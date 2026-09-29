@@ -85,7 +85,7 @@ The production capture helper was invoked for the controlled test, but Windows c
 
 The controlled workload contains idle periods, a six-second CPU burst, 64 MiB writes plus reads, an 8 MiB loopback payload, a 128 MiB resident allocation, and twelve child processes. Woi.Validation drives the production helper, imports the resulting ETL, verifies workload lifetime and dominant CPU contributor, checks expected quantities, inspects evidence, and exports reports.
 
-GitHub CI requires that test before uploading a release artifact. [GitHub documents administrator Windows runners with UAC disabled](https://docs.github.com/en/actions/reference/runners/github-hosted-runners), allowing a noninteractive run. The workflow has not executed remotely yet.
+GitHub CI requires that test before uploading a release artifact. [GitHub documents administrator Windows runners with UAC disabled](https://docs.github.com/en/actions/reference/runners/github-hosted-runners), allowing a noninteractive run. The 2026-09-30 Actions run failed before any job step: GitHub reported recent account payment failures or a spending limit that needs increasing. It supplies no remote validation evidence.
 
 ## Reproduce
 

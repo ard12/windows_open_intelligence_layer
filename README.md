@@ -59,7 +59,7 @@ $env:DOTNET_ROOT = (Resolve-Path .\.tools\dotnet).Path # local SDK development a
 
 SDK, package, and public fixture downloads use the network during development. Product analysis remains local. Node.js is needed only for the developer replay stress script. See [reproduction commands](docs/validation.md).
 
-The [Windows GitHub workflow](.github/workflows/windows.yml) builds locked dependencies, tests real ETLs, runs a native controlled recording, checks report export and desktop recovery, stresses the packaged worker, and uploads the application only after those checks succeed. It has been prepared but has not run remotely yet. Native capture coverage is intentionally a failing gate if it cannot be demonstrated.
+The [Windows GitHub workflow](.github/workflows/windows.yml) builds locked dependencies, tests real ETLs, runs a native controlled recording, checks report export and desktop recovery, stresses the packaged worker, and uploads the application only after those checks succeed. The 2026-09-30 push triggered Actions, but GitHub rejected the job before any step because of an account payment or spending-limit issue. Native capture coverage is intentionally a failing gate if it cannot be demonstrated.
 
 To upload the project to GitHub, use the generated **WindowsOpenIntelligence-source.zip** contents. It contains source, locks, workflow, docs, and notices, excluding SDKs, binaries, traces, caches, and local test artifacts. Publish the separate application ZIP as a release asset after reviewing the verification gates.
 
