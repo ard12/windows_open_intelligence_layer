@@ -79,7 +79,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         var contributors = await client.Send<List<Contributor>>("contributors",interval,token);
         Metrics.Clear(); foreach(var x in metrics) Metrics.Add(x);
         Contributors.Clear(); foreach(var x in contributors) Contributors.Add(x);
-        Explanation = EvidenceLanguage.Explain(interval,contributors,Summary.Session.Warnings);
+        Explanation = EvidenceLanguage.Explain(interval,contributors,Summary.Session.Capabilities,Summary.Session.Warnings);
         nextCursor = null; Events.Clear(); await LoadPage(token);
         ChartsChanged?.Invoke();
         Status = $"{Events.Count:n0} events on this page · interval {interval.StartMs/1000:n3}–{interval.EndMs/1000:n3}s · {(SelectedProcess?.Name ?? "all processes")}";

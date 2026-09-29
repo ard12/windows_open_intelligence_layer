@@ -2,6 +2,16 @@
 
 Verified locally on 2026-09-29: Windows 10 Pro build 19045 x64, twelve logical processors, approximately 32 GiB RAM; SDK 10.0.401, runtime 10.0.12, installed WPR 10.0.19041. Analysis cache version is 1.1.1. Windows 11 acceptance remains pending.
 
+## 2026-09-30 P0 checkpoint
+
+The updated [product reassessment](product-reassessment.md) makes independent usefulness and correctness the near-term gates. This checkpoint advances P0; it does not close native capture or Windows 11 acceptance.
+
+- Locked Release build passed with zero warnings and errors. All 58 automated tests passed again.
+- CPU contributor explanations now use summed recorded sample weights when all contributors have them, matching the query ranking. When weights are incomplete, the explanation names the sample-count leader and says why. The contributor grid and Markdown report expose estimated sampled CPU milliseconds separately from sample counts.
+- Explanations distinguish absent CPU or physical-disk coverage from zero activity. Regression assertions cover weighted and unweighted leaders and missing CPU coverage.
+- Self-contained publish succeeded after removing rebuildable local validation caches from a nearly full D: drive. The ZIP is about 76 MB. The packaged desktop smoke test on SimpleAllocator-dotnet6.etl passed with 418,378 indexed events, 500 first-page events, 72 contributors, and verified worker crash recovery.
+- The controlled native capture was attempted through the production helper on Windows 10 build 19045. Windows canceled UAC elevation before recording, so no ETL was produced and the capture-to-report gate remains open. Repeat on a consenting interactive account and on Windows 11 before claiming native support.
+- The existing 1.55% native CPU-weight discrepancy, 514 ms contributor-query p95, maximum-envelope decoding, and independent pilot remain open.
 ## Completed checks
 
 - Locked restore and Release build completed without warnings or errors.

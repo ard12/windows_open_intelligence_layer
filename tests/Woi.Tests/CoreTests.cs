@@ -64,10 +64,13 @@ public sealed class CoreTests
         var values=new[]{Obs(10,1010,process:"p",weight:1),Obs(11,1020,process:"p",weight:1),Obs(12,1030,process:"q",weight:known?3:null)};
         var builder=new AnalysisBuilder();foreach(var value in values)builder.Add(value);
         var session=fixture.Reader.Session;
-        fixture.Store.Save(session,[Life("p",0,3000),Life("q",0,3000)],builder.Finish());
+        fixture.Store.Save(session,[Life("p",0,3000),Life("q",0,3000) with {Name="second"}],builder.Finish());
         using var reader=new FakeReader(session,values);var engine=new QueryEngine(reader,fixture.Store);
         Assert.Equal(first,engine.Contributors(new(1000,2000),default)[0].ProcessId);
         Assert.Equal(first,engine.Contributors(new(1001,1999),default)[0].ProcessId);
+        var report = engine.Report(new(1000,2000),default);
+        Assert.Contains(known ? "estimated sampled CPU time" : "recorded CPU samples", report.Explanation);
+        Assert.Contains(known ? "second accounted for 60.0%" : "work accounted for 66.7%", report.Explanation);
     }
     [Fact] public void MissingCoverageStaysNullAndUnavailableInExport()
     {
@@ -81,6 +84,7 @@ public sealed class CoreTests
         Assert.Contains("unavailable",File.ReadAllText(path));
         var report=fixture.Engine.Report(new(0,3000),default);
         Assert.Equal(Provenance.ResourceAttribution,report.Provenance);
+        Assert.Contains("Physical disk transfer coverage is unavailable", report.Explanation);
         Assert.Contains(report.Findings!,x=>x.Provenance==Provenance.Observed);
         Assert.Contains(report.Findings!,x=>x.Provenance==Provenance.TemporalCorrelation);
         Assert.DoesNotContain(report.Findings!,x=>x.Provenance==Provenance.Hypothesis);
@@ -94,6 +98,8 @@ public sealed class CoreTests
         Assert.All(fixture.Engine.Metrics(new(0,3000)),x=>Assert.Null(x.CpuSamples));
         var report=fixture.Engine.Report(new(0,3000),default);
         Assert.Contains(report.Findings!,x=>x.Provenance==Provenance.Observed && x.Text.Contains("coverage is unavailable"));
+        Assert.Contains("CPU sampling is unavailable", report.Explanation);
+        Assert.DoesNotContain("No CPU samples were recorded", report.Explanation);
     }
     internal sealed class FakeFixture : IDisposable
     {

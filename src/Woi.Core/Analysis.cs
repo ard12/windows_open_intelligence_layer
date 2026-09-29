@@ -106,19 +106,31 @@ public static class IncidentDetector
 public static class EvidenceLanguage
 {
     public static string Explain(IntervalQuery interval, IReadOnlyList<Contributor> contributors,
-        IReadOnlyList<string> warnings)
+        IReadOnlyList<Capability> capabilities, IReadOnlyList<string> warnings)
     {
         var duration = Math.Max(0, interval.EndMs - interval.StartMs) / 1000;
-        var ranked = contributors.Where(x => x.CpuSamples > 0).OrderByDescending(x => x.CpuSamples).ToArray();
+        var cpuAvailable = capabilities.Any(x => x.Category == "CPU" && x.Status == Availability.Available);
+        var diskAvailable = capabilities.Any(x => x.Category == "Disk" && x.Status == Availability.Available);
+        var ranked = contributors.Where(x => x.CpuSamples > 0).ToArray();
         var total = ranked.Sum(x => x.CpuSamples ?? 0);
         string description = $"Selected interval: {duration:n2} seconds.";
         if (total > 0) {
-            var top = ranked[0];
-            description += $" {top.Name} accounted for {(double)(top.CpuSamples ?? 0)/total*100:n1}% of recorded CPU samples ({top.CpuSamples:n0} of {total:n0}).";
-        }
+            // Match QueryEngine's CPU ordering: weights apply only when every contributor has them.
+            var weighted = ranked.All(x => x.CpuMs is >= 0);
+            var totalMs = ranked.Sum(x => x.CpuMs ?? 0);
+            if (weighted && totalMs > 0) {
+                var top = ranked.OrderByDescending(x => x.CpuMs).First();
+                description += $" {top.Name} accounted for {(top.CpuMs!.Value / totalMs * 100):n1}% of estimated sampled CPU time ({top.CpuMs:n2} of {totalMs:n2} ms), using recorded sample weights.";
+            } else {
+                var top = ranked.OrderByDescending(x => x.CpuSamples).First();
+                description += $" {top.Name} accounted for {(double)(top.CpuSamples ?? 0) / total * 100:n1}% of recorded CPU samples ({top.CpuSamples:n0} of {total:n0}); complete sample weights are unavailable.";
+            }
+        } else if (!cpuAvailable) description += " CPU sampling is unavailable in this recording.";
+        else description += " No CPU samples were recorded in this interval.";
         var disk = contributors.OrderByDescending(x => x.DiskBytes).FirstOrDefault();
         if (disk is { DiskBytes: > 0 }) description += $" {disk.Name} accounted for {disk.DiskBytes/1048576d:n2} MiB of recorded physical disk transfers.";
-        if (total == 0 && disk is not { DiskBytes: > 0 }) description += " No attributable CPU samples or physical disk transfers were recorded in this interval.";
+        else if (!diskAvailable) description += " Physical disk transfer coverage is unavailable.";
+        else description += " No physical disk transfers were recorded in this interval.";
         description += " These are resource attributions, not proof of why an application froze.";
         if (contributors.All(x => x.BaselineCpuPercent == null)) description += " A usable sampled CPU baseline is unavailable.";
         else description += " Baseline percentages use the preceding available interval, up to 30 seconds.";

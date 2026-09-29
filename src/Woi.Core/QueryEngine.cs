@@ -100,7 +100,7 @@ public sealed class QueryEngine(ITraceReader reader, CacheStore store)
     {
         interval = Clamp(interval);
         var contributors = Contributors(interval, token);
-        var explanation=EvidenceLanguage.Explain(interval, contributors, Session.Warnings);
+        var explanation=EvidenceLanguage.Explain(interval, contributors, Session.Capabilities, Session.Warnings);
         var references=contributors.SelectMany(x=>x.Evidence).DistinctBy(x=>x.EtlxEventIndex).Take(12).ToArray();
         bool cpuCaptured=Session.Capabilities.Any(x=>x.Category=="CPU" && x.Status==Availability.Available);
         List<Explanation> findings = [new(Provenance.Observed,cpuCaptured ? $"Recorded interval [{interval.StartMs:F3}, {interval.EndMs:F3}) ms contains {contributors.Sum(x=>x.CpuSamples):n0} busy CPU samples." : "CPU sample coverage is unavailable for this recording.",references),
@@ -127,9 +127,9 @@ public sealed class QueryEngine(ITraceReader reader, CacheStore store)
         text.AppendLine(report.Explanation).AppendLine().AppendLine("Provenance: resource attribution.").AppendLine();
         text.AppendLine($"Source SHA-256: {Session.SourceHash}").AppendLine($"Parser: {Session.ParserVersion} / analysis: {Wire.AnalysisVersion}");
         text.AppendLine(FormattableString.Invariant($"Interval: {interval.StartMs/1000:F3}–{interval.EndMs/1000:F3} seconds from trace start.")).AppendLine();
-        text.AppendLine("| Process | PID | CPU samples | Physical disk MiB | Logical file MiB | Network event MiB |").AppendLine("|---|---:|---:|---:|---:|---:|");
+        text.AppendLine("| Process | PID | CPU samples | Estimated sampled CPU ms | Physical disk MiB | Logical file MiB | Network event MiB |").AppendLine("|---|---:|---:|---:|---:|---:|---:|");
         foreach (var x in report.Contributors)
-            text.AppendLine(FormattableString.Invariant($"| {x.Name.Replace("|", "\\|").Replace("\n", " ")} | {x.Pid} | {x.CpuSamples} | {MiB(x.DiskBytes)} | {MiB(x.FileBytes)} | {MiB(x.NetworkBytes)} |"));
+            text.AppendLine(FormattableString.Invariant($"| {x.Name.Replace("|", "\\|").Replace("\n", " ")} | {x.Pid} | {x.CpuSamples} | {(x.CpuMs is { } ms ? ms.ToString("F2", CultureInfo.InvariantCulture) : "unavailable")} | {MiB(x.DiskBytes)} | {MiB(x.FileBytes)} | {MiB(x.NetworkBytes)} |"));
         text.AppendLine().AppendLine("## Classified findings").AppendLine();
         foreach(var finding in report.Findings ?? []) text.AppendLine($"- {finding.Provenance}: {finding.Text}");
         text.AppendLine().AppendLine("## Evidence coordinates").AppendLine();
