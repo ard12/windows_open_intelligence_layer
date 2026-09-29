@@ -1,6 +1,6 @@
 # Windows Open Intelligence
 
-A local Windows activity analyzer with bounded, guided WPR recording. Version **0.3.0 is an engineering preview**: the offline analyzer has real-trace stress coverage; the new privileged recording path still needs a successful native capture run. See [verification](docs/validation.md) for measured results and open gates.
+A local Windows activity analyzer with optional, unprivileged recent-history observation and bounded guided WPR recording. This remains an **engineering preview**: offline analysis and observation have local checks, while the privileged recording path still needs a successful native capture run. See [verification](docs/validation.md) for measured results and open gates.
 
 ## Run
 
@@ -15,6 +15,14 @@ Windows 11 x64 is the release baseline. Local build and desktop tests ran on Win
 3. Compare contributors ranked by CPU, completed disk bytes, or summed recorded latency. Double-click a contributor to inspect its lifetime.
 4. Filter the paged **Explorer**, then double-click an event to see captured **Evidence**.
 5. Review **Capture quality**, adjust heuristic thresholds, bookmark intervals, and export Markdown or JSON.
+
+### Observe a slowdown without elevation
+
+1. Open **Observe** and choose **Start observing** before the activity you want to investigate. The app collects roughly one-second Windows API snapshots in a separate unprivileged worker.
+2. When a slowdown occurs, choose **Mark slowdown**. Review accounted process CPU, available physical memory, process I/O accounting, current contributors, and the retained lifetime list.
+3. Choose **Stop observing** when done. Unsaved history is in memory only and disappears when you stop or close the app. For event-level evidence, use a guided WPR recording or import an ETL.
+
+The first sample is a counter baseline. Unreadable processes, missed ticks, clock changes, and counter resets remain visible as unavailable values or collection gaps. The ring allows up to 60 minutes but also caps process rows and estimated bytes; the displayed retained duration is the actual one.
 
 ### Record an investigation
 
@@ -38,7 +46,7 @@ The original ETL is read-only and SHA-256 fingerprinted. Reopening verifies fing
 - Physical disk bytes, logical file bytes, and network event bytes are separate measurements. Summed latency can overlap; it is not elapsed disk busy time.
 - ETLX indices are derived coordinates, not original ETL byte offsets. Lifetime identities govern PID/TID joins; ambiguous attribution remains unattributed.
 - Incident candidates are configurable heuristics, not diagnoses. Descriptions classify observations, resource attribution, and temporal correlation.
-- Symbols load only from a local directory on request. No cloud analysis, HTTP service, online symbols, live recorder, custom driver, or automatic remediation is included.
+- Symbols load only from a local directory on request. No cloud analysis, HTTP service, online symbols, automatic startup, Windows service, custom driver, or automatic remediation is included.
 
 ## Build and verify
 

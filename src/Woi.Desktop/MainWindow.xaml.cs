@@ -20,6 +20,7 @@ public partial class MainWindow : Window
         try {
             model = new MainViewModel(); DataContext = model;
             model.ChartsChanged += RenderCharts;
+            model.MonitorChartsChanged += RenderMonitorCharts;
         } catch(Exception ex) { MessageBox.Show(ex.Message,"Cannot start analysis worker"); Close(); return; }
         CpuPlot.ToolTip = "Hold Shift and drag across the chart to select a recorded interval.";
         CpuPlot.PreviewMouseLeftButtonDown += (_,e)=> {
@@ -53,6 +54,8 @@ public partial class MainWindow : Window
         if(args.Length > 2 && args[1]=="--smoke-test") {
             var snapshot=args.Length>3?Path.GetFullPath(args[3]):Path.Combine(AppContext.BaseDirectory,"desktop.png");
             try {
+                bool monitorVerified=false; int observedLifetimes=0;
+                if(args.Contains("--verify-monitor")) await model!.StartObservation();
                 await model!.Open(args[2]);
                 if(!string.IsNullOrEmpty(model.Error))throw new InvalidOperationException(model.Error);
                 bool recovered=false;
@@ -64,6 +67,23 @@ public partial class MainWindow : Window
                         throw new InvalidOperationException("Worker crash recovery failed: "+model.Error);
                     recovered=true;
                 }
+                if(args.Contains("--verify-monitor")){
+                    await Task.Delay(2500);
+                    await model.RefreshMonitor();
+                    await model.MarkSlowdown();
+                    await model.LoadMonitorLifetimes();
+                    observedLifetimes=model.MonitorLifetimes.Count;
+                    if(observedLifetimes == 0) throw new InvalidOperationException("Observed process lifetimes are unavailable.");
+                    if(model.Monitor is not { SnapshotCount: >= 2, RetainedProcessRows: > 0 } ||
+                        model.Monitor.Marks.Count == 0 || model.Monitor.History.All(x => x.AvailablePhysicalBytes == null))
+                        throw new InvalidOperationException("Observation worker did not retain native history and a mark: "+model.MonitorStatus);
+                    Views.SelectedItem=MonitorTab;await Task.Delay(250);Capture(Path.ChangeExtension(snapshot,"monitor.png"));
+                    monitorVerified=true;
+                    model.StopObservation();
+                    if(model.Monitor != null || model.MonitorHistory.Count != 0 || model.MonitorLifetimes.Count != 0)
+                        throw new InvalidOperationException("Stopping observation retained unsaved history in the UI.");
+                    Views.SelectedIndex=0;
+                }
                 await Dispatcher.InvokeAsync(()=>{},DispatcherPriority.Render);
                 await Task.Delay(350); Capture(snapshot);
                 Views.SelectedItem=RecordTab;await Task.Delay(100);Capture(Path.ChangeExtension(snapshot,"record.png"));
@@ -72,7 +92,7 @@ public partial class MainWindow : Window
                 await model.ShowEvidence(observation); Views.SelectedIndex=2; await Task.Delay(200);
                 Capture(Path.ChangeExtension(snapshot,"evidence.png"));
                 File.WriteAllText(Path.ChangeExtension(snapshot,"json"),JsonSerializer.Serialize(new {
-                    success=true, workerRecoveryVerified=recovered, events=model.Events.Count, contributors=model.Contributors.Count,
+                    success=true, workerRecoveryVerified=recovered, monitorVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
                     indexedEvents=model.Summary?.Session.IndexedEvents,
                     lifetimes=model.Summary?.Processes.OrderByDescending(x=>x.EndMs-x.StartMs).Take(5),
                     capabilities=model.Summary?.Session.Capabilities
@@ -147,6 +167,49 @@ public partial class MainWindow : Window
             plot.Plot.Axes.AutoScale();
         }
         plot.Refresh();
+    }
+    private void RenderMonitorCharts()
+    {
+        if (model?.Monitor is not { } view) {
+            MonitorCpuPlot.Plot.Clear(); MonitorMemoryPlot.Plot.Clear(); MonitorIoPlot.Plot.Clear();
+            MonitorCpuPlot.Refresh(); MonitorMemoryPlot.Refresh(); MonitorIoPlot.Refresh(); return;
+        }
+        var points = view.History;
+        var x = points.Select(p => (p.Utc - view.StartedUtc).TotalSeconds).ToArray();
+        void Plot(ScottPlot.WPF.WpfPlot plot, double[] y, string title, string color)
+        {
+            plot.Plot.Clear();
+            plot.Plot.Title(title);
+            plot.Plot.XLabel("Seconds observing");
+            if (x.Length > 0) {
+                var line = plot.Plot.Add.Scatter(x, y);
+                line.Color = ScottPlot.Color.FromHex(color);
+                line.MarkerSize = y.Count(double.IsFinite) == 1 ? 5 : 0;
+                line.LineWidth = 2;
+                plot.Plot.Axes.AutoScale();
+            }
+            plot.Refresh();
+        }
+        Plot(MonitorCpuPlot, points.Select(p => p.CpuPercent ?? double.NaN).ToArray(),
+            "Accounted process CPU", "#167C80");
+        Plot(MonitorMemoryPlot, points.Select(p => p.AvailablePhysicalBytes is { } bytes
+            ? bytes / 1073741824d : double.NaN).ToArray(), "Available memory", "#5876B5");
+        Plot(MonitorIoPlot, points.Select(p => p.ReadBytesPerSecond == null && p.WriteBytesPerSecond == null
+            ? double.NaN : ((p.ReadBytesPerSecond ?? 0) + (p.WriteBytesPerSecond ?? 0)) / 1048576d).ToArray(),
+            "Accounted process read + write", "#9569AA");
+    }
+    private async void StartObservationClicked(object sender,RoutedEventArgs e)
+    {
+        if (model != null) await model.StartObservation();
+    }
+    private async void MarkSlowdownClicked(object sender,RoutedEventArgs e)
+    {
+        if (model != null) await model.MarkSlowdown();
+    }
+    private void StopObservationClicked(object sender,RoutedEventArgs e) => model?.StopObservation();
+    private async void MonitorLifetimesClicked(object sender,RoutedEventArgs e)
+    {
+        if (model != null) await model.LoadMonitorLifetimes();
     }
     private void RecordActivityClicked(object sender,RoutedEventArgs e)=>Views.SelectedItem=RecordTab;
     private async void StartRecordingClicked(object sender,RoutedEventArgs e)

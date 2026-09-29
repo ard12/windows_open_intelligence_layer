@@ -12,6 +12,17 @@ The updated [product reassessment](product-reassessment.md) makes independent us
 - Self-contained publish succeeded after removing rebuildable local validation caches from a nearly full D: drive. The ZIP is about 76 MB. The packaged desktop smoke test on SimpleAllocator-dotnet6.etl passed with 418,378 indexed events, 500 first-page events, 72 contributors, and verified worker crash recovery.
 - The controlled native capture was attempted through the production helper on Windows 10 build 19045. Windows canceled UAC elevation before recording, so no ETL was produced and the capture-to-report gate remains open. Repeat on a consenting interactive account and on Windows 11 before claiming native support.
 - The existing 1.55% native CPU-weight discrepancy, 514 ms contributor-query p95, maximum-envelope decoding, and independent pilot remain open.
+
+## 2026-09-30 P1 observation checkpoint
+
+The separate unprivileged monitor worker now collects roughly one-second Windows API snapshots while ETL import runs in its own worker. Session/PID/creation-time identity, first-sample baselines, invalid-delta gaps, bounded in-memory retention, marks, and on-demand observed lifetimes are implemented. The UI distinguishes accounted process CPU from machine utilization and process I/O accounting from physical disk transfers.
+
+- Locked Release build passed without warnings. The fixture-aware suite passed 63 tests with no skips, including first-sample, PID reuse, missed-tick, counter-reset, ring-eviction, and exited-lifetime cases.
+- The worker protocol smoke returned four snapshots, 2,056 retained process rows, system available memory, one mark, and clean stop. A nonexistent parent PID caused the worker to exit cleanly after a shutdown bug was found and corrected.
+- The final packaged WPF smoke opened the 418,378-event SimpleAllocator fixture, recovered from an analysis-worker kill, kept the independent monitor active, marked the observation, queried 500 bounded lifetimes, and rendered the Observe tab with CPU, memory, and accounted process-I/O charts. Stopping observation cleared the unsaved UI history.
+- A 120-second packaged monitor run retained 120 snapshots across 119.0 seconds and 60,776 process rows. Peak worker working set was 58.0 MiB; average worker CPU was 0.26% of machine capacity on this Windows 10, 12-logical-processor host. The final tick had 146 unreadable processes; accounted CPU therefore cannot be treated as complete system CPU. The machine-readable result is in the local ignored file `.artifacts/validation/monitor-stress.json`.
+- After the final process-I/O chart change, a separate 30-second packaged run retained 30 snapshots across 29.0 seconds and 15,868 process rows, with 46.03 MiB peak worker working set and 0.328% average machine CPU. The final package passed the desktop smoke again. This short run meets the provisional isolated worker CPU/memory targets on this host. It does not establish the UI-plus-monitor budget, workload slowdown, 24-hour behavior, Windows 11 compatibility, or reliable history across sleep/resume and heavy churn. Unsaved sessions have no regular persistence code path; disk-write overhead has not yet been independently measured.
+
 ## Completed checks
 
 - Locked restore and Release build completed without warnings or errors.

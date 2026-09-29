@@ -216,6 +216,12 @@
           "SQLitePCLRaw.lib.e_sqlite3": "[3.53.3, )"
         }
       },
+      "woi.monitor": {
+        "type": "Project",
+        "dependencies": {
+          "Woi.Core": "[0.3.0, )"
+        }
+      },
       "woi.trace": {
         "type": "Project",
         "dependencies": {

@@ -37,9 +37,12 @@ jobs:
       - name: Packaged desktop smoke and worker recovery
         shell: pwsh
         run: |
-          $app = Start-Process dist/WindowsOpenIntelligence/WindowsOpenIntelligence.exe -ArgumentList @("--smoke-test", ".artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl", ".artifacts/validation/desktop.png", "--verify-recovery") -WindowStyle Hidden -PassThru
+          $app = Start-Process dist/WindowsOpenIntelligence/WindowsOpenIntelligence.exe -ArgumentList @("--smoke-test", ".artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl", ".artifacts/validation/desktop.png", "--verify-recovery", "--verify-monitor") -WindowStyle Hidden -PassThru
           if (-not $app.WaitForExit(120000)) { $app.Kill(); throw "Desktop smoke timed out." }
           if ($app.ExitCode -ne 0) { throw "Desktop smoke failed." }
+      - name: Unprivileged monitor continuity and overhead smoke
+        shell: pwsh
+        run: ./scripts/monitor-stress.ps1 -Seconds 30 -Output .artifacts/validation/ci-monitor-stress.json
       - name: Packaged replay stress
         shell: pwsh
         run: node scripts/stress.cjs dist/WindowsOpenIntelligence/Woi.Worker.exe .artifacts/validation/ci-stress.json 10 .artifacts/fixtures/net452/net.4.5.2.x64.etl .artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl

@@ -147,5 +147,5 @@ public partial class MainViewModel : ObservableObject, IDisposable
         await client.Send<object>("export",new { path,format,interval=Interval() },token); Status="Evidence report saved locally.";
     });
     public void Cancel() => operation?.Cancel();
-    public void Dispose() { CancelRecording();captureClient?.DisposeAsync().AsTask().GetAwaiter().GetResult();operation?.Cancel(); client.Dispose(); }
+    public void Dispose() { StopObservation(); CancelRecording();captureClient?.DisposeAsync().AsTask().GetAwaiter().GetResult();operation?.Cancel(); client.Dispose(); }
 }

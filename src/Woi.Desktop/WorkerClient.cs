@@ -15,7 +15,7 @@ public sealed class WorkerClient : IDisposable
     internal int ProcessId=>process.Id;
     public bool IsAlive => !disconnected && !process.HasExited;
     public event Action<ImportProgress>? Progress;
-    public WorkerClient()
+    public WorkerClient(bool monitor = false)
     {
         var executable = Path.Combine(AppContext.BaseDirectory, "Woi.Worker.exe");
         if(!File.Exists(executable)) {
@@ -27,6 +27,13 @@ public sealed class WorkerClient : IDisposable
             UseShellExecute = false, RedirectStandardInput = true, RedirectStandardOutput = true,
             RedirectStandardError = true, CreateNoWindow = true
         }};
+        if (monitor) {
+            process.StartInfo.ArgumentList.Add("--monitor");
+            process.StartInfo.ArgumentList.Add("--parent");
+            process.StartInfo.ArgumentList.Add(Environment.ProcessId.ToString());
+            process.StartInfo.ArgumentList.Add("--parent-start");
+            process.StartInfo.ArgumentList.Add(Process.GetCurrentProcess().StartTime.ToUniversalTime().Ticks.ToString());
+        }
         process.Start(); _ = ReadResponses();
         _ = process.StandardError.ReadToEndAsync(); // Drain stderr so a library warning cannot deadlock the protocol.
     }

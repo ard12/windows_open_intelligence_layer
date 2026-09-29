@@ -4,6 +4,7 @@
     <Project Path="src/Woi.Capture/Woi.Capture.csproj" />
     <Project Path="src/Woi.Core/Woi.Core.csproj" />
     <Project Path="src/Woi.Desktop/Woi.Desktop.csproj" />
+    <Project Path="src/Woi.Monitor/Woi.Monitor.csproj" />
     <Project Path="src/Woi.Trace/Woi.Trace.csproj" />
     <Project Path="src/Woi.Worker/Woi.Worker.csproj" />
   </Folder>

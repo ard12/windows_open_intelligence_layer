@@ -4,6 +4,7 @@ using System.Text.Json;
 using Woi.Core;
 using Woi.Trace;
 
+if (args.Length > 0 && args[0] == "--monitor") return await MonitorHost.Run(args);
 Console.InputEncoding = Encoding.UTF8; Console.OutputEncoding = new UTF8Encoding(false);
 var cacheArg = Array.IndexOf(args, "--cache-root");
 var cacheRoot = cacheArg >= 0 && args.Length > cacheArg+1 ? Path.GetFullPath(args[cacheArg+1]) :
@@ -127,11 +128,11 @@ sealed class BoundedLines(TextReader reader,int maximum)
 {
     private readonly char[] buffer=new char[4096];
     private int offset,count;
-    public async Task<string?> Read()
+    public async Task<string?> Read(CancellationToken token = default)
     {
         var line=new StringBuilder();bool oversized=false,seen=false;
         while(true) {
-            if(offset==count){count=await reader.ReadAsync(buffer);offset=0;if(count==0)return seen?Finish():null;}
+            if(offset==count){count=await reader.ReadAsync(buffer.AsMemory(), token);offset=0;if(count==0)return seen?Finish():null;}
             char next=buffer[offset++];seen=true;
             if(next=='\n')return Finish();
             if(line.Length<maximum)line.Append(next);else oversized=true;

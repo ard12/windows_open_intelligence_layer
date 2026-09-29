@@ -119,11 +119,17 @@
           "SQLitePCLRaw.lib.e_sqlite3": "[3.53.3, )"
         }
       },
+      "woi.monitor": {
+        "type": "Project",
+        "dependencies": {
+          "Woi.Core": "[0.3.0, )"
+        }
+      },
       "woi.trace": {
         "type": "Project",
         "dependencies": {
           "Microsoft.Diagnostics.Tracing.TraceEvent": "[3.2.8, )",
-          "Woi.Core": "[1.0.0, )"
+          "Woi.Core": "[0.3.0, )"
         }
       }
     },

@@ -110,6 +110,65 @@
       <TextBlock Text="{Binding Summary.Session.SourceHash, StringFormat='SHA-256: {0}'}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap"/>
      </StackPanel></ScrollViewer>
     </TabItem>
+    <TabItem Header="Observe" x:Name="MonitorTab">
+     <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16,0,0">
+      <Border Style="{StaticResource Card}"><StackPanel>
+       <TextBlock Text="RECENT LOCAL HISTORY" Style="{StaticResource Label}"/>
+       <TextBlock Text="Observe while you work, then mark the time a slowdown is noticeable." FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap"/>
+       <TextBlock Text="Collection starts only when you choose Start. It runs without elevation and keeps a bounded in-memory history; stopping or closing the app discards it." TextWrapping="Wrap" Foreground="#61768D" Margin="0,10,0,12"/>
+       <WrapPanel><Button Content="Start observing" Click="StartObservationClicked" Background="#167C80" Foreground="White"/>
+        <TextBox Text="{Binding MonitorMarkLabel}" Width="190" ToolTip="Mark label"/><Button Content="Mark slowdown" Click="MarkSlowdownClicked"/>
+        <Button Content="Stop observing" Click="StopObservationClicked"/></WrapPanel>
+       <TextBlock Text="{Binding MonitorStatus}" TextWrapping="Wrap" Margin="4,12,0,0"/>
+       <TextBlock Text="The first sample sets counter baselines. CPU is the sum of readable process CPU-time deltas, divided by elapsed time and logical processors; it is not a machine utilization counter. Process I/O bytes are accounting counters, not physical disk transfers." TextWrapping="Wrap" Foreground="#61768D" Margin="4,8,0,0"/>
+      </StackPanel></Border>
+      <Grid Height="260"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <Border Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="ACCOUNTED PROCESS CPU · percent of machine" Style="{StaticResource Label}"/><plot:WpfPlot x:Name="MonitorCpuPlot" Grid.Row="1"/></Grid></Border>
+       <Border Grid.Column="1" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="AVAILABLE PHYSICAL MEMORY · GiB" Style="{StaticResource Label}"/><plot:WpfPlot x:Name="MonitorMemoryPlot" Grid.Row="1"/></Grid></Border>
+       <Border Grid.Column="2" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="ACCOUNTED PROCESS I/O · MiB/s" Style="{StaticResource Label}"/><plot:WpfPlot x:Name="MonitorIoPlot" Grid.Row="1"/></Grid></Border>
+      </Grid>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="LATEST READABLE PROCESSES · trace-local lifetime identity" Style="{StaticResource Label}"/>
+       <DataGrid ItemsSource="{Binding MonitorTop}" Height="260"><DataGrid.Columns>
+        <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="160"/><DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
+        <DataGridTextColumn Header="Session" Binding="{Binding SessionId}" Width="65"/><DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat=N2, TargetNullValue=—}" Width="75"/>
+        <DataGridTextColumn Header="Read B/s" Binding="{Binding ReadBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="100"/>
+        <DataGridTextColumn Header="Write B/s" Binding="{Binding WriteBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="100"/>
+        <DataGridTextColumn Header="Private bytes" Binding="{Binding PrivateBytes, StringFormat=N0, TargetNullValue=—}" Width="125"/>
+        <DataGridTextColumn Header="Working set" Binding="{Binding WorkingSetBytes, StringFormat=N0, TargetNullValue=—}" Width="125"/>
+        <DataGridTextColumn Header="Lifetime ID" Binding="{Binding LifetimeId}" Width="200"/>
+       </DataGrid.Columns></DataGrid></StackPanel></Border>
+      <Border Style="{StaticResource Card}"><StackPanel>
+       <DockPanel><Button DockPanel.Dock="Right" Content="Refresh lifetimes" Click="MonitorLifetimesClicked"/><TextBlock Text="OBSERVED PROCESS LIFETIMES · first/last seen in retained snapshots" Style="{StaticResource Label}" VerticalAlignment="Center"/></DockPanel>
+       <DataGrid ItemsSource="{Binding MonitorLifetimes}" Height="220"><DataGrid.Columns>
+        <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="160"/><DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
+        <DataGridTextColumn Header="Session" Binding="{Binding SessionId}" Width="65"/>
+        <DataGridTextColumn Header="First seen UTC" Binding="{Binding FirstObservedUtc, StringFormat=HH:mm:ss}" Width="120"/>
+        <DataGridTextColumn Header="Last seen UTC" Binding="{Binding LastObservedUtc, StringFormat=HH:mm:ss}" Width="120"/>
+        <DataGridTextColumn Header="Present now" Binding="{Binding PresentAtLatest}" Width="90"/>
+        <DataGridTextColumn Header="Samples" Binding="{Binding SnapshotCount}" Width="85"/>
+        <DataGridTextColumn Header="Lifetime ID" Binding="{Binding LifetimeId}" Width="200"/>
+       </DataGrid.Columns></DataGrid>
+       <TextBlock Text="First and last seen bound only this observation session. A process may have started earlier or exited between polls." Foreground="#61768D" TextWrapping="Wrap" Margin="0,8,0,0"/>
+      </StackPanel></Border>
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="MARKS WITHIN RETAINED HISTORY" Style="{StaticResource Label}"/>
+        <DataGrid ItemsSource="{Binding MonitorMarks}" Height="150"><DataGrid.Columns><DataGridTextColumn Header="Time UTC" Binding="{Binding Utc, StringFormat=HH:mm:ss}" Width="90"/><DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="*"/></DataGrid.Columns></DataGrid></StackPanel></Border>
+       <Border Grid.Column="1" Style="{StaticResource Card}"><StackPanel><TextBlock Text="RECENT COLLECTION GAPS" Style="{StaticResource Label}"/>
+        <ItemsControl ItemsSource="{Binding Monitor.RecentGaps}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding Detail}" TextWrapping="Wrap" Margin="0,4" Foreground="#8A6024"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
+      </Grid>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="RECENT ONE-SECOND SAMPLES" Style="{StaticResource Label}"/>
+       <DataGrid ItemsSource="{Binding MonitorHistory}" Height="220"><DataGrid.Columns>
+        <DataGridTextColumn Header="Time UTC" Binding="{Binding Utc, StringFormat=HH:mm:ss}" Width="105"/>
+        <DataGridTextColumn Header="Rate interval s" Binding="{Binding IntervalSeconds, StringFormat=N2, TargetNullValue=—}" Width="110"/><DataGridTextColumn Header="Accounted CPU %" Binding="{Binding CpuPercent, StringFormat=N2, TargetNullValue=—}" Width="145"/>
+        <DataGridTextColumn Header="Read B/s" Binding="{Binding ReadBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="115"/>
+        <DataGridTextColumn Header="Write B/s" Binding="{Binding WriteBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="115"/>
+        <DataGridTextColumn Header="Available bytes" Binding="{Binding AvailablePhysicalBytes, StringFormat=N0, TargetNullValue=—}" Width="150"/>
+        <DataGridTextColumn Header="Commit bytes" Binding="{Binding CommitBytes, StringFormat=N0, TargetNullValue=—}" Width="150"/>
+        <DataGridTextColumn Header="Enumerated" Binding="{Binding EnumeratedProcesses}" Width="95"/>
+        <DataGridTextColumn Header="Unreadable" Binding="{Binding UnreadableProcesses}" Width="95"/>
+       </DataGrid.Columns></DataGrid></StackPanel></Border>
+     </StackPanel></ScrollViewer>
+    </TabItem>
     <TabItem Header="Record" x:Name="RecordTab">
      <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16,0,0">
       <Border Style="{StaticResource Card}"><StackPanel>
