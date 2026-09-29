@@ -1,0 +1,62 @@
+name: Windows build and verification
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.401
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - name: Locked build and real ETL regression tests
+        shell: pwsh
+        run: ./scripts/test.ps1 -DownloadFixtures
+      - name: Package the self-contained desktop and capture helper
+        shell: pwsh
+        run: ./scripts/publish.ps1
+      - name: Real controlled recording and report export
+        shell: pwsh
+        run: |
+          dotnet publish tools/Woi.Workload -c Release -r win-x64 --self-contained true -p:RestoreLockedMode=true -o .artifacts/workload
+          dotnet tools/Woi.Validation/bin/Release/net10.0-windows/Woi.Validation.dll --capture .artifacts/end-to-end/ci dist/WindowsOpenIntelligence/Woi.Capture.exe .artifacts/workload/Woi.Workload.exe
+          if ($LASTEXITCODE -ne 0) { throw "Real capture-to-report validation failed." }
+      - name: Five-million-observation aggregation stress
+        shell: pwsh
+        run: dotnet tools/Woi.Validation/bin/Release/net10.0-windows/Woi.Validation.dll --aggregate-stress .artifacts/validation/aggregate-stress.json
+      - name: Packaged desktop smoke and worker recovery
+        shell: pwsh
+        run: |
+          $app = Start-Process dist/WindowsOpenIntelligence/WindowsOpenIntelligence.exe -ArgumentList @("--smoke-test", ".artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl", ".artifacts/validation/desktop.png", "--verify-recovery") -WindowStyle Hidden -PassThru
+          if (-not $app.WaitForExit(120000)) { $app.Kill(); throw "Desktop smoke timed out." }
+          if ($app.ExitCode -ne 0) { throw "Desktop smoke failed." }
+      - name: Packaged replay stress
+        shell: pwsh
+        run: node scripts/stress.cjs dist/WindowsOpenIntelligence/Woi.Worker.exe .artifacts/validation/ci-stress.json 10 .artifacts/fixtures/net452/net.4.5.2.x64.etl .artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl
+      - name: Upload test and stress reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-reports
+          path: |
+            .artifacts/test-results/*.trx
+            .artifacts/validation/*.json
+            .artifacts/end-to-end/ci/*.json
+            .artifacts/end-to-end/ci/*.md
+      - name: Upload Windows application
+        uses: actions/upload-artifact@v4
+        with:
+          name: WindowsOpenIntelligence-win-x64
+          path: |
+            dist/WindowsOpenIntelligence-win-x64.zip
+            dist/WindowsOpenIntelligence-win-x64.zip.sha256

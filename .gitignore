@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+.tools/
+.artifacts/
+dist/
+*.etl
+*.etlx
+*.db
+*.db-shm
+*.db-wal
+*.user

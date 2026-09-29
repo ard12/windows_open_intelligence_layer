@@ -1,0 +1,299 @@
+{
+  "schema": 1,
+  "success": true,
+  "recordedUtc": "2026-09-29T13:53:02.354Z",
+  "iterations": 30,
+  "totalRequests": 578,
+  "pagedEvents": 150000,
+  "restarts": 6,
+  "peakWorkerBytes": 466747392,
+  "p95Ms": {
+    "import": 3965.422699999999,
+    "contributors": 622.6326000000008,
+    "metrics": 4.57829999999376,
+    "firstPage": 86.17709999999988,
+    "laterPage": 18.47339999999531,
+    "evidence": 12.361199999999371,
+    "export": 24.180899999999383
+  },
+  "runs": [
+    {
+      "iteration": 0,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 123039744
+    },
+    {
+      "iteration": 1,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 340508672
+    },
+    {
+      "iteration": 2,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 394530816
+    },
+    {
+      "iteration": 3,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 391835648
+    },
+    {
+      "iteration": 4,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 441290752
+    },
+    {
+      "iteration": 5,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 161783808
+    },
+    {
+      "iteration": 6,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 159666176
+    },
+    {
+      "iteration": 7,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 208564224
+    },
+    {
+      "iteration": 8,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 247595008
+    },
+    {
+      "iteration": 9,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 266739712
+    },
+    {
+      "iteration": 10,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 165556224
+    },
+    {
+      "iteration": 11,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 238878720
+    },
+    {
+      "iteration": 12,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 264290304
+    },
+    {
+      "iteration": 13,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 353804288
+    },
+    {
+      "iteration": 14,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 396828672
+    },
+    {
+      "iteration": 15,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 93876224
+    },
+    {
+      "iteration": 16,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 176074752
+    },
+    {
+      "iteration": 17,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 238727168
+    },
+    {
+      "iteration": 18,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 269844480
+    },
+    {
+      "iteration": 19,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 364679168
+    },
+    {
+      "iteration": 20,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 161837056
+    },
+    {
+      "iteration": 21,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 160280576
+    },
+    {
+      "iteration": 22,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 212656128
+    },
+    {
+      "iteration": 23,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 247533568
+    },
+    {
+      "iteration": 24,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 260390912
+    },
+    {
+      "iteration": 25,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 165502976
+    },
+    {
+      "iteration": 26,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 238411776
+    },
+    {
+      "iteration": 27,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 262529024
+    },
+    {
+      "iteration": 28,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 354500608
+    },
+    {
+      "iteration": 29,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 397553664
+    }
+  ],
+  "sourceIntegrityPreserved": true,
+  "damagedImportRecovery": true,
+  "unsupportedQueriesRejected": true,
+  "cancellationAtomicity": true,
+  "crashDuringImportRecovery": true,
+  "limitations": [
+    "This stress run measures replay and worker recovery. Privileged recording and desktop interaction have separate tests."
+  ]
+}

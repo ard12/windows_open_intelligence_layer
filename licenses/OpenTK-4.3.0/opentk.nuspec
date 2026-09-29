@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>OpenTK</id>
+    <version>4.3.0</version>
+    <authors>Team OpenTK</authors>
+    <owners>Team OpenTK</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <projectUrl>https://github.com/opentk/opentk</projectUrl>
+    <iconUrl>https://api.nuget.org/v3-flatcontainer/opentk/3.1.0/icon</iconUrl>
+    <description>The Open Toolkit is set of fast, low-level C# bindings for OpenGL, OpenGL ES, OpenAL and OpenCL. It runs on all major platforms and powers hundreds of apps, games and scientific research.  It provides bindings for GLFW windowing, input and a game loop, and is the perfect start for your own game engine.    OpenTK comes with simple and easy to follow tutorials for learning *modern* OpenGL. These are written by the community and represent all of the best practices to get you started.  Learn how to use OpenTK here:  https://opentk.net/learn/index.html  Sample projects that accompany the tutorial can be found here:  https://github.com/opentk/LearnOpenTK  We have a very active discord server, if you need help, want to help, or are just curious, come join us!  https://discord.gg/6HqD48s</description>
+    <releaseNotes>API: Add new Monitor Info API (@utkumaden)
+Fix WindowState and StartVisible to behave correctly on MS Windows (@seanofw)
+Fix scrolling getting lost between frames (@NogginBops)
+Fix ContextProfile documentation to be correct (@NogginBops)
+Fix Quaternion -&gt; Matrix3/Matrix4 conversions (@NogginBops)
+Fix wrong binding code generation on some locales (@ahmetsait)</releaseNotes>
+    <copyright>Copyright (c) 2006 - 2020 Stefanos Apostolopoulos &lt;stapostol@gmail.com&gt; for the Open Toolkit library.</copyright>
+    <tags>OpenTK OpenGL OpenGLES GLES OpenAL OpenCL C# F# .NET Mono Vector Math Game Graphics Sound</tags>
+    <dependencies>
+      <dependency id="OpenTK.Compute" version="4.3.0" />
+      <dependency id="OpenTK.Core" version="4.3.0" />
+      <dependency id="OpenTK.Graphics" version="4.3.0" />
+      <dependency id="OpenTK.Input" version="4.3.0" />
+      <dependency id="OpenTK.Mathematics" version="4.3.0" />
+      <dependency id="OpenTK.Windowing.Common" version="4.3.0" />
+      <dependency id="OpenTK.Windowing.Desktop" version="4.3.0" />
+      <dependency id="OpenTK.Windowing.GraphicsLibraryFramework" version="4.3.0" />
+      <dependency id="OpenTK.OpenAL" version="4.3.0" />
+    </dependencies>
+  </metadata>
+</package>

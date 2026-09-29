@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Woi.Capture.Core/Woi.Capture.Core.csproj" />
+    <Project Path="src/Woi.Capture/Woi.Capture.csproj" />
+    <Project Path="src/Woi.Core/Woi.Core.csproj" />
+    <Project Path="src/Woi.Desktop/Woi.Desktop.csproj" />
+    <Project Path="src/Woi.Trace/Woi.Trace.csproj" />
+    <Project Path="src/Woi.Worker/Woi.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Woi.Tests/Woi.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Woi.Validation/Woi.Validation.csproj" />
+    <Project Path="tools/Woi.Reference/Woi.Reference.csproj" />
+    <Project Path="tools/Woi.Workload/Woi.Workload.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>OpenTK.Mathematics</id>
+    <version>4.3.0</version>
+    <authors>Team OpenTK</authors>
+    <owners>Team OpenTK</owners>
+    <description>A basic mathematics library developed primarily for rendering in 3d and 2d.</description>
+    <releaseNotes>API: Add new Monitor Info API (@utkumaden)
+Fix WindowState and StartVisible to behave correctly on MS Windows (@seanofw)
+Fix scrolling getting lost between frames (@NogginBops)
+Fix ContextProfile documentation to be correct (@NogginBops)
+Fix Quaternion -&amp;gt; Matrix3/Matrix4 conversions (@NogginBops)
+Fix wrong binding code generation on some locales (@ahmetsait)</releaseNotes>
+  </metadata>
+</package>

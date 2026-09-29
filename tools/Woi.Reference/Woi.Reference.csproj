@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><PackageLicenseExpression></PackageLicenseExpression></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Woi.Trace/Woi.Trace.csproj"/>
+    <PackageReference Include="Microsoft.Windows.EventTracing.Processing.All" Version="1.12.10"/>
+  </ItemGroup>
+</Project>

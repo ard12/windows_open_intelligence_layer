@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../../src/Woi.Trace/Woi.Trace.csproj"/><ProjectReference Include="../../src/Woi.Capture.Core/Woi.Capture.Core.csproj"/></ItemGroup>
+</Project>

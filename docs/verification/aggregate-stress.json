@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "success": true,
+  "kind": "synthetic aggregation and query stress",
+  "observations": 5000000,
+  "buckets": 210000,
+  "retainedSeconds": 10000,
+  "aggregateMs": 1592.6235,
+  "contributorsP95Ms": 0.9653,
+  "coldContributorMs": 334.0256,
+  "queryCacheEntries": 16,
+  "metricsMs": 248.0955,
+  "peakBytes": 246235136,
+  "cpuSamples": 4000000,
+  "diskBytes": 2048000000,
+  "fileBytes": 512000000,
+  "visiblePoints": 501,
+  "partialIntervalMatched": true,
+  "limitations": "This validates aggregation/query scale; it does not certify ETL decoding at five million events."
+}

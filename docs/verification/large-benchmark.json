@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "recordedUtc": "2026-09-29T13:42:59.410Z",
+  "sourceSha256": "08ac25a2603a2e63dac425a1ac3a6cf5885b8ee6c2f6f070a8cc74df33d8a3f6",
+  "sourceBytes": 115408896,
+  "sourceFile": "PerfViewData.etl",
+  "analysisVersion": "1.1.1",
+  "events": 534046,
+  "coldImportMs": 8058.2779,
+  "verifiedWarmImportMs": 1583.3135000000002,
+  "p95Ms": {
+    "metrics": 0.7665999999990163,
+    "contributors": 70.98460000000159,
+    "firstPage": 6.753399999999601,
+    "sequentialPages": 5.513600000000224
+  },
+  "samples": 20,
+  "sequentialPages": 100,
+  "pagedEvents": 50000,
+  "peakWorkerBytes": 364924928,
+  "gates": {
+    "coldUnderTwoMinutes": true,
+    "warmUnderFiveSeconds": true,
+    "queriesUnder300Ms": true,
+    "peakUnderTwoGiB": true
+  },
+  "limitations": [
+    "Small fixture measurements do not certify the maximum 1 GiB / five-million-event envelope.",
+    "Import includes worker summary; desktop rendering is measured separately."
+  ]
+}

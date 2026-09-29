@@ -1,0 +1,161 @@
+{
+  "schema": 1,
+  "success": true,
+  "recordedUtc": "2026-09-29T14:00:39.622Z",
+  "iterations": 12,
+  "totalRequests": 236,
+  "pagedEvents": 60000,
+  "restarts": 2,
+  "peakWorkerBytes": 459165696,
+  "p95Ms": {
+    "import": 6416.415,
+    "contributors": 514.2873,
+    "metrics": 4.333499999999731,
+    "firstPage": 76.03940000000057,
+    "laterPage": 19.207900000001246,
+    "evidence": 16.358299999999872,
+    "export": 27.791000000001077
+  },
+  "runs": [
+    {
+      "iteration": 0,
+      "fullContributorMs": 46.886699999999564,
+      "partialContributorMs": 56.21099999999933,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 131899392
+    },
+    {
+      "iteration": 1,
+      "fullContributorMs": 70.76139999999941,
+      "partialContributorMs": 218.09950000000026,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 336515072
+    },
+    {
+      "iteration": 2,
+      "fullContributorMs": 13.537600000001476,
+      "partialContributorMs": 72.13320000000022,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 384864256
+    },
+    {
+      "iteration": 3,
+      "fullContributorMs": 10.710100000000239,
+      "partialContributorMs": 19.646600000000035,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 387887104
+    },
+    {
+      "iteration": 4,
+      "fullContributorMs": 62.200300000000425,
+      "partialContributorMs": 278.8781999999992,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 423448576
+    },
+    {
+      "iteration": 5,
+      "fullContributorMs": 172.25870000000214,
+      "partialContributorMs": 179.5142999999989,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 161742848
+    },
+    {
+      "iteration": 6,
+      "fullContributorMs": 8.059999999997672,
+      "partialContributorMs": 44.88180000000284,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 162304000
+    },
+    {
+      "iteration": 7,
+      "fullContributorMs": 76.68289999999979,
+      "partialContributorMs": 514.2873,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 225476608
+    },
+    {
+      "iteration": 8,
+      "fullContributorMs": 12.434300000000803,
+      "partialContributorMs": 57.08770000000004,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 262508544
+    },
+    {
+      "iteration": 9,
+      "fullContributorMs": 4.632799999999406,
+      "partialContributorMs": 21.11779999999999,
+      "sourceFile": "net.4.5.2.x64.etl",
+      "events": 179474,
+      "cpuSamples": 6320,
+      "diskBytes": 19851264,
+      "pages": 10,
+      "workingSetBytes": 266379264
+    },
+    {
+      "iteration": 10,
+      "fullContributorMs": 235.25209999999788,
+      "partialContributorMs": 578.4393000000018,
+      "sourceFile": "SimpleAllocator-dotnet6.etl",
+      "events": 418378,
+      "cpuSamples": 5316,
+      "diskBytes": 52171776,
+      "pages": 10,
+      "workingSetBytes": 165548032
+    },
+    {
+      "iteration": 11,
+      "fullContributorMs": 20.705999999998312,
+      "partialContributorMs": 162.46329999999944,
+      "sourceFile": "PerfViewData.etl",
+      "events": 534046,
+      "cpuSamples": 12652,
+      "diskBytes": 94759424,
+      "pages": 10,
+      "workingSetBytes": 238800896
+    }
+  ],
+  "sourceIntegrityPreserved": true,
+  "damagedImportRecovery": true,
+  "unsupportedQueriesRejected": true,
+  "cancellationAtomicity": true,
+  "crashDuringImportRecovery": true,
+  "limitations": [
+    "This stress run measures replay and worker recovery. Privileged recording and desktop interaction have separate tests."
+  ]
+}

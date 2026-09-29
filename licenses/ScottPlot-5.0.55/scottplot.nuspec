@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>ScottPlot</id>
+    <version>5.0.55</version>
+    <authors>Scott Harden</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>icon.png</icon>
+    <readme>readme.md</readme>
+    <projectUrl>https://scottplot.net/</projectUrl>
+    <description>ScottPlot is a free and open-source plotting library for .NET. This package can be used to create static plots, and user controls for displaying plots interactively are available as separate NuGet packages.</description>
+    <copyright>Copyright (c) Scott Harden / Harden Technologies, LLC</copyright>
+    <tags>plot graph data chart signal line bar heatmap scatter</tags>
+    <repository type="git" url="https://github.com/ScottPlot/ScottPlot.git" commit="461efbdb139fb7c7d7a4bae185cde26e885b74bd" />
+    <dependencies>
+      <group targetFramework=".NETFramework4.6.2">
+        <dependency id="HarfBuzzSharp.NativeAssets.Linux" version="7.3.0.3" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.HarfBuzz" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.NativeAssets.Linux.NoDependencies" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="System.ValueTuple" version="4.5.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net6.0">
+        <dependency id="HarfBuzzSharp.NativeAssets.Linux" version="7.3.0.3" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.HarfBuzz" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.NativeAssets.Linux.NoDependencies" version="2.88.9" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net8.0">
+        <dependency id="HarfBuzzSharp.NativeAssets.Linux" version="7.3.0.3" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.HarfBuzz" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.NativeAssets.Linux.NoDependencies" version="2.88.9" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="HarfBuzzSharp.NativeAssets.Linux" version="7.3.0.3" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.HarfBuzz" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.NativeAssets.Linux.NoDependencies" version="2.88.9" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

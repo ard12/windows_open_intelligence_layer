@@ -1,0 +1,143 @@
+<Window x:Class="Woi.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:plot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+ Title="Windows Open Intelligence" Width="1440" Height="940" MinWidth="1100" MinHeight="720" Background="#F4F6FA" FontFamily="Segoe UI" Foreground="#192C42">
+ <Window.Resources>
+  <Style TargetType="Button"><Setter Property="Padding" Value="14,8"/><Setter Property="Margin" Value="4"/><Setter Property="Background" Value="#FFFFFF"/><Setter Property="BorderBrush" Value="#CAD5E2"/><Setter Property="Cursor" Value="Hand"/></Style>
+  <Style TargetType="TextBox"><Setter Property="Padding" Value="8,6"/><Setter Property="Margin" Value="4"/><Setter Property="BorderBrush" Value="#CAD5E2"/><Setter Property="VerticalContentAlignment" Value="Center"/></Style>
+  <Style TargetType="DataGrid"><Setter Property="AutoGenerateColumns" Value="False"/><Setter Property="IsReadOnly" Value="True"/><Setter Property="CanUserAddRows" Value="False"/><Setter Property="CanUserDeleteRows" Value="False"/><Setter Property="GridLinesVisibility" Value="Horizontal"/><Setter Property="HorizontalGridLinesBrush" Value="#EDF1F5"/><Setter Property="BorderThickness" Value="0"/><Setter Property="RowHeight" Value="34"/><Setter Property="ColumnHeaderHeight" Value="36"/><Setter Property="EnableRowVirtualization" Value="True"/><Setter Property="EnableColumnVirtualization" Value="True"/><Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/><Setter Property="SelectionMode" Value="Single"/><Setter Property="AlternatingRowBackground" Value="#F8FAFD"/></Style>
+  <Style TargetType="TabItem"><Setter Property="Padding" Value="20,10"/><Setter Property="FontSize" Value="14"/></Style>
+  <Style x:Key="Card" TargetType="Border"><Setter Property="Background" Value="White"/><Setter Property="CornerRadius" Value="10"/><Setter Property="Padding" Value="18"/><Setter Property="Margin" Value="0,0,12,12"/><Setter Property="BorderBrush" Value="#E1E7EF"/><Setter Property="BorderThickness" Value="1"/></Style>
+  <Style x:Key="Label" TargetType="TextBlock"><Setter Property="FontSize" Value="11"/><Setter Property="Foreground" Value="#697C91"/><Setter Property="Margin" Value="0,0,0,6"/></Style>
+ </Window.Resources>
+ <Grid>
+  <Grid.ColumnDefinitions><ColumnDefinition Width="210"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+  <Border Background="#14273E" Padding="22,30">
+   <StackPanel>
+    <TextBlock Text="WOI" FontSize="34" FontWeight="Bold" Foreground="#55D8CC"/>
+    <TextBlock Text="WINDOWS OPEN&#10;INTELLIGENCE" FontSize="12" FontWeight="SemiBold" Foreground="White" LineHeight="20" Margin="0,12,0,24"/>
+    <TextBlock Text="Understand what&#10;happened." FontSize="20" Foreground="White" LineHeight="29"/>
+    <Border BorderBrush="#39536B" BorderThickness="0,1,0,0" Margin="0,28,0,22"/>
+    <TextBlock Text="LOCAL TRACE ANALYZER" Foreground="#90A9BD" FontSize="10" FontWeight="Bold"/>
+    <TextBlock Text="Your recordings stay on this computer. Findings link back to captured evidence." Foreground="#BECCDB" TextWrapping="Wrap" LineHeight="21" Margin="0,14,0,0"/>
+    <TextBlock Text="START HERE" Foreground="#90A9BD" FontSize="10" FontWeight="Bold" Margin="0,30,0,12"/>
+    <TextBlock Text="1  Record or open activity&#10;2  Select a time interval&#10;3  Compare contributors&#10;4  Inspect the evidence" Foreground="#BECCDB" LineHeight="27"/>
+    <TextBlock Text="BOOKMARKS" Foreground="#90A9BD" FontSize="10" Margin="0,28,0,8"/>
+    <ListBox x:Name="BookmarkList" ItemsSource="{Binding Bookmarks}" DisplayMemberPath="Label" SelectionChanged="BookmarkSelected" Background="Transparent" Foreground="#D3E0EC" BorderThickness="0" MaxHeight="130"/>
+   </StackPanel>
+  </Border>
+  <Grid Grid.Column="1" Margin="24,20,16,14">
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <DockPanel Margin="0,0,0,14">
+    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+     <Button Content="Record activity" Click="RecordActivityClicked"/>
+     <Button Content="Open recording" Click="OpenClicked" Background="#167C80" Foreground="White" BorderThickness="0"/>
+     <Button Content="Export report" Click="ExportClicked"/>
+     <Button Content="Cancel" Click="CancelClicked" IsEnabled="{Binding Busy}"/>
+    </StackPanel>
+    <StackPanel><TextBlock Text="Recorded activity" FontSize="27" FontWeight="SemiBold"/><TextBlock Text="{Binding Summary.Session.SourcePath, TargetNullValue='Open an existing Windows Performance Recorder trace (.etl)'}" Foreground="#61768D" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" MaxWidth="750"/></StackPanel>
+   </DockPanel>
+   <Border Grid.Row="1" Style="{StaticResource Card}" Padding="12" Margin="0,0,0,12">
+    <WrapPanel VerticalAlignment="Center">
+     <TextBlock Text="INTERVAL" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+     <TextBox Text="{Binding StartSeconds, UpdateSourceTrigger=PropertyChanged}" Width="82" ToolTip="Start seconds from trace beginning"/>
+     <TextBlock Text="to" VerticalAlignment="Center"/>
+     <TextBox Text="{Binding EndSeconds, UpdateSourceTrigger=PropertyChanged}" Width="82" ToolTip="End seconds from trace beginning"/>
+     <TextBlock Text="seconds" VerticalAlignment="Center" Foreground="#61768D" Margin="4,0,15,0"/>
+     <ComboBox x:Name="ProcessPicker" ItemsSource="{Binding Summary.Processes}" SelectedItem="{Binding SelectedProcess}" DisplayMemberPath="DisplayLabel" Width="185" Margin="4" Padding="6" ToolTip="Choose a captured process lifetime"/>
+     <Button Content="All processes" Click="AllClicked"/>
+     <Button Content="Apply interval" Click="ApplyClicked"/>
+     <TextBox Text="{Binding BookmarkLabel}" Width="115" ToolTip="Bookmark label"/>
+     <Button Content="Bookmark" Click="BookmarkClicked"/>
+    </WrapPanel>
+   </Border>
+   <Border Grid.Row="2" Background="#FCEDEC" CornerRadius="6" Padding="8" Margin="0,0,0,10">
+    <Border.Style><Style TargetType="Border"><Style.Triggers><DataTrigger Binding="{Binding Error}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style>
+    <TextBlock Text="{Binding Error}" Foreground="#A52E35" TextWrapping="Wrap"/>
+   </Border>
+   <TabControl Grid.Row="3" x:Name="Views" Background="Transparent" BorderThickness="0">
+    <TabItem Header="Summary">
+     <Grid Margin="0,14,0,0">
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="270"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="WHAT THE EVIDENCE SHOWS · resource attribution" Style="{StaticResource Label}"/><TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" FontSize="15" LineHeight="23"/></StackPanel></Border>
+      <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <Border Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="CPU · sampled estimate (% of whole machine)" Style="{StaticResource Label}"/><plot:WpfPlot x:Name="CpuPlot" Grid.Row="1"/></Grid></Border>
+       <Border Grid.Column="1" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><ComboBox x:Name="SecondaryPlotSelector" SelectedIndex="0" SelectionChanged="ChartSelectionChanged" Padding="3" Margin="0,0,0,4"><ComboBoxItem Content="Physical disk"/><ComboBoxItem Content="Logical file"/><ComboBoxItem Content="Network"/><ComboBoxItem Content="Working set"/><ComboBoxItem Content="Disk latency"/></ComboBox><plot:WpfPlot x:Name="DiskPlot" Grid.Row="1"/></Grid></Border>
+      </Grid>
+      <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="1.45*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <Border Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><DockPanel Margin="0,0,0,6"><ComboBox DockPanel.Dock="Right" Width="140" SelectedValuePath="Content" SelectedValue="{Binding Ranking}" ToolTip="Choose ranking, then Apply interval"><ComboBoxItem Content="CPU"/><ComboBoxItem Content="Disk"/><ComboBoxItem Content="Latency"/></ComboBox><TextBlock Text="CONTRIBUTORS · double-click to explore" Style="{StaticResource Label}"/></DockPanel>
+        <DataGrid Grid.Row="1" x:Name="ContributorGrid" ItemsSource="{Binding Contributors}" MouseDoubleClick="ContributorClicked"><DataGrid.Columns>
+         <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="150" MinWidth="150"/><DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
+         <DataGridTextColumn Header="CPU samples" Binding="{Binding CpuSamples, StringFormat=N0, TargetNullValue=—}" Width="110"/><DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat=N1, TargetNullValue=—}" Width="70"/>
+         <DataGridTextColumn Header="Disk bytes" Binding="{Binding DiskBytes, StringFormat=N0, TargetNullValue=—}" Width="115"/>
+         <DataGridTextColumn Header="I/O latency sum ms" Binding="{Binding RecordedIoMs, StringFormat=N2, TargetNullValue=—}" Width="145"/>
+         <DataGridTextColumn Header="Baseline CPU %" Binding="{Binding BaselineCpuPercent, StringFormat=N2, TargetNullValue=—}" Width="120"/>
+         <DataGridTextColumn Header="File bytes" Binding="{Binding FileBytes, StringFormat=N0, TargetNullValue=—}" Width="110"/>
+         <DataGridTextColumn Header="Network bytes" Binding="{Binding NetworkBytes, StringFormat=N0, TargetNullValue=—}" Width="120"/>
+        </DataGrid.Columns></DataGrid>
+       </Grid></Border>
+       <Border Grid.Column="1" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <TextBlock Text="INCIDENT CANDIDATES · heuristic conditions" Style="{StaticResource Label}"/>
+        <ListBox Grid.Row="1" x:Name="IncidentList" ItemsSource="{Binding Summary.Incidents}" MouseDoubleClick="IncidentClicked" BorderThickness="0"><ListBox.ItemTemplate><DataTemplate><StackPanel Margin="0,6"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" Foreground="#61768D" FontSize="11" Margin="0,5,0,8"/></StackPanel></DataTemplate></ListBox.ItemTemplate></ListBox>
+        <TextBlock Grid.Row="2" Text="An empty list means no detected condition, not proof of a healthy system." FontSize="11" Foreground="#61768D" TextWrapping="Wrap"/>
+       </Grid></Border>
+      </Grid>
+     </Grid>
+    </TabItem>
+    <TabItem Header="Explorer">
+     <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="280"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <WrapPanel Margin="0,0,0,10">
+       <ComboBox Width="135" ToolTip="Recorded activity category" SelectedValuePath="Content" SelectedValue="{Binding Category}" Padding="7" Margin="4"><ComboBoxItem Content="All categories"/><ComboBoxItem Content="CPU"/><ComboBoxItem Content="Disk"/><ComboBoxItem Content="File"/><ComboBoxItem Content="Network"/><ComboBoxItem Content="Process"/><ComboBoxItem Content="Thread"/><ComboBoxItem Content="Module"/><ComboBoxItem Content="Memory"/><ComboBoxItem Content="HardFault"/><ComboBoxItem Content="Unsupported"/></ComboBox>
+       <TextBox Text="{Binding OperationFilter}" Width="165" ToolTip="Operation contains"/><TextBox Text="{Binding TargetFilter}" Width="275" ToolTip="Target path or endpoint contains"/>
+       <Button Content="Filter activity" Click="FirstClicked"/><Button Content="Inspect process" Click="EntityClicked"/>
+      </WrapPanel>
+      <Border Grid.Row="1" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="SELECTED PROCESS LIFETIME · seconds from trace start" Style="{StaticResource Label}"/><plot:WpfPlot x:Name="LifetimePlot" Grid.Row="1"/></Grid></Border>
+      <DataGrid Grid.Row="2" x:Name="EventGrid" ItemsSource="{Binding Events}" MouseDoubleClick="EventClicked">
+       <DataGrid.Columns><DataGridTextColumn Header="Time (ms)" Binding="{Binding TimeMs, StringFormat=F3}" Width="95"/><DataGridTextColumn Header="Process" Binding="{Binding ProcessName}" Width="145"/><DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="95"/><DataGridTextColumn Header="Operation" Binding="{Binding Operation}" Width="165"/><DataGridTextColumn Header="Target" Binding="{Binding Target}" Width="*"/><DataGridTextColumn Header="Bytes" Binding="{Binding Bytes, StringFormat=N0}" Width="90"/><DataGridTextColumn Header="Latency ms" Binding="{Binding DurationMs, StringFormat=F3}" Width="90"/></DataGrid.Columns>
+      </DataGrid>
+      <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="First page" Click="FirstClicked"/><Button Content="Next page" Click="NextClicked"/><Button Content="Inspect selected event" Click="EventClicked"/></StackPanel>
+     </Grid>
+    </TabItem>
+    <TabItem Header="Evidence">
+     <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <DockPanel Margin="0,0,0,12"><Button Content="Load local symbols" DockPanel.Dock="Right" Click="SymbolsClicked"/><TextBlock Text="CAPTURED RECORD · source coordinates and provenance" Style="{StaticResource Label}" VerticalAlignment="Center"/></DockPanel>
+      <TextBox Grid.Row="1" Text="{Binding EvidenceText, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="13" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Background="White"/>
+     </Grid>
+    </TabItem>
+    <TabItem Header="Capture quality">
+     <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16,0,0">
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="RECORDED COVERAGE" Style="{StaticResource Label}"/><ItemsControl ItemsSource="{Binding Summary.Session.Capabilities}"><ItemsControl.ItemTemplate><DataTemplate><Grid Margin="0,7"><Grid.ColumnDefinitions><ColumnDefinition Width="95"/><ColumnDefinition Width="100"/><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Category}" FontWeight="SemiBold"/><TextBlock Grid.Column="1" Text="{Binding Status}"/><TextBlock Grid.Column="2" Text="{Binding Events, StringFormat=N0}"/><TextBlock Grid.Column="3" Text="{Binding Detail}" TextWrapping="Wrap" Foreground="#61768D"/></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="LIMITATIONS" Style="{StaticResource Label}"/><ItemsControl ItemsSource="{Binding Summary.Session.Warnings}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,6" Foreground="#8A6024"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="CONFIGURABLE INCIDENT HEURISTICS" Style="{StaticResource Label}"/><WrapPanel><TextBlock Text="CPU %" VerticalAlignment="Center"/><TextBox Text="{Binding CpuThreshold}" Width="65"/><TextBlock Text="Disk p95 ms" VerticalAlignment="Center"/><TextBox Text="{Binding LatencyThreshold}" Width="65"/><TextBlock Text="Seconds" VerticalAlignment="Center"/><TextBox Text="{Binding ConsecutiveSeconds}" Width="65"/><TextBlock Text="Disk operations / second" VerticalAlignment="Center"/><TextBox Text="{Binding MinimumDiskOperations}" Width="65"/><Button Content="Update heuristics" Click="SettingsClicked"/></WrapPanel><TextBlock Text="These rules identify recorded resource conditions. They do not establish a freeze or its cause." TextWrapping="Wrap" Foreground="#61768D" Margin="0,10"/></StackPanel></Border>
+      <TextBlock Text="{Binding Summary.Session.SourceHash, StringFormat='SHA-256: {0}'}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap"/>
+     </StackPanel></ScrollViewer>
+    </TabItem>
+    <TabItem Header="Record" x:Name="RecordTab">
+     <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16,0,0">
+      <Border Style="{StaticResource Card}"><StackPanel>
+       <TextBlock Text="RECORD A SHORT INCIDENT" Style="{StaticResource Label}"/>
+       <TextBlock Text="Start recording, reproduce the slowdown, then stop and inspect the saved evidence." FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,14"/>
+       <TextBlock Text="Only the temporary recording helper requests administrator elevation. Recording stops automatically after the selected duration." TextWrapping="Wrap" Foreground="#61768D" Margin="0,0,0,14"/>
+       <WrapPanel><TextBlock Text="Profile" VerticalAlignment="Center"/>
+        <ComboBox ItemsSource="{Binding RecordingProfiles}" SelectedItem="{Binding SelectedCaptureProfile}" DisplayMemberPath="Name" Width="270" Padding="8" Margin="8"/>
+        <TextBlock Text="Duration" VerticalAlignment="Center"/><TextBox Text="{Binding RecordingSeconds}" Width="70"/><TextBlock Text="seconds (5–120)" VerticalAlignment="Center" Foreground="#61768D"/>
+       </WrapPanel>
+       <TextBlock Text="{Binding SelectedCaptureProfile.Description}" TextWrapping="Wrap" Foreground="#61768D" Margin="0,10,0,14"/>
+       <WrapPanel><Button Content="Start recording" Click="StartRecordingClicked" IsEnabled="{Binding CanRecord}" Background="#167C80" Foreground="White"/>
+        <Button Content="Stop and analyze" Click="StopRecordingClicked" IsEnabled="{Binding CaptureActive}"/>
+        <Button Content="Cancel recording" Click="CancelRecordingClicked" IsEnabled="{Binding CaptureActive}"/>
+       </WrapPanel><TextBlock Text="{Binding CaptureMessage}" TextWrapping="Wrap" FontSize="15" Margin="0,18,0,8"/>
+      </StackPanel></Border>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="PRESERVED RECORDING" Style="{StaticResource Label}"/>
+       <TextBlock Text="{Binding CapturedTracePath}" TextWrapping="Wrap" Margin="0,8"/>
+       <Button Content="Save an ETL copy" Click="SaveRecordingClicked" HorizontalAlignment="Left"/>
+       <TextBlock Text="The original capture stays in your local recording folder. Reports exclude the ETL unless you choose to share it." TextWrapping="Wrap" Foreground="#61768D" Margin="0,8"/>
+      </StackPanel></Border>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="RECORDING COVERAGE" Style="{StaticResource Label}"/>
+       <TextBlock Text="Profiles request specific providers; actual coverage is shown after import. Memory buffers retain recent events and can overwrite older activity under heavy load. The configured kernel buffer pool is 128 MiB. A duration limit bounds recording time; it does not guarantee complete history or low overhead." TextWrapping="Wrap" Foreground="#61768D" LineHeight="22"/>
+      </StackPanel></Border>
+     </StackPanel></ScrollViewer>
+    </TabItem>
+   </TabControl>
+   <DockPanel Grid.Row="4" Margin="0,10,0,0"><TextBlock Text="LOCAL ONLY" DockPanel.Dock="Right" Foreground="#167C80" FontSize="10" FontWeight="Bold"/><TextBlock Text="{Binding Status}" Foreground="#61768D" TextTrimming="CharacterEllipsis" FontSize="12"/></DockPanel>
+  </Grid>
+ </Grid>
+</Window>

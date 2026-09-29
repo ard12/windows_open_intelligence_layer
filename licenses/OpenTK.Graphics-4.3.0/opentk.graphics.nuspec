@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>OpenTK.Graphics</id>
+    <version>4.3.0</version>
+    <authors>Team OpenTK</authors>
+    <owners>Team OpenTK</owners>
+    <description>GLes11, GLes20, GLes30, GL2, and GL4 bindings for dotnet from the Khronos openGL c library.</description>
+    <releaseNotes>API: Add new Monitor Info API (@utkumaden)
+Fix WindowState and StartVisible to behave correctly on MS Windows (@seanofw)
+Fix scrolling getting lost between frames (@NogginBops)
+Fix ContextProfile documentation to be correct (@NogginBops)
+Fix Quaternion -&amp;gt; Matrix3/Matrix4 conversions (@NogginBops)
+Fix wrong binding code generation on some locales (@ahmetsait)</releaseNotes>
+    <dependencies>
+      <group targetFramework="netstandard2.1">
+        <dependency id="OpenTK.Core" version="[4.3.0,4.4.0)" />
+        <dependency id="OpenTK.Mathematics" version="[4.3.0,4.4.0)" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

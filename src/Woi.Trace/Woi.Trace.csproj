@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><ItemGroup><ProjectReference Include="../Woi.Core/Woi.Core.csproj"/><PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.2.8"/></ItemGroup></Project>

@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>OpenTK.GLWpfControl</id>
+    <version>4.2.3</version>
+    <title>OpenTK.GLWpfControl</title>
+    <authors>varon NogginBops</authors>
+    <owners>varon NogginBops</owners>
+    <licenseUrl>https://github.com/varon/GLWpfControl/blob/master/LICENSE.md</licenseUrl>
+    <projectUrl>https://www.opentk.net</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/opentk/opentk.net/docfx/assets/opentk.png</iconUrl>
+    <description>A native WPF control for OpenTK 4.X.</description>
+    <summary>A native WPF control for OpenTK 4.3.0+</summary>
+    <releaseNotes>Fix event issue, use `RegisterToEventsDirectly` and `CanInvokeOnHandledEvents` to customize event registering/handling. (@softwareantics)
+Internal cleanup that fixed issue where setting `RenderContinuously = false` caused an extra call to render. (@francotiveron)</releaseNotes>
+    <copyright>Copyright (c) 2022 Team OpenTK.</copyright>
+    <dependencies>
+      <dependency id="OpenTK" version="[4.3.0,5.0.0)" />
+    </dependencies>
+  </metadata>
+</package>
