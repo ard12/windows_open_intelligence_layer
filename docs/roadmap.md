@@ -1,5 +1,7 @@
 # Product roadmap and gates
 
+The [detailed engineering timeline](engineering-plan.md) sets dates, deliverables, dependencies, and acceptance gates for the next release and conditional live recorder.
+
 One application translates recorded Windows activity into incident investigations with progressively deeper evidence. Accessible descriptions, resource rankings, and explicit evidence quality are the product hypothesis; adoption remains unproven.
 
 | Stage | Status | Acceptance gate |
