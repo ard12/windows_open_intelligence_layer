@@ -57,7 +57,9 @@ public sealed class DesktopClientTests
         var fixture = Path.Combine(Environment.GetEnvironmentVariable("WOI_FIXTURES")!, "allocator", "SimpleAllocator-dotnet6.etl");
         using var cancelled = new CancellationTokenSource();
         var import = client.Send<Summary>("import", new { path=fixture }, cancelled.Token);
-        await decoded.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        // Bound integration-test startup under concurrent imports on small CI runners.
+        // Import/query performance budgets are measured separately and stay unchanged.
+        await decoded.Task.WaitAsync(TimeSpan.FromSeconds(30));
         cancelled.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => import);
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
@@ -74,7 +76,9 @@ public sealed class DesktopClientTests
         client.Progress += x => { if (x.Stage == "Decode") decoded.TrySetResult(); };
         var fixture = Path.Combine(Environment.GetEnvironmentVariable("WOI_FIXTURES")!, "allocator", "SimpleAllocator-dotnet6.etl");
         var import = client.Send<Summary>("import", new { path=fixture });
-        await decoded.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        // Bound integration-test startup under concurrent imports on small CI runners.
+        // Import/query performance budgets are measured separately and stay unchanged.
+        await decoded.Task.WaitAsync(TimeSpan.FromSeconds(30));
         using var worker = Process.GetProcessById(client.ProcessId);
         worker.Kill(true);
         await worker.WaitForExitAsync();
