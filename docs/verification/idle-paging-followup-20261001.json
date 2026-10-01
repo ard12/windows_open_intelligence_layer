@@ -2483,11 +2483,11 @@
     "samplingFailures": 0,
     "status": "running",
     "terminalAcceptance": "pending; cumulative gap episodes already contradict a zero-gap acceptance claim",
-    "missedTickGapEpisodes": 5,
-    "totalSnapshots": 2829,
-    "currentCombinedMiB": 275.8515625,
+    "missedTickGapEpisodes": 13,
+    "totalSnapshots": 3610,
+    "currentCombinedMiB": 260.16015625,
     "invalidIntervals": 0,
-    "elapsedSeconds": 2840.908635
+    "elapsedSeconds": 3636.9858242
   },
   "limitations": [
     "Allocation and latency comparisons use separate shared-machine development runs, not isolated causal observer-effect measurements.",
@@ -2497,5 +2497,674 @@
     "Existing 366.96 ms server first-page failure remains authoritative until current-source CI measurements are recorded.",
     "The current two-hour test remains live, has five cumulative gap episodes under heavy concurrent development and is not restarted or represented as a clean run.",
     "P3 independent people and Windows 11, P5 privileged storage/WPA, and remaining P6 observer/physical-write/sleep/repeatability gates remain open."
-  ]
+  ],
+  "ci": {
+    "sourceCommit": "c90851afe381e8dd3d71dfaac7e4c7cdfe7cb705",
+    "url": "https://github.com/ard12/win_OiL/actions/runs/36878107422",
+    "status": "completed",
+    "conclusion": "success",
+    "runner": "Windows Server 2025; two logical processors",
+    "testsPassed": 110,
+    "testsSkipped": 0,
+    "nativeReferencesPassed": true,
+    "bothShippingProfilesPassed": true,
+    "lifecyclePassed": true,
+    "lifecycleCases": [
+      {
+        "name": "automatic deadline",
+        "passed": true,
+        "elapsedSeconds": 5.3219153,
+        "indexedEvents": 56855
+      },
+      {
+        "name": "manual cancellation",
+        "passed": true,
+        "elapsedSeconds": null,
+        "indexedEvents": null
+      },
+      {
+        "name": "pipe disconnect",
+        "passed": true,
+        "elapsedSeconds": null,
+        "indexedEvents": null
+      },
+      {
+        "name": "helper crash and recovery",
+        "passed": true,
+        "elapsedSeconds": null,
+        "indexedEvents": null
+      },
+      {
+        "name": "coexistence",
+        "passed": true,
+        "elapsedSeconds": null,
+        "indexedEvents": 44388
+      }
+    ],
+    "replay": {
+      "schema": 1,
+      "success": true,
+      "recordedUtc": "2026-10-01T14:48:22.833Z",
+      "iterations": 10,
+      "totalRequests": 228,
+      "pagedEvents": 50000,
+      "restarts": 2,
+      "peakWorkerBytes": 315092992,
+      "p95Ms": {
+        "import": 5682.1824000000015,
+        "contributors": 204.20130000000063,
+        "metrics": 5.87670000000071,
+        "firstPage": 97.92610000000059,
+        "laterPage": 61.2531999999992,
+        "evidence": 37.29309999999532,
+        "export": 41.19410000000062
+      },
+      "runs": [
+        {
+          "iteration": 0,
+          "fullContributorMs": 214.80329999999958,
+          "partialContributorMs": 24.274999999997817,
+          "fullContributorProfile": {
+            "totalMilliseconds": 28.7673,
+            "selectedTotalsMilliseconds": 11.5313,
+            "selectedEdgeReplayMilliseconds": 2.3515,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 12.9393,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 7,
+            "allocatedBytes": 251632
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 22.9775,
+            "selectedTotalsMilliseconds": 3.8073,
+            "selectedEdgeReplayMilliseconds": 12.0804,
+            "baselineTotalsMilliseconds": 2.2371,
+            "baselineEdgeReplayMilliseconds": 1.8021,
+            "rankingMilliseconds": 2.8443,
+            "selectedEdgeObservations": 456,
+            "baselineEdgeObservations": 79,
+            "visitedRecords": 17147,
+            "allocatedBytes": 2136432
+          },
+          "firstPageMs": 97.92610000000059,
+          "firstPageProfile": {
+            "totalMilliseconds": 61.9931,
+            "normalizationMilliseconds": 15.904,
+            "traversalAndFilteringMilliseconds": 46.0891,
+            "visitedRecords": 33791,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 930248
+          },
+          "sourceFile": "net.4.5.2.x64.etl",
+          "events": 179474,
+          "cpuSamples": 6320,
+          "diskBytes": 19851264,
+          "pages": 10,
+          "workingSetBytes": 129667072
+        },
+        {
+          "iteration": 1,
+          "fullContributorMs": 55.74510000000009,
+          "partialContributorMs": 204.20130000000063,
+          "fullContributorProfile": {
+            "totalMilliseconds": 53.3787,
+            "selectedTotalsMilliseconds": 46.8975,
+            "selectedEdgeReplayMilliseconds": 0.8064,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 5.6661,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 11,
+            "allocatedBytes": 3425008
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 202.0292,
+            "selectedTotalsMilliseconds": 68.8567,
+            "selectedEdgeReplayMilliseconds": 3.0894,
+            "baselineTotalsMilliseconds": 0.0005,
+            "baselineEdgeReplayMilliseconds": 126.5437,
+            "rankingMilliseconds": 3.5195,
+            "selectedEdgeObservations": 352,
+            "baselineEdgeObservations": 3146,
+            "visitedRecords": 125792,
+            "allocatedBytes": 8039752
+          },
+          "firstPageMs": 36.93509999999878,
+          "firstPageProfile": {
+            "totalMilliseconds": 31.1445,
+            "normalizationMilliseconds": 3.1912,
+            "traversalAndFilteringMilliseconds": 27.953300000000002,
+            "visitedRecords": 98442,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 1293224
+          },
+          "sourceFile": "SimpleAllocator-dotnet6.etl",
+          "events": 418378,
+          "cpuSamples": 5316,
+          "diskBytes": 52171776,
+          "pages": 10,
+          "workingSetBytes": 300544000
+        },
+        {
+          "iteration": 2,
+          "fullContributorMs": 3.580999999998312,
+          "partialContributorMs": 38.18770000000222,
+          "fullContributorProfile": {
+            "totalMilliseconds": 2.8438,
+            "selectedTotalsMilliseconds": 2.554,
+            "selectedEdgeReplayMilliseconds": 0.1488,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 0.1328,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 7,
+            "allocatedBytes": 229200
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 37.2634,
+            "selectedTotalsMilliseconds": 1.8298,
+            "selectedEdgeReplayMilliseconds": 7.4017,
+            "baselineTotalsMilliseconds": 2.0073,
+            "baselineEdgeReplayMilliseconds": 25.7753,
+            "rankingMilliseconds": 0.2308,
+            "selectedEdgeObservations": 456,
+            "baselineEdgeObservations": 79,
+            "visitedRecords": 17147,
+            "allocatedBytes": 2123832
+          },
+          "firstPageMs": 9.60570000000007,
+          "firstPageProfile": {
+            "totalMilliseconds": 4.1949,
+            "normalizationMilliseconds": 0.8574,
+            "traversalAndFilteringMilliseconds": 3.3374999999999995,
+            "visitedRecords": 33791,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 924408
+          },
+          "sourceFile": "net.4.5.2.x64.etl",
+          "events": 179474,
+          "cpuSamples": 6320,
+          "diskBytes": 19851264,
+          "pages": 10,
+          "workingSetBytes": 299147264
+        },
+        {
+          "iteration": 3,
+          "fullContributorMs": 48.855600000002596,
+          "partialContributorMs": 74.50910000000295,
+          "fullContributorProfile": {
+            "totalMilliseconds": 46.9218,
+            "selectedTotalsMilliseconds": 45.6582,
+            "selectedEdgeReplayMilliseconds": 0.1143,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 1.1416,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 11,
+            "allocatedBytes": 3098752
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 73.3354,
+            "selectedTotalsMilliseconds": 46.6542,
+            "selectedEdgeReplayMilliseconds": 2.6587,
+            "baselineTotalsMilliseconds": 0.0005,
+            "baselineEdgeReplayMilliseconds": 22.8395,
+            "rankingMilliseconds": 1.1645,
+            "selectedEdgeObservations": 352,
+            "baselineEdgeObservations": 3146,
+            "visitedRecords": 125792,
+            "allocatedBytes": 7940464
+          },
+          "firstPageMs": 53.945299999999406,
+          "firstPageProfile": {
+            "totalMilliseconds": 49.8272,
+            "normalizationMilliseconds": 1.6309,
+            "traversalAndFilteringMilliseconds": 48.1963,
+            "visitedRecords": 98442,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 1293224
+          },
+          "sourceFile": "SimpleAllocator-dotnet6.etl",
+          "events": 418378,
+          "cpuSamples": 5316,
+          "diskBytes": 52171776,
+          "pages": 10,
+          "workingSetBytes": 265289728
+        },
+        {
+          "iteration": 4,
+          "fullContributorMs": 3.9253000000026077,
+          "partialContributorMs": 8.451399999998102,
+          "fullContributorProfile": {
+            "totalMilliseconds": 3.2206,
+            "selectedTotalsMilliseconds": 3.0089,
+            "selectedEdgeReplayMilliseconds": 0.1055,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 0.0995,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 7,
+            "allocatedBytes": 225168
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 7.7331,
+            "selectedTotalsMilliseconds": 1.3941,
+            "selectedEdgeReplayMilliseconds": 3.014,
+            "baselineTotalsMilliseconds": 1.9941,
+            "baselineEdgeReplayMilliseconds": 1.1501,
+            "rankingMilliseconds": 0.1639,
+            "selectedEdgeObservations": 456,
+            "baselineEdgeObservations": 79,
+            "visitedRecords": 17147,
+            "allocatedBytes": 2121600
+          },
+          "firstPageMs": 9.949300000000221,
+          "firstPageProfile": {
+            "totalMilliseconds": 6.1702,
+            "normalizationMilliseconds": 1.0216,
+            "traversalAndFilteringMilliseconds": 5.1486,
+            "visitedRecords": 33791,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 924408
+          },
+          "sourceFile": "net.4.5.2.x64.etl",
+          "events": 179474,
+          "cpuSamples": 6320,
+          "diskBytes": 19851264,
+          "pages": 10,
+          "workingSetBytes": 267509760
+        },
+        {
+          "iteration": 5,
+          "fullContributorMs": 152.93830000000162,
+          "partialContributorMs": 186.19830000000366,
+          "fullContributorProfile": {
+            "totalMilliseconds": 93.6318,
+            "selectedTotalsMilliseconds": 65.9,
+            "selectedEdgeReplayMilliseconds": 8.9226,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 17.1206,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 11,
+            "allocatedBytes": 3510600
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 184.2387,
+            "selectedTotalsMilliseconds": 60.5496,
+            "selectedEdgeReplayMilliseconds": 20.6794,
+            "baselineTotalsMilliseconds": 0.0006,
+            "baselineEdgeReplayMilliseconds": 92.3822,
+            "rankingMilliseconds": 10.4375,
+            "selectedEdgeObservations": 352,
+            "baselineEdgeObservations": 3146,
+            "visitedRecords": 125792,
+            "allocatedBytes": 8359152
+          },
+          "firstPageMs": 70.94869999999355,
+          "firstPageProfile": {
+            "totalMilliseconds": 55.5092,
+            "normalizationMilliseconds": 10.5192,
+            "traversalAndFilteringMilliseconds": 44.99,
+            "visitedRecords": 98442,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 1293336
+          },
+          "sourceFile": "SimpleAllocator-dotnet6.etl",
+          "events": 418378,
+          "cpuSamples": 5316,
+          "diskBytes": 52171776,
+          "pages": 10,
+          "workingSetBytes": 108195840
+        },
+        {
+          "iteration": 6,
+          "fullContributorMs": 5.346899999996822,
+          "partialContributorMs": 28.968999999997322,
+          "fullContributorProfile": {
+            "totalMilliseconds": 4.387,
+            "selectedTotalsMilliseconds": 3.9334,
+            "selectedEdgeReplayMilliseconds": 0.1336,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 0.3134,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 7,
+            "allocatedBytes": 249272
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 27.7121,
+            "selectedTotalsMilliseconds": 2.5533,
+            "selectedEdgeReplayMilliseconds": 18.4249,
+            "baselineTotalsMilliseconds": 3.1653,
+            "baselineEdgeReplayMilliseconds": 3.178,
+            "rankingMilliseconds": 0.3749,
+            "selectedEdgeObservations": 456,
+            "baselineEdgeObservations": 79,
+            "visitedRecords": 17147,
+            "allocatedBytes": 2132224
+          },
+          "firstPageMs": 14.796800000003714,
+          "firstPageProfile": {
+            "totalMilliseconds": 10.0516,
+            "normalizationMilliseconds": 1.9982,
+            "traversalAndFilteringMilliseconds": 8.0534,
+            "visitedRecords": 33791,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 924408
+          },
+          "sourceFile": "net.4.5.2.x64.etl",
+          "events": 179474,
+          "cpuSamples": 6320,
+          "diskBytes": 19851264,
+          "pages": 10,
+          "workingSetBytes": 116301824
+        },
+        {
+          "iteration": 7,
+          "fullContributorMs": 93.66659999999683,
+          "partialContributorMs": 171.34610000000248,
+          "fullContributorProfile": {
+            "totalMilliseconds": 90.792,
+            "selectedTotalsMilliseconds": 83.1185,
+            "selectedEdgeReplayMilliseconds": 1.3936,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 6.2724,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 11,
+            "allocatedBytes": 3506400
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 169.1547,
+            "selectedTotalsMilliseconds": 56.9884,
+            "selectedEdgeReplayMilliseconds": 10.0726,
+            "baselineTotalsMilliseconds": 0.0004,
+            "baselineEdgeReplayMilliseconds": 95.69,
+            "rankingMilliseconds": 6.3764,
+            "selectedEdgeObservations": 352,
+            "baselineEdgeObservations": 3146,
+            "visitedRecords": 125792,
+            "allocatedBytes": 8347592
+          },
+          "firstPageMs": 69.67549999999756,
+          "firstPageProfile": {
+            "totalMilliseconds": 61.0068,
+            "normalizationMilliseconds": 5.3282,
+            "traversalAndFilteringMilliseconds": 55.678599999999996,
+            "visitedRecords": 98442,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 1293224
+          },
+          "sourceFile": "SimpleAllocator-dotnet6.etl",
+          "events": 418378,
+          "cpuSamples": 5316,
+          "diskBytes": 52171776,
+          "pages": 10,
+          "workingSetBytes": 170360832
+        },
+        {
+          "iteration": 8,
+          "fullContributorMs": 5.008199999996577,
+          "partialContributorMs": 48.758600000001024,
+          "fullContributorProfile": {
+            "totalMilliseconds": 3.8204,
+            "selectedTotalsMilliseconds": 3.3398,
+            "selectedEdgeReplayMilliseconds": 0.121,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 0.3544,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 7,
+            "allocatedBytes": 240192
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 47.2883,
+            "selectedTotalsMilliseconds": 3.3706,
+            "selectedEdgeReplayMilliseconds": 15.8614,
+            "baselineTotalsMilliseconds": 3.1508,
+            "baselineEdgeReplayMilliseconds": 24.5508,
+            "rankingMilliseconds": 0.3324,
+            "selectedEdgeObservations": 456,
+            "baselineEdgeObservations": 79,
+            "visitedRecords": 17147,
+            "allocatedBytes": 2129848
+          },
+          "firstPageMs": 51.11280000000261,
+          "firstPageProfile": {
+            "totalMilliseconds": 41.3349,
+            "normalizationMilliseconds": 3.4,
+            "traversalAndFilteringMilliseconds": 37.9349,
+            "visitedRecords": 33791,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 924408
+          },
+          "sourceFile": "net.4.5.2.x64.etl",
+          "events": 179474,
+          "cpuSamples": 6320,
+          "diskBytes": 19851264,
+          "pages": 10,
+          "workingSetBytes": 167424000
+        },
+        {
+          "iteration": 9,
+          "fullContributorMs": 95.05719999999565,
+          "partialContributorMs": 140.00329999999667,
+          "fullContributorProfile": {
+            "totalMilliseconds": 91.861,
+            "selectedTotalsMilliseconds": 85.0664,
+            "selectedEdgeReplayMilliseconds": 0.461,
+            "baselineTotalsMilliseconds": 0,
+            "baselineEdgeReplayMilliseconds": 0,
+            "rankingMilliseconds": 6.3269,
+            "selectedEdgeObservations": 0,
+            "baselineEdgeObservations": 0,
+            "visitedRecords": 11,
+            "allocatedBytes": 3342400
+          },
+          "partialContributorProfile": {
+            "totalMilliseconds": 138.2501,
+            "selectedTotalsMilliseconds": 80.8995,
+            "selectedEdgeReplayMilliseconds": 5.9506,
+            "baselineTotalsMilliseconds": 0.0005,
+            "baselineEdgeReplayMilliseconds": 46.2475,
+            "rankingMilliseconds": 5.1375,
+            "selectedEdgeObservations": 352,
+            "baselineEdgeObservations": 3146,
+            "visitedRecords": 125792,
+            "allocatedBytes": 8183624
+          },
+          "firstPageMs": 38.73990000000049,
+          "firstPageProfile": {
+            "totalMilliseconds": 32.925,
+            "normalizationMilliseconds": 4.309,
+            "traversalAndFilteringMilliseconds": 28.615999999999996,
+            "visitedRecords": 98442,
+            "normalizedRecords": 501,
+            "returnedRecords": 500,
+            "continuedIterator": false,
+            "reusedLookahead": false,
+            "completed": true,
+            "allocatedBytes": 1293224
+          },
+          "sourceFile": "SimpleAllocator-dotnet6.etl",
+          "events": 418378,
+          "cpuSamples": 5316,
+          "diskBytes": 52171776,
+          "pages": 10,
+          "workingSetBytes": 160415744
+        }
+      ],
+      "sourceIntegrityPreserved": true,
+      "damagedImportRecovery": true,
+      "unsupportedQueriesRejected": true,
+      "cancellationAtomicity": true,
+      "crashDuringImportRecovery": true,
+      "limitations": [
+        "This stress run measures replay and worker recovery. Privileged recording and desktop interaction have separate tests."
+      ]
+    },
+    "shortMonitor": {
+      "durationSeconds": 30.268,
+      "snapshotCount": 30,
+      "retainedSeconds": 29.015697,
+      "retainedProcessRows": 4166,
+      "estimatedRetainedBytes": 1099952,
+      "peakWorkerMiB": 37.82,
+      "workerCpuPercentOfMachine": 1.161,
+      "samplingDiagnostics": {
+        "samplingMedianMs": 5.4542,
+        "samplingP95Ms": 7.0738,
+        "samplingMaximumMs": 12.2252,
+        "missedTickGaps": 0
+      },
+      "latestUnreadableProcesses": 1,
+      "gapKinds": [
+        {
+          "kind": "ProcessAccess",
+          "count": 1
+        },
+        {
+          "kind": "ProcessImageUnavailable",
+          "count": 1
+        }
+      ]
+    },
+    "nativeNearLimit": {
+      "schema": 1,
+      "success": true,
+      "kind": "generated native ETL import and evidence scale",
+      "capture": {
+        "generated": 4990000,
+        "recorded": 4990000,
+        "generationMs": 36950.2467,
+        "sourceBytes": 640155648,
+        "sourceHash": "008fbcd827cc97c8e9869d2e9ce462de443a1afdc238f684d64d6407e1b78d85",
+        "reportedLoss": 0,
+        "missingSequences": 0,
+        "sequenceSum": 12450047505000,
+        "expectedSequenceSum": 12450047505000,
+        "generatorBufferMiB": 64,
+        "pacingEveryEvents": 8192,
+        "pacingDelayMs": 50
+      },
+      "indexedEvents": 4990003,
+      "coldImportMs": 7011.977,
+      "verifiedCachedImportMs": 2267.0013,
+      "sequentialPageP95Ms": 11.6296,
+      "pages": 20,
+      "pagedEvents": 10000,
+      "peakWorkerBytes": 93339648,
+      "derivedBytes": 539048221,
+      "originalPreserved": true,
+      "evidenceVerified": true,
+      "gates": {
+        "coldUnderTwoMinutes": true,
+        "cachedUnderFiveSeconds": true,
+        "pagesUnder300Ms": true,
+        "workerUnderTwoGiB": true,
+        "derivedUnderTwoGiB": true
+      },
+      "limitations": [
+        "Generated application-provider events exercise native ETL/ETLX decoding and indexed evidence, not resource interpretation.",
+        "Near-five-million indexed events do not certify every 1 GiB resource trace, rich stacks, or process churn.",
+        "Generator/reference memory is separate from the measured importer worker.",
+        "No kernel, process, file or network providers are enabled. No original ETL is included in default artifacts.",
+        "This is development validation, not independent Windows 11 desktop or usability evidence."
+      ]
+    },
+    "nativeOverLimit": {
+      "schema": 1,
+      "success": true,
+      "kind": "generated native ETL over-limit rejection",
+      "capture": {
+        "generated": 5010000,
+        "recorded": 5010000,
+        "generationMs": 37967.8772,
+        "sourceBytes": 642646016,
+        "sourceHash": "7d713fbba4662d2ea31f84de78a98df9534dd609c9bc0451c6fe2931499e8654",
+        "reportedLoss": 0,
+        "missingSequences": 0,
+        "sequenceSum": 12550047495000,
+        "expectedSequenceSum": 12550047495000,
+        "generatorBufferMiB": 64,
+        "pacingEveryEvents": 8192,
+        "pacingDelayMs": 50
+      },
+      "importMs": 6892.1453,
+      "rejectedCode": "SizeLimit",
+      "originalPreserved": true,
+      "limitations": [
+        "Generated application-provider events exercise native ETL/ETLX decoding and indexed evidence, not resource interpretation.",
+        "Near-five-million indexed events do not certify every 1 GiB resource trace, rich stacks, or process churn.",
+        "Generator/reference memory is separate from the measured importer worker.",
+        "No kernel, process, file or network providers are enabled. No original ETL is included in default artifacts.",
+        "This is development validation, not independent Windows 11 desktop or usability evidence."
+      ]
+    },
+    "measuredBudgets": {
+      "shortMonitorUnderOnePercentIncludingStartup": false,
+      "referenceContributorsUnder300Ms": true,
+      "referenceFirstPageUnder300Ms": true
+    },
+    "limitations": [
+      "Current reference paging target passes; the earlier 366.96 ms failure is retained.",
+      "The startup-inclusive 30-second CPU figure is above 1%; it is not isolated steady-state idle or observer-effect acceptance.",
+      "No independent Windows 11, WPA or participant acceptance is implied by the server workflow."
+    ]
+  },
+  "packagedWorkflow": {
+    "sourceCommit": "c90851afe381e8dd3d71dfaac7e4c7cdfe7cb705",
+    "extractedZipAllAssertionsPassed": true,
+    "indexedEvents": 418378,
+    "sourceFileCount": 226,
+    "applicationZipSha256": "b8c51753505cb2d66a64e99d310b934fde59fc2f5615e5d53dd2d94cb76931d6",
+    "sourceZipSha256": "9657c5c3aa813c1bdf3c4586b68f84f58276fae9b22679c80708c13cab648180"
+  }
 }
