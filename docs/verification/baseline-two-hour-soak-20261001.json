@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "utc": "2026-10-01T11:36:12.4509949Z",
+  "completed": true,
+  "implementation": "Baseline before stable metadata sharing and reduced-copy replies; not the current bundle",
+  "context": "Windows 10 19045 / twelve logical processors; concurrent developer activity and other soaks",
+  "durationSeconds": 7200.0769387,
+  "peakUiMiB": 201.421875,
+  "peakMonitorMiB": 173.4375,
+  "maximumSampledCombinedMiB": 371.0703125,
+  "maximumSampledTotalAppMiB": 394.59375,
+  "uiCpuPercentOfMachine": 0.48192844389611583,
+  "monitorCpuPercentOfMachine": 0.33539138130876817,
+  "cumulativeCoverageTargetMet": true,
+  "monitorMemoryTargetMet": false,
+  "uiPlusMonitorMemoryTargetMet": false,
+  "finalView": {
+    "snapshotCount": 822,
+    "retainedSeconds": 821.0301099,
+    "retainedProcessRows": 249770,
+    "estimatedRetainedBytes": 65117912,
+    "diagnostics": {
+      "samplingMedianMs": 44.2409,
+      "samplingP95Ms": 51.3386,
+      "samplingMaximumMs": 90.5304,
+      "missedTickGaps": 0
+    },
+    "statistics": {
+      "totalSnapshots": 7200,
+      "missedTickGaps": 0,
+      "samplingFailures": 0,
+      "invalidIntervals": 0
+    }
+  },
+  "limitations": [
+    "Local desktop soak, not independent Windows 11 or clean-machine validation.",
+    "CPU values include startup; memory samples occur every five seconds and may miss a transient combined peak.",
+    "Background/hidden-window rendering can differ from active interaction.",
+    "Concurrent machine activity is uncontrolled; this is not an isolated idle or observer-cost experiment.",
+    "Workload slowdown, physical disk-write overhead, sleep/resume and field usefulness are separate gates."
+  ]
+}

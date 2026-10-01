@@ -157,7 +157,7 @@
   "limits": [
     "The combined desktop memory target failed again; 308.75 MiB exceeds 300 MiB.",
     "The server short monitor run includes startup; it does not establish 24-hour, Windows 11 or representative-work budgets.",
-    "The original two-hour baseline remains running; its terminal results are pending.",
+    "The old baseline completed two hours without gaps but failed both memory budgets; current-version two-hour acceptance remains pending.",
     "Native controlled captures still lack usable CPU-weight metadata for their leading workload; no estimated CPU percentage is reconstructed from current machine state.",
     "Independent users, Windows 11, interactive WPA, maximum real ETL, observer cost and privileged distribution trust remain open."
   ]
