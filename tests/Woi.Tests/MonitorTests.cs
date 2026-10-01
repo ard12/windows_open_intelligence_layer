@@ -54,6 +54,23 @@ public sealed class MonitorTests
     }
 
     [Fact]
+    public void RetainedSnapshotsShareStableMetadataAndPreserveRecordedNameChanges()
+    {
+        var calculator = new SnapshotCalculator(2); var utc = DateTime.UtcNow;
+        var first = calculator.Calculate(Raw(0, utc, Process(100, 0) with { Name = new string("work".ToCharArray()) })).Processes[0];
+        var second = calculator.Calculate(Raw(Stopwatch.Frequency, utc.AddSeconds(1), Process(100, 1) with { Name = new string("work".ToCharArray()) })).Processes[0];
+        Assert.Same(first.LifetimeId, second.LifetimeId);
+        Assert.Same(first.Name, second.Name);
+        var renamed = calculator.Calculate(Raw(2L * Stopwatch.Frequency, utc.AddSeconds(2), Process(100, 2) with { Name = "renamed" })).Processes[0];
+        Assert.Same(first.LifetimeId, renamed.LifetimeId);
+        Assert.Equal("renamed", renamed.Name);
+        Assert.Equal("work", first.Name);
+        var reused = calculator.Calculate(Raw(3L * Stopwatch.Frequency, utc.AddSeconds(3), Process(200, 3))).Processes[0];
+        Assert.NotEqual(first.LifetimeId, reused.LifetimeId);
+        Assert.Null(reused.CpuPercent);
+    }
+
+    [Fact]
     public void MissedTickAndCounterResetProduceGapsInsteadOfRates()
     {
         var calculator = new SnapshotCalculator(2);
@@ -131,6 +148,35 @@ public sealed class MonitorTests
         Assert.True(view.History.Zip(view.History.Skip(1)).All(pair => pair.First.MonotonicTick < pair.Second.MonotonicTick));
         Assert.Contains(view.History, x => x.CpuPercent == 80);
     }
+    [Fact]
+    public void SessionStatisticsKeepFailuresAfterEvidenceEviction()
+    {
+        var utc = DateTime.UtcNow;
+        var source = new SequenceSampler([
+            Raw(0, utc, Process(100, 0)),
+            Raw(4L * Stopwatch.Frequency, utc.AddSeconds(4), Process(100, 1)),
+            Raw(5L * Stopwatch.Frequency, utc.AddSeconds(5)) with {
+                Gaps = [new(utc.AddSeconds(5), "SamplingFailure", "Controlled failure")]
+            },
+            Raw(6L * Stopwatch.Frequency, utc.AddSeconds(6), Process(100, 1)),
+            Raw(7L * Stopwatch.Frequency, utc.AddSeconds(7), Process(100, 2))
+        ]);
+        var session = new MonitorSession(source, 2, new(maximumSnapshots: 2));
+        for (var i = 0; i < 5; i++) session.SampleOnce();
+        var view = session.View();
+        Assert.Equal(2, view.SnapshotCount);
+        Assert.DoesNotContain(view.RecentGaps, x => x.Kind is "MissedTicks" or "SamplingFailure");
+        Assert.Equal(5, view.Statistics!.TotalSnapshots);
+        Assert.Equal(1, view.Statistics.MissedTickGaps);
+        Assert.Equal(1, view.Statistics.SamplingFailures);
+    }
+
+    private sealed class SequenceSampler(IEnumerable<RawSnapshot> samples) : IRawSampler
+    {
+        private readonly Queue<RawSnapshot> remaining = new(samples);
+        public RawSnapshot Sample() => remaining.Dequeue();
+    }
+
     [Fact]
     public void NativeSamplingDurationIsPreservedAndUnknownDurationStaysUnavailable()
     {

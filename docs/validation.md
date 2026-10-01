@@ -174,3 +174,23 @@ Both captures reported zero loss, preserved source hashes, resolved the workload
 The server replay stress handled 198 requests, 50,000 paged events and two restarts. Contributor p95 was 747.14 ms, above the 300 ms gate; first-page p95 was 148.32 ms; peak worker was about 435 MiB. Synthetic cold contributor query was 343.24 ms and metrics were 339.90 ms; repeat contributor p95 was 1.07 ms. The 30-second monitor test had no missed ticks and 37.37 MiB peak but 1.293% machine CPU including startup, exceeding the <1% idle target. A green workflow does not close these failed performance budgets.
 
 The [redacted remote ledger](verification/github-native-20261001.json) excludes raw ETLs, absolute capture paths, owner SIDs and process command lines. Supported Windows 11 desktop/clean-machine use, native failure lifecycle, CPU-weight parity, full-size real ETL, long-run observer cost and independent product evidence remain open.
+
+
+### Contributor-query and filled-history follow-up
+
+The locked Release suite now passes 92 tests. Additional real-ETL regressions compare every resource observation in a partial interval, including identities, bytes, recorded latency, sample weights and evidence coordinates, with the full detail traversal. Contributor replay omits only target display resolution; Explorer, Evidence, import and reports retain captured paths/endpoints. Allocation profiling identified approximately 66 MiB of captured target resolution in one allocator partial query; the removed per-stage instrumentation remains in local diagnostic artifacts, while shipping diagnostics retain coarse query stages, visited records and thread allocations.
+
+The initial two-fixture 10-round measured p95 was 452.23 ms; a 20-round run after the change measured 168.92 ms. A final 30-round run across net452, SimpleAllocator and the 115 MB net462 fixture passed 638 requests, 150,000 paged events, six restarts, cancellation/damaged-import/crash recovery and source immutability. Contributor p95 was 161.34 ms, first-page p95 95.74 ms, metrics p95 4.96 ms, and peak worker working set 425.55 MiB. Runs share a development machine with concurrent observation soaks; these close this local reference-query target, not all platform or maximum-size gates. The packaged desktop also passed recovery, native observation, findings, evidence, save/reopen, comparison and export.
+
+Observation metadata now shares stable lifetime ID/name strings between adjacent snapshots. The bounded map contains only currently sampled lifetimes; a captured name change and PID reuse remain distinct. Session-wide sample/failure/gap counters survive ring eviction, preventing a retained clean tail from hiding earlier failures. The soak writes atomic progress and final status and separately reports execution completion versus failed budgets.
+
+Two soaks are running: the original two-hour baseline and a thirty-minute metadata-sharing run. Both have filled and evicted history under the unchanged 250,000-row / 64 MiB estimated-data bounds with no gaps so far. Both have already exceeded the sampled 300 MiB UI-plus-monitor budget. No long-run memory pass is claimed, and the baseline failure will be retained. Final duration, cumulative coverage and peaks require their completion records.
+
+The native lifecycle validator now drives the shipping helper for deadline save/import/evidence, idempotent stop, cancellation without published ETL, pipe disconnect, verified helper crash/recovery/restart and preservation of a separately owned named tracing session. Coexistence permits explicit profile-conflict refusal, provided the separate client's recording survives and remains importable. English WPR status output is required by this validation harness; unrecognized status fails. This shell is unprivileged, so native execution is pending the administrator CI runner.
+
+~~~powershell
+# In an elevated shell using the same Windows account:
+dotnet tools/Woi.Validation/bin/Release/net10.0-windows/Woi.Validation.dll --capture-lifecycle .artifacts/validation/native-lifecycle dist/WindowsOpenIntelligence/Woi.Capture.exe
+~~~
+
+The [privacy-reduced performance ledger](verification/performance-checkpoint-20261001.json) contains measurements without snapshots, SIDs, application notes or captured process paths. Independent Windows 11 use, field usefulness, CPU-weight parity, observer cost and the combined memory budget remain open.

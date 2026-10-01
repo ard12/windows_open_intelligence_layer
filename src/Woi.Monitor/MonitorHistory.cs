@@ -13,6 +13,7 @@ public interface IRawSampler { RawSnapshot Sample(); }
 public sealed class SnapshotCalculator(int logicalProcessors)
 {
     private RawSnapshot? previous;
+    private Dictionary<(int Session, int Pid, long Creation), (string Id, string Name)> identityStrings = [];
     public MonitorSnapshot Calculate(RawSnapshot raw)
     {
         var gaps = raw.Gaps.ToList();
@@ -29,13 +30,18 @@ public sealed class SnapshotCalculator(int logicalProcessors)
         if (logicalProcessors <= 0)
             gaps.Add(new(raw.Utc, "ProcessorTopology", "Logical processor count is unavailable; CPU percentages are unavailable."));
 
-        var previousById = earlier?.Processes.ToDictionary(Identity) ?? [];
+        var previousById = earlier?.Processes.ToDictionary(Key) ?? [];
+        var nextIdentityStrings = new Dictionary<(int Session, int Pid, long Creation), (string Id, string Name)>();
         var rows = new List<MonitorProcess>(raw.Processes.Count);
         double systemCpu = 0;
         var knownCpu = 0;
         foreach (var item in raw.Processes) {
-            var id = Identity(item);
-            previousById.TryGetValue(id, out var before);
+            var key = Key(item);
+            identityStrings.TryGetValue(key, out var knownStrings);
+            var id = knownStrings.Id ?? Identity(item);
+            var name = string.Equals(knownStrings.Name, item.Name, StringComparison.Ordinal) ? knownStrings.Name! : item.Name;
+            nextIdentityStrings[key] = (id, name);
+            previousById.TryGetValue(key, out var before);
             var hasPrevious = validInterval && before != null;
             double? cpu = null, read = null, write = null;
             if (hasPrevious && before != null) {
@@ -47,9 +53,10 @@ public sealed class SnapshotCalculator(int logicalProcessors)
                 read = Rate(item.ReadBytes, before.ReadBytes, elapsed, raw.Utc, item.Pid, "read", gaps);
                 write = Rate(item.WriteBytes, before.WriteBytes, elapsed, raw.Utc, item.Pid, "write", gaps);
             }
-            rows.Add(new(id, item.Pid, item.SessionId, item.CreationFileTime, item.Name, cpu, read, write,
+            rows.Add(new(id, item.Pid, item.SessionId, item.CreationFileTime, name, cpu, read, write,
                 item.PrivateBytes, item.WorkingSetBytes));
         }
+        identityStrings = nextIdentityStrings;
         // Totals cover readable process counters; unavailable counters remain excluded.
         double? totalRead = rows.Any(x => x.ReadBytesPerSecond != null) ? rows.Sum(x => x.ReadBytesPerSecond ?? 0) : null;
         double? totalWrite = rows.Any(x => x.WriteBytesPerSecond != null) ? rows.Sum(x => x.WriteBytesPerSecond ?? 0) : null;
@@ -67,6 +74,8 @@ public sealed class SnapshotCalculator(int logicalProcessors)
         }
         return (current.Value - prior.Value) / elapsed;
     }
+    private static (int Session, int Pid, long Creation) Key(RawProcess value) =>
+        (value.SessionId, value.Pid, value.CreationFileTime);
     public static string Identity(RawProcess value) =>
         $"{value.SessionId}:{value.Pid}:{value.CreationFileTime}";
 }

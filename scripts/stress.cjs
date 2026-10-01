@@ -47,6 +47,7 @@ const p95=values=>values.length?[...values].sort((a,b)=>a-b)[Math.ceil(values.le
             const interval={startMs:0,endMs:session.durationMs,ranking:'CPU'};
             const contributors=await timed('contributors',interval,'contributors');
             const fullContributorMs=samples.contributors.at(-1);
+            const fullContributorProfile=(await worker.request('diagnostics',{})).contributorQuery??null;
             assert(contributors.some(x=>x.cpuSamples>0||x.diskBytes>0),'No resource contributors');
             const metrics=await timed('metrics',interval,'metrics');assert(metrics.length<=2000);
             let page=await timed('events',{...interval,category:'CPU',limit:500},'firstPage');
@@ -63,6 +64,7 @@ const p95=values=>values.length?[...values].sort((a,b)=>a-b)[Math.ceil(values.le
             // Exact partial-interval replay exercises edge buckets instead of only SQLite aggregates.
             await timed('contributors',{startMs:session.durationMs*.213,endMs:session.durationMs*.789,ranking:'Disk'},'contributors');
             const partialContributorMs=samples.contributors.at(-1);
+            const partialContributorProfile=(await worker.request('diagnostics',{})).contributorQuery??null;
             const bookmark={id:'stress-'+i,label:'stress interval '+i,startMs:0,endMs:Math.min(1000,session.durationMs)};
             await worker.request('bookmark',bookmark);
             assert((await worker.request('bookmarks',{})).some(x=>x.id===bookmark.id));
@@ -71,7 +73,7 @@ const p95=values=>values.length?[...values].sort((a,b)=>a-b)[Math.ceil(values.le
             const report=JSON.parse(fs.readFileSync(destination,'utf8'));assert.equal(report.session.sourceHash,hashes[index]);assert(report.contributors.length>0);
             const diagnostics=await worker.request('diagnostics',{});peak=Math.max(peak,diagnostics.peakWorkingSetBytes);
             assert(peak<2147483648,'Worker exceeded 2 GiB during repeated replay');
-            runs.push({iteration:i,fullContributorMs,partialContributorMs,sourceFile:path.basename(source),events:session.indexedEvents,cpuSamples:contributors.reduce((sum,x)=>sum+(x.cpuSamples||0),0),diskBytes:contributors.reduce((sum,x)=>sum+(x.diskBytes||0),0),pages,workingSetBytes:diagnostics.workingSetBytes});
+            runs.push({iteration:i,fullContributorMs,partialContributorMs,fullContributorProfile,partialContributorProfile,sourceFile:path.basename(source),events:session.indexedEvents,cpuSamples:contributors.reduce((sum,x)=>sum+(x.cpuSamples||0),0),diskBytes:contributors.reduce((sum,x)=>sum+(x.diskBytes||0),0),pages,workingSetBytes:diagnostics.workingSetBytes});
             if(i%5===4){worker.process.kill();worker=launch();restarts++;}
             console.log('Stress iteration '+(i+1)+'/'+iterations+' passed: '+path.basename(source)+' contributors full='+fullContributorMs.toFixed(1)+' ms, partial='+partialContributorMs.toFixed(1)+' ms');
         }

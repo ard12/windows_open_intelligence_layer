@@ -101,6 +101,20 @@ public sealed class CoreTests
         Assert.Contains("CPU sampling is unavailable", report.Explanation);
         Assert.DoesNotContain("No CPU samples were recorded", report.Explanation);
     }
+    [Fact]
+    public void QueryProfileMeasuresEdgesWithoutChangingPartialTotals()
+    {
+        using var fixture = new FakeFixture();
+        var result = fixture.Engine.Contributors(new(250, 2250), default);
+        Assert.Equal(4, result.Sum(x => x.CpuSamples));
+        var profile = fixture.Engine.LastContributorProfile!;
+        Assert.Equal(2, profile.SelectedEdgeObservations);
+        Assert.Equal(1, profile.BaselineEdgeObservations);
+        Assert.Null(profile.VisitedRecords);
+        Assert.True(profile.AllocatedBytes >= 0);
+        Assert.True(profile.TotalMilliseconds >= profile.SelectedEdgeReplayMilliseconds);
+    }
+
     internal sealed class FakeFixture : IDisposable
     {
         public string Directory {get;}=Path.Combine(Path.GetTempPath(),"woi-tests-"+Guid.NewGuid().ToString("N"));

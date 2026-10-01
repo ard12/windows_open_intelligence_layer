@@ -61,7 +61,7 @@ async Task Handle(Request request, CancellationTokenSource cancellation)
                 "report" => InvestigationWorkspace.CompactReport(engine.Report(Parse<IntervalQuery>(request.Parameters), token)),
                 "diagnostics" => new {pid=Environment.ProcessId,
                     peakWorkingSetBytes=System.Diagnostics.Process.GetCurrentProcess().PeakWorkingSet64,
-                    workingSetBytes=System.Diagnostics.Process.GetCurrentProcess().WorkingSet64},
+                    workingSetBytes=System.Diagnostics.Process.GetCurrentProcess().WorkingSet64, contributorQuery=engine.LastContributorProfile},
                 "capabilities" => engine.Session.Capabilities,
                 "metrics" => engine.Metrics(Parse<IntervalQuery>(request.Parameters)),
                 "contributors" => engine.Contributors(Parse<IntervalQuery>(request.Parameters),token),

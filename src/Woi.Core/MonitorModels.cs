@@ -13,7 +13,7 @@ public record MonitorMark(string Id, long MonotonicTick, DateTime Utc, string La
 public record MonitorView(DateTime StartedUtc, DateTime? LatestUtc, double RetainedSeconds,
     int SnapshotCount, int RetainedProcessRows, long EstimatedRetainedBytes,
     IReadOnlyList<MonitorPoint> History, IReadOnlyList<MonitorProcess> TopProcesses,
-    IReadOnlyList<MonitorMark> Marks, IReadOnlyList<ObservationGap> RecentGaps, SourceDescriptor? Descriptor = null, MonitorDiagnostics? Diagnostics = null)
+    IReadOnlyList<MonitorMark> Marks, IReadOnlyList<ObservationGap> RecentGaps, SourceDescriptor? Descriptor = null, MonitorDiagnostics? Diagnostics = null, MonitorSessionStatistics? Statistics = null)
 {
     public string Source => "WindowsApiSnapshot";
 }
@@ -22,3 +22,5 @@ public record MonitorLifetime(string LifetimeId, int Pid, int SessionId, long Cr
 { public string DisplayLabel => $"{Name} · PID {Pid} · {FirstObservedUtc:HH:mm:ss} UTC"; }
 
 public record MonitorDiagnostics(double? SamplingMedianMs, double? SamplingP95Ms, double? SamplingMaximumMs, int MissedTickGaps);
+
+public record MonitorSessionStatistics(long TotalSnapshots, long MissedTickGaps, long SamplingFailures, long InvalidIntervals);

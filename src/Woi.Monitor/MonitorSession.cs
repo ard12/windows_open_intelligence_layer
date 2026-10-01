@@ -3,13 +3,14 @@ using Woi.Core;
 
 namespace Woi.Monitor;
 
-public sealed class MonitorSession(IRawSampler sampler, int logicalProcessors)
+public sealed class MonitorSession(IRawSampler sampler, int logicalProcessors, SnapshotRing? history = null)
 {
     private readonly object gate = new();
     private readonly SnapshotCalculator calculator = new(logicalProcessors);
-    private readonly SnapshotRing ring = new();
+    private readonly SnapshotRing ring = history ?? new();
     private readonly List<MonitorMark> marks = [];
     private readonly DateTime startedUtc = DateTime.UtcNow;
+    private long totalSnapshots, missedTickGaps, samplingFailures, invalidIntervals;
     private SourceDescriptor? source;
     private readonly string sourceId = Guid.NewGuid().ToString("N");
 
@@ -24,12 +25,17 @@ public sealed class MonitorSession(IRawSampler sampler, int logicalProcessors)
         lock (gate) {
             source ??= new(sourceId, "WindowsApiSnapshot", InvestigationAnalyzer.Version, Environment.MachineName,
                 Environment.OSVersion.VersionString, logicalProcessors, Stopwatch.Frequency, raw.Tick, raw.Utc);
-            ring.Add(calculator.Calculate(raw));
+            var snapshot = calculator.Calculate(raw);
+            totalSnapshots++;
+            missedTickGaps += snapshot.Gaps.Count(x => x.Kind == "MissedTicks");
+            samplingFailures += snapshot.Gaps.Count(x => x.Kind == "SamplingFailure");
+            invalidIntervals += snapshot.Gaps.Count(x => x.Kind == "InvalidInterval");
+            ring.Add(snapshot);
         }
     }
     public MonitorView View()
     {
-        lock (gate) return ring.View(startedUtc, marks) with { Descriptor = source };
+        lock (gate) return ring.View(startedUtc, marks) with { Descriptor = source, Statistics = new(totalSnapshots, missedTickGaps, samplingFailures, invalidIntervals) };
     }
     public InvestigationDocument Investigate(InvestigationRequest request)
     {

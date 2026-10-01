@@ -49,6 +49,15 @@ public sealed class TraceTests(ITestOutputHelper output)
                 Assert.Equal(rawDiskBytes,contributions.Sum(x=>x.DiskBytes ?? 0));
                 Assert.Equal(rawDiskOps,engine.Metrics(interval).Sum(x=>x.DiskOperations));
                 Assert.Equal(rawFileBytes,contributions.Sum(x=>x.FileBytes ?? 0));
+                var partial = new IntervalQuery(session.DurationMs * .213, session.DurationMs * .789);
+                var expectedResourceEvents = reader.ReadObservations(partial, default)
+                    .Where(x => x.Category is "CPU" or "Disk" or "Network" || x.Category == "File" && x.Bytes != null)
+                    .Select(x => x with { Target = "" }).ToArray();
+                var lightweightResourceEvents = reader.ReadContributorObservations(partial, default).ToArray();
+                Assert.Equal(expectedResourceEvents, lightweightResourceEvents);
+                var partialContributors = engine.Contributors(partial, default);
+                Assert.Equal(expectedResourceEvents.Count(x => x.Category == "CPU"), partialContributors.Sum(x => x.CpuSamples));
+                Assert.Equal(expectedResourceEvents.Where(x => x.Category == "Disk").Sum(x => x.Bytes ?? 0), partialContributors.Sum(x => x.DiskBytes ?? 0));
                 var first=reader.QueryEvents(new(0,session.DurationMs),default);
                 Assert.Equal(500,first.Events.Count);Assert.True(first.More);
                 var next=reader.QueryEvents(new(0,session.DurationMs,Cursor:first.NextCursor),default);

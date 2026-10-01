@@ -8,7 +8,7 @@ using Woi.Core;
 
 namespace Woi.Trace;
 
-public sealed class EtlReader : ITraceReader
+public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
 {
     private readonly TraceLog log;
     private readonly ImportMetadata metadata;
@@ -20,6 +20,7 @@ public sealed class EtlReader : ITraceReader
     private EventQuery? activePageQuery;
     private long? expectedCursor;
     internal long PagingRecordsVisited { get; private set; }
+    public long ContributorRecordsVisited { get; private set; }
     public TraceSession Session { get; }
     public IReadOnlyList<EntityLifetime> Entities { get; }
     public EtlReader(TraceSession session) : this(new TraceLog(Path.Combine(session.CacheDirectory, "events.etlx")),
@@ -72,7 +73,7 @@ public sealed class EtlReader : ITraceReader
         }
         return found<0?null:intervals[found].Milliseconds;
     }
-    public Observation? Normalize(TraceEvent data, bool includeUnsupported = false)
+    public Observation? Normalize(TraceEvent data, bool includeUnsupported = false, bool resolveTargets = true)
     {
         var category = Category(data);
         if (category == "Unsupported" && !includeUnsupported) return null;
@@ -88,27 +89,29 @@ public sealed class EtlReader : ITraceReader
         if (thread != null && processId != null && ProcessId(thread.Process) == processId &&
             (category == "Thread" || (lifetimesByTid.TryGetValue(data.ThreadID,out var threadCandidates) &&
              LifetimeResolver.Resolve(threadCandidates,data.ThreadID,data.TimeStampRelativeMSec,"Thread")?.Id == ThreadId(thread)))) threadId = ThreadId(thread);
-        string target = Text(data, "FileName", "ImageFileName", "ModuleILPath");
+        string target = resolveTargets ? Text(data, "FileName", "ImageFileName", "ModuleILPath") : "";
         long? bytes = null;
         double? duration = null, memory = null, cpuWeight = null;
         if (data is SampledProfileTraceData sample) {
             if (sample.NonProcess) { processId = null; threadId = null; name = "Unattributed interrupt / DPC activity"; }
             if (sample.ThreadID == 0 && !sample.NonProcess) return null; // Idle samples are not busy CPU.
             cpuWeight = Weight(data.TimeStampRelativeMSec);
-            target = "Instruction 0x" + sample.InstructionPointer.ToString("x");
+            if (resolveTargets) target = "Instruction 0x" + sample.InstructionPointer.ToString("x");
         }
-        if (data is DiskIOTraceData disk) { bytes = Math.Max(0, (long)disk.TransferSize); duration = disk.ElapsedTimeMSec; target = disk.FileName; }
-        if (data is MemoryHardFaultTraceData hardFault) { bytes = Math.Max(0, (long)hardFault.ByteCount); duration = hardFault.ElapsedTimeMSec; target = hardFault.FileName; }
-        if (data is FileIOReadWriteTraceData file) { bytes = Math.Max(0, (long)file.IoSize); target = file.FileName; }
+        if (data is DiskIOTraceData disk) { bytes = Math.Max(0, (long)disk.TransferSize); duration = disk.ElapsedTimeMSec; if (resolveTargets) target = disk.FileName; }
+        if (data is MemoryHardFaultTraceData hardFault) { bytes = Math.Max(0, (long)hardFault.ByteCount); duration = hardFault.ElapsedTimeMSec; if (resolveTargets) target = hardFault.FileName; }
+        if (data is FileIOReadWriteTraceData file) { bytes = Math.Max(0, (long)file.IoSize); if (resolveTargets) target = file.FileName; }
         if (category == "Network") {
-            var source = Text(data, "saddr"); var dest = Text(data, "daddr");
-            target = $"{source}:{Text(data,"sport")} → {dest}:{Text(data,"dport")}";
+            if (resolveTargets) {
+                var source = Text(data, "saddr"); var dest = Text(data, "daddr");
+                target = $"{source}:{Text(data,"sport")} → {dest}:{Text(data,"dport")}";
+            }
             bytes = Number(data, "size");
         }
         if (data is MemoryProcessMemInfoTraceData memoryData && memoryData.Count > 0) {
             var mem = memoryData.Values(0);
             memory = mem.WorkingSetPageCount * 4096d; // Windows x64 base pages.
-            target = $"Working set snapshot: {memory/1048576:n2} MiB";
+            if (resolveTargets) target = $"Working set snapshot: {memory/1048576:n2} MiB";
         }
         var reference = new EvidenceReference(Session.SourceHash, Session.ParserVersion, (long)data.EventIndex,
             ReadQpc(data), data.TimeStampRelativeMSec, data.ProviderGuid.ToString(), data.EventName, data.ProcessID, data.ThreadID);
@@ -150,10 +153,12 @@ public sealed class EtlReader : ITraceReader
     {
         foreach(var data in log.Events.FilterByTime(query.StartMs,query.EndMs)) {
             token.ThrowIfCancellationRequested();
+            ContributorRecordsVisited++;
             if(data.TimeStampRelativeMSec<query.StartMs || data.TimeStampRelativeMSec>=query.EndMs)continue;
             // Lifecycle and metadata records have no contributor weight. Keep them available in Explorer.
             if(data is not (SampledProfileTraceData or DiskIOTraceData or FileIOReadWriteTraceData) && Category(data)!="Network")continue;
-            var value=Normalize(data);
+            // Contributor quantities do not need captured paths or endpoint display strings.
+            var value = Normalize(data, resolveTargets: false);
             if(value!=null && (query.ProcessId==null || value.ProcessId==query.ProcessId))yield return value;
         }
     }

@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "recordedUtc": "2026-10-01T10:18:55.766Z",
+  "scope": "Local Windows 10 build 19045, 12 logical processors; concurrent development and two observation soaks",
+  "testsPassed": 92,
+  "queryChange": "Defer captured target display resolution only in contributor replay; quantities, identities and evidence coordinates preserved",
+  "beforeTwoFixtureP95Ms": 452.23249999999825,
+  "afterTwoFixtureP95Ms": 168.916500000003,
+  "finalThreeFixtureRun": {
+    "iterations": 30,
+    "totalRequests": 638,
+    "pagedEvents": 150000,
+    "restarts": 6,
+    "peakWorkerMiB": 425.55078125,
+    "p95Ms": {
+      "import": 3499.5167999999994,
+      "contributors": 161.34399999999914,
+      "metrics": 4.964200000002165,
+      "firstPage": 95.73569999999745,
+      "laterPage": 21.29110000000219,
+      "evidence": 12.330800000001545,
+      "export": 21.17540000000008
+    },
+    "sourceIntegrityPreserved": true,
+    "damagedImportRecovery": true,
+    "cancellationAtomicity": true,
+    "crashDuringImportRecovery": true
+  },
+  "fixtures": [
+    {
+      "file": "net.4.5.2.x64.etl",
+      "indexedEvents": 179474,
+      "iterations": 10
+    },
+    {
+      "file": "PerfViewData.etl",
+      "indexedEvents": 534046,
+      "iterations": 10
+    },
+    {
+      "file": "SimpleAllocator-dotnet6.etl",
+      "indexedEvents": 418378,
+      "iterations": 10
+    }
+  ],
+  "packagedSmoke": {
+    "workerRecovery": true,
+    "monitor": true,
+    "investigations": true,
+    "savedComparisons": true,
+    "indexedEvents": 418378
+  },
+  "memoryGate": "Both running filled-history soaks have exceeded the sampled 300 MiB UI-plus-monitor budget; final results pending",
+  "nativeLifecycle": "Harness compiled; native result pending CI",
+  "limitations": [
+    "Warm cached replays with repeated worker restarts; not cold import of the maximum supported ETL envelope.",
+    "Local p95 does not close the separate server or independent Windows 11 performance gates.",
+    "Original native CPU-weight discrepancy remains unresolved.",
+    "Memory sharing preserves all rows and hard retention bounds; it has not met the combined memory target."
+  ]
+}

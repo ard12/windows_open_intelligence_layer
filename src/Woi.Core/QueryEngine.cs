@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -8,6 +9,7 @@ public sealed class QueryEngine(ITraceReader reader, CacheStore store)
 {
     private readonly IReadOnlyList<EntityLifetime> entities = store.Entities();
     private readonly Dictionary<string,EntityLifetime> entitiesById = store.Entities().ToDictionary(x=>x.Id);
+    public ContributorQueryProfile? LastContributorProfile { get; private set; }
     public TraceSession Session => reader.Session;
     public DetectionSettings Settings { get; private set; } = new();
     public Summary Summary() => new(Session, entities.Where(x => x.Kind == "Process").OrderBy(x => x.Name).ToArray(),
@@ -23,29 +25,41 @@ public sealed class QueryEngine(ITraceReader reader, CacheStore store)
             throw new WoiException("InvalidRanking","Choose CPU, Disk, or Latency ranking.");
         return query with { StartMs = Math.Min(query.StartMs, Session.DurationMs), EndMs = Math.Min(query.EndMs, Session.DurationMs) };
     }
-    private IReadOnlyList<AggregateRow> ExactRows(IntervalQuery query, CancellationToken token)
+    private IReadOnlyList<AggregateRow> ExactRows(IntervalQuery query, CancellationToken token, QueryMeasurement? measurement = null)
     {
         query = Clamp(query);
         var firstFull = Math.Ceiling(query.StartMs / 1000) * 1000;
         var lastFull = Math.Floor(query.EndMs / 1000) * 1000;
+        var totalsClock = Stopwatch.StartNew();
         var rows = firstFull < lastFull ? store.ContributorTotals(firstFull, lastFull, query.ProcessId, token) : [];
+        if (measurement != null) measurement.TotalsMs = totalsClock.Elapsed.TotalMilliseconds;
+        var replayClock = Stopwatch.StartNew();
         var builder = new AnalysisBuilder();
         var firstEnd = Math.Min(firstFull, query.EndMs);
         if (firstEnd > query.StartMs)
-            foreach (var value in reader.ReadContributorObservations(query with { EndMs = firstEnd }, token)) builder.Add(value);
+            foreach (var value in reader.ReadContributorObservations(query with { EndMs = firstEnd }, token)) { builder.Add(value); if (measurement != null) measurement.EdgeObservations++; }
         var lastStart = Math.Max(lastFull, firstEnd);
         if (query.EndMs > lastStart)
-            foreach (var value in reader.ReadContributorObservations(query with { StartMs = lastStart }, token)) builder.Add(value);
+            foreach (var value in reader.ReadContributorObservations(query with { StartMs = lastStart }, token)) { builder.Add(value); if (measurement != null) measurement.EdgeObservations++; }
         // When the entire selection lies inside one bucket, firstFull >= end handled the whole interval.
-        return rows.Concat(builder.Finish().Where(x => query.ProcessId == null || x.ProcessId == query.ProcessId)).ToArray();
+        var result = rows.Concat(builder.Finish().Where(x => query.ProcessId == null || x.ProcessId == query.ProcessId)).ToArray();
+        if (measurement != null) measurement.ReplayMs = replayClock.Elapsed.TotalMilliseconds;
+        return result;
     }
     public IReadOnlyList<Contributor> Contributors(IntervalQuery query, CancellationToken token)
     {
+        LastContributorProfile = null;
+        var clock = Stopwatch.StartNew();
+        var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+        var visitedBefore = (reader as IContributorQueryDiagnostics)?.ContributorRecordsVisited;
         query = Clamp(query);
-        var rows = ExactRows(query, token).Where(x => x.ProcessId != "");
+        var selectedMeasurement = new QueryMeasurement();
+        var baselineMeasurement = new QueryMeasurement();
+        var rows = ExactRows(query, token, selectedMeasurement).Where(x => x.ProcessId != "");
         var baselineStart = Math.Max(0, query.StartMs - 30000);
         var baselineRows = query.StartMs > baselineStart ?
-            ExactRows(new(baselineStart, query.StartMs, query.ProcessId), token).Where(x => x.ProcessId != "").ToArray() : [];
+            ExactRows(new(baselineStart, query.StartMs, query.ProcessId), token, baselineMeasurement).Where(x => x.ProcessId != "").ToArray() : [];
+        var rankClock = Stopwatch.StartNew();
         var baseline = baselineRows.GroupBy(x => x.ProcessId).ToDictionary(x => x.Key, x => x.ToArray());
         bool Has(string category) => Session.Capabilities.Any(x => x.Category == category && x.Status == Availability.Available);
         var result = rows.GroupBy(x => x.ProcessId).Select(group => {
@@ -61,11 +75,22 @@ public sealed class QueryEngine(ITraceReader reader, CacheStore store)
                 Has("Disk") ? group.Sum(x => x.IoMs) : null, basePercent, group.SelectMany(x => x.Evidence).DistinctBy(x => x.EtlxEventIndex).Take(6).ToArray());
         }).Where(x => x.CpuSamples > 0 || x.DiskBytes > 0 || x.FileBytes > 0 || x.NetworkBytes > 0).ToArray();
         bool weightedRanking=result.Where(x=>x.CpuSamples>0).All(x=>x.CpuMs!=null);
-        return query.Ranking switch {
+        var ranked = query.Ranking switch {
             "Disk" => result.OrderByDescending(x => x.DiskBytes).ThenByDescending(x => x.RecordedIoMs).ToArray(),
             "Latency" => result.OrderByDescending(x => x.RecordedIoMs).ThenByDescending(x => x.DiskBytes).ToArray(),
             _ => result.OrderByDescending(x => weightedRanking ? x.CpuMs ?? 0 : x.CpuSamples ?? 0).ThenByDescending(x => x.DiskBytes).ToArray()
         };
+        var visitedAfter = (reader as IContributorQueryDiagnostics)?.ContributorRecordsVisited;
+        LastContributorProfile = new(clock.Elapsed.TotalMilliseconds, selectedMeasurement.TotalsMs,
+            selectedMeasurement.ReplayMs, baselineMeasurement.TotalsMs, baselineMeasurement.ReplayMs,
+            rankClock.Elapsed.TotalMilliseconds, selectedMeasurement.EdgeObservations, baselineMeasurement.EdgeObservations,
+            visitedAfter - visitedBefore, GC.GetAllocatedBytesForCurrentThread() - allocatedBefore);
+        return ranked;
+    }
+    private sealed class QueryMeasurement
+    {
+        public double TotalsMs, ReplayMs;
+        public long EdgeObservations;
     }
     public IReadOnlyList<MetricPoint> Metrics(IntervalQuery query)
     {
