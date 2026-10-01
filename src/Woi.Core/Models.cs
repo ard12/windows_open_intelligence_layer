@@ -6,7 +6,7 @@ namespace Woi.Core;
 public static class Wire
 {
     public const int Version = 1;
-    public const string AnalysisVersion = "1.1.1";
+    public const string AnalysisVersion = "1.2.0";
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         IncludeFields = true,

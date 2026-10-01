@@ -25,13 +25,14 @@ if(args.Length >= 2 && args[0] == "--analyze") {
 
 var running = new ConcurrentDictionary<string,CancellationTokenSource>();
 var serial = new SemaphoreSlim(1);
+using var output = Console.OpenStandardOutput();
 var outputGate = new SemaphoreSlim(1);
 ITraceReader? activeReader = null; CacheStore? activeStore = null; QueryEngine? engineState = null;
 var tasks = new List<Task>();
 var investigations = new InvestigationWorkspace();
 async Task Reply(Response value) {
     await outputGate.WaitAsync();
-    try { await Console.Out.WriteLineAsync(JsonSerializer.Serialize(value,Wire.Json)); await Console.Out.FlushAsync(); }
+    try { await ProtocolOutput.Write(output, value); }
     finally { outputGate.Release(); }
 }
 T Parse<T>(JsonElement value) => value.Deserialize<T>(Wire.Json)!;
@@ -47,7 +48,7 @@ async Task Handle(Request request, CancellationTokenSource cancellation)
             var path = request.Parameters.GetProperty("path").GetString()!;
             var progress = new InlineProgress(value => Reply(new(request.Id, Wire.Version,"progress",value)).GetAwaiter().GetResult());
             var session = EtlImporter.Import(path,cacheRoot,progress,token);
-            activeReader = new EtlReader(session); activeStore = new CacheStore(session.CacheDirectory,readOnly:true);
+            activeReader = new EtlReader(session,token); activeStore = new CacheStore(session.CacheDirectory,readOnly:true);
             engineState = new(activeReader,activeStore); result = engineState.Summary();
         } else if (request.Method == "investigation.attach") {
             var engine = engineState ?? throw new WoiException("NoTrace", "Open an ETL before attaching its evidence.");

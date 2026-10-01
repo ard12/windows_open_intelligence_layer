@@ -1,0 +1,252 @@
+{
+  "schema": 1,
+  "utc": "2026-10-01T11:09:38.2681471Z",
+  "analysisVersion": "1.2.0",
+  "testsPassed": 99,
+  "referenceParser": "Microsoft.Windows.EventTracing.Processing.All 1.12.10",
+  "parity": [
+    {
+      "source": "net.4.5.2.x64.etl",
+      "sourceSha256": "50da7f725f80f88a7622b37f9826844a790cb0c4f64e351fa1f38cf24916889a",
+      "analysisVersion": "1.2.0",
+      "checks": {
+        "cpuCountsMatch": true,
+        "diskOperationsMatch": true,
+        "cpuSampleWeightGroupsMatch": true,
+        "partialWeightsMatch": true,
+        "diskBytesMatch": true,
+        "cpuWeightWithinOnePercent": true
+      },
+      "cpu": {
+        "analyzerSamples": 6320,
+        "referenceSamples": 6320,
+        "knownWeightStartMs": 36.9567,
+        "analyzerWeightMs": 6214.69879999999,
+        "referenceWeightMs": 6214.698800000072,
+        "weightDifferencePercent": 1.3171116701514576E-12,
+        "mismatchedSampleGroups": 0,
+        "partialWeightChecks": [
+          {
+            "startMs": 0,
+            "endMs": 4193.854933333333,
+            "analyzerSamples": 1774,
+            "referenceSamples": 1774,
+            "analyzerWeightMs": 1744.0343000000034,
+            "referenceWeightMs": 1744.034299999999,
+            "differencePercent": 2.607444996273665E-13
+          },
+          {
+            "startMs": 2679.8733024,
+            "endMs": 9926.8546272,
+            "analyzerSamples": 5936,
+            "referenceSamples": 5936,
+            "analyzerWeightMs": 5857.4694999999865,
+            "referenceWeightMs": 5857.469500000053,
+            "differencePercent": 1.1334777454568592E-12
+          },
+          {
+            "startMs": 11581.5648,
+            "endMs": 12581.5648,
+            "analyzerSamples": 0,
+            "referenceSamples": 0,
+            "analyzerWeightMs": 0,
+            "referenceWeightMs": 0,
+            "differencePercent": null
+          }
+        ]
+      },
+      "disk": {
+        "analyzerOperations": 1229,
+        "referenceOperations": 1229,
+        "analyzerBytes": 19851264,
+        "referenceBytes": 19851264
+      }
+    },
+    {
+      "source": "SimpleAllocator-dotnet6.etl",
+      "sourceSha256": "5876415dbc49e6b86bd96906e77a2237deced01a8841684644f3bd303a1cf812",
+      "analysisVersion": "1.2.0",
+      "checks": {
+        "cpuCountsMatch": true,
+        "diskOperationsMatch": true,
+        "cpuSampleWeightGroupsMatch": true,
+        "partialWeightsMatch": true,
+        "diskBytesMatch": true,
+        "cpuWeightWithinOnePercent": true
+      },
+      "cpu": {
+        "analyzerSamples": 5316,
+        "referenceSamples": 5316,
+        "knownWeightStartMs": 184.1977,
+        "analyzerWeightMs": 4733.979800000008,
+        "referenceWeightMs": 4733.979800000011,
+        "weightDifferencePercent": 5.763615859363782E-14,
+        "mismatchedSampleGroups": 0,
+        "partialWeightChecks": [
+          {
+            "startMs": 0,
+            "endMs": 1310.6051333333332,
+            "analyzerSamples": 3402,
+            "referenceSamples": 3402,
+            "analyzerWeightMs": 3400.03550000001,
+            "referenceWeightMs": 3400.0355000000027,
+            "differencePercent": 2.139965189829171E-13
+          },
+          {
+            "startMs": 837.4766801999999,
+            "endMs": 3102.2023506,
+            "analyzerSamples": 2274,
+            "referenceSamples": 2274,
+            "analyzerWeightMs": 2267.3864999999996,
+            "referenceWeightMs": 2267.3864999999996,
+            "differencePercent": 0
+          },
+          {
+            "startMs": 2931.8154,
+            "endMs": 3931.8154,
+            "analyzerSamples": 0,
+            "referenceSamples": 0,
+            "analyzerWeightMs": 0,
+            "referenceWeightMs": 0,
+            "differencePercent": null
+          }
+        ]
+      },
+      "disk": {
+        "analyzerOperations": 858,
+        "referenceOperations": 858,
+        "analyzerBytes": 52171776,
+        "referenceBytes": 52171776
+      }
+    },
+    {
+      "source": "PerfViewData.etl",
+      "sourceSha256": "08ac25a2603a2e63dac425a1ac3a6cf5885b8ee6c2f6f070a8cc74df33d8a3f6",
+      "analysisVersion": "1.2.0",
+      "checks": {
+        "cpuCountsMatch": true,
+        "diskOperationsMatch": true,
+        "cpuSampleWeightGroupsMatch": true,
+        "partialWeightsMatch": true,
+        "diskBytesMatch": true,
+        "cpuWeightWithinOnePercent": true
+      },
+      "cpu": {
+        "analyzerSamples": 12652,
+        "referenceSamples": 12652,
+        "knownWeightStartMs": 134.3045,
+        "analyzerWeightMs": 12306.6238000001,
+        "referenceWeightMs": 12306.623800000058,
+        "weightDifferencePercent": 3.3995315824600493E-13,
+        "mismatchedSampleGroups": 0,
+        "partialWeightChecks": [
+          {
+            "startMs": 0,
+            "endMs": 2818.3748333333333,
+            "analyzerSamples": 8598,
+            "referenceSamples": 8598,
+            "analyzerWeightMs": 8560.125100000052,
+            "referenceWeightMs": 8560.125100000047,
+            "differencePercent": 6.374869697450496E-14
+          },
+          {
+            "startMs": 1800.9415185,
+            "endMs": 6671.093230500001,
+            "analyzerSamples": 6475,
+            "referenceSamples": 6475,
+            "analyzerWeightMs": 6412.8862000000245,
+            "referenceWeightMs": 6412.886200000001,
+            "differencePercent": 3.687397765782298E-13
+          },
+          {
+            "startMs": 7455.1245,
+            "endMs": 8455.1245,
+            "analyzerSamples": 0,
+            "referenceSamples": 0,
+            "analyzerWeightMs": 0,
+            "referenceWeightMs": 0,
+            "differencePercent": null
+          }
+        ]
+      },
+      "disk": {
+        "analyzerOperations": 2220,
+        "referenceOperations": 2220,
+        "analyzerBytes": 94759424,
+        "referenceBytes": 94759424
+      }
+    }
+  ],
+  "allocationDiagnosis": {
+    "schema": 1,
+    "utc": "2026-10-01T10:37:28.0016212Z",
+    "synthetic": true,
+    "generatedSnapshots": 1200,
+    "processesPerSnapshot": 300,
+    "snapshotCount": 833,
+    "retainedProcessRows": 249900,
+    "estimatedRetainedBytes": 60249224,
+    "retainedManagedBytes": 34466016,
+    "statusUtf8Bytes": 265058,
+    "decodeWithClone": {
+      "rounds": 100,
+      "allocatedBytesPerIteration": 931815.76,
+      "millisecondsPerIteration": 5.591559999999999,
+      "consumed": 83300
+    },
+    "decodeInDocument": {
+      "rounds": 100,
+      "allocatedBytesPerIteration": 420952.4,
+      "millisecondsPerIteration": 6.30405,
+      "consumed": 83300
+    },
+    "stringSerialization": {
+      "rounds": 100,
+      "allocatedBytesPerIteration": 530722.64,
+      "millisecondsPerIteration": 2.192084,
+      "consumed": 26505800
+    },
+    "utf8Serialization": {
+      "rounds": 100,
+      "allocatedBytesPerIteration": 265593.12,
+      "millisecondsPerIteration": 1.765135,
+      "consumed": 26505800
+    },
+    "elapsedSeconds": 2.1714416,
+    "limitations": [
+      "Synthetic in-process allocation diagnosis, not real Windows API sampling or WPF memory acceptance.",
+      "Explicit collections isolate retained managed data in this diagnostic process; production and native soaks do not force GC.",
+      "Allocated bytes per iteration are managed thread allocations, not working set, native graphics memory or retained bytes."
+    ]
+  },
+  "replay": {
+    "iterations": 30,
+    "totalRequests": 638,
+    "pagedEvents": 150000,
+    "restarts": 6,
+    "peakWorkerMiB": 431.70703125,
+    "p95Ms": {
+      "import": 3455.567499999999,
+      "contributors": 124.35020000000077,
+      "metrics": 3.981900000000678,
+      "firstPage": 74.04559999999992,
+      "laterPage": 15.14929999999731,
+      "evidence": 11.353199999997742,
+      "export": 20.584999999999127
+    },
+    "sourceIntegrityPreserved": true
+  },
+  "packagedDesktop": {
+    "recovery": true,
+    "monitor": true,
+    "investigation": true,
+    "savedComparison": true,
+    "indexedEvents": 418378
+  },
+  "memoryGate": "Reduced-copy 30-minute soak still running; the previous 312.59 MiB failed gate is retained.",
+  "limitations": [
+    "Per-processor 110% long-gap fallback is an empirical match to the named native parser on these fixtures, not a promise for all traces or OS versions.",
+    "CPU estimates stay unavailable without recorded sampling intervals or valid spacing. Full-trace and partial comparisons use the same eligibility and half-open timestamp rules.",
+    "Independent Windows 11/interactive WPA, maximum real ETL envelope, native missing-metadata cases, observer cost and field usefulness remain open."
+  ]
+}

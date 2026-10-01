@@ -41,7 +41,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
     internal int WorkerProcessId=>client.ProcessId;
     private void AttachProgress() => client.Progress += value =>
-        System.Windows.Application.Current.Dispatcher.Invoke(()=>Status=value.Message);
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(() => Status=value.Message);
     public IntervalQuery Interval()
     {
         if(!double.TryParse(StartSeconds, NumberStyles.Float, CultureInfo.InvariantCulture,out var start) ||

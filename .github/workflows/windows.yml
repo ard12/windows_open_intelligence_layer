@@ -22,6 +22,13 @@ jobs:
       - name: Locked build and real ETL regression tests
         shell: pwsh
         run: ./scripts/test.ps1 -DownloadFixtures
+      - name: Independent native CPU and disk reference checks
+        shell: pwsh
+        run: |
+          dotnet tools/Woi.Reference/bin/Release/net10.0-windows/Woi.Reference.dll .artifacts/fixtures/net452/net.4.5.2.x64.etl .artifacts/validation/ci-reference-net452.json
+          if ($LASTEXITCODE -ne 0) { throw "Native net452 reference checks failed." }
+          dotnet tools/Woi.Reference/bin/Release/net10.0-windows/Woi.Reference.dll .artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl .artifacts/validation/ci-reference-allocator.json
+          if ($LASTEXITCODE -ne 0) { throw "Native allocator reference checks failed." }
       - name: Package the self-contained desktop and capture helper
         shell: pwsh
         run: ./scripts/publish.ps1

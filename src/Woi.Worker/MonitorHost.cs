@@ -16,6 +16,7 @@ internal static class MonitorHost
             return 2;
         Console.InputEncoding = Encoding.UTF8;
         Console.OutputEncoding = new UTF8Encoding(false);
+        using var output = Console.OpenStandardOutput();
         using var stop = new CancellationTokenSource();
         var investigations = new InvestigationWorkspace();
         var session = new MonitorSession(new WindowsSampler(), WindowsSampler.LogicalProcessorCount);
@@ -56,15 +57,13 @@ internal static class MonitorHost
                         _ when request.Method.StartsWith("investigation.", StringComparison.Ordinal) => InvestigationRpc.Handle(investigations, request, stop.Token),
                         _ => throw new WoiException("UnknownMethod", "The requested monitor operation is not supported.")
                     };
-                    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(
-                        new Response(request.Id, Wire.Version, "result", result), Wire.Json));
-                    await Console.Out.FlushAsync();
+                    await ProtocolOutput.Write(output,
+                        new Response(request.Id, Wire.Version, "result", result));
                     if (request.Method == "monitor.stop") break;
                 } catch (Exception ex) when (ex is WoiException or JsonException or KeyNotFoundException or InvalidOperationException or IOException or UnauthorizedAccessException or ArgumentException or NullReferenceException) {
                     var code = ex is WoiException woi ? woi.Code : "ProtocolError";
-                    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(
-                        new Response(request?.Id ?? "", Wire.Version, "error", Error: ex.Message, Code: code), Wire.Json));
-                    await Console.Out.FlushAsync();
+                    await ProtocolOutput.Write(output,
+                        new Response(request?.Id ?? "", Wire.Version, "error", Error: ex.Message, Code: code));
                 }
             }
         } finally {

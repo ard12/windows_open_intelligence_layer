@@ -57,6 +57,7 @@ public sealed class TraceTests(ITestOutputHelper output)
                 Assert.Equal(expectedResourceEvents, lightweightResourceEvents);
                 var partialContributors = engine.Contributors(partial, default);
                 Assert.Equal(expectedResourceEvents.Count(x => x.Category == "CPU"), partialContributors.Sum(x => x.CpuSamples));
+                Assert.Equal(expectedResourceEvents.Where(x => x.Category == "CPU").Sum(x => x.CpuWeightMs ?? 0), partialContributors.Sum(x => x.CpuMs ?? 0), 7);
                 Assert.Equal(expectedResourceEvents.Where(x => x.Category == "Disk").Sum(x => x.Bytes ?? 0), partialContributors.Sum(x => x.DiskBytes ?? 0));
                 var first=reader.QueryEvents(new(0,session.DurationMs),default);
                 Assert.Equal(500,first.Events.Count);Assert.True(first.More);

@@ -28,6 +28,28 @@ public sealed class HardeningTests
         Assert.Equal(2,EtlReader.SamplingWeight(intervals,2500));
         Assert.Equal(.5,EtlReader.SamplingWeight(intervals,99999));
     }
+    [Fact] public void CpuWeightsUseEachProcessorIncludingIdlePredecessorContext()
+    {
+        var calculator=new CpuSampleWeightCalculator([new(0,1)]);
+        Assert.Equal(1,calculator.Observe(0,0));
+        Assert.Equal(1,calculator.Observe(1,.2));
+        Assert.Equal(.9,calculator.Observe(0,.9)!.Value,8);
+        Assert.Equal(.95,calculator.Observe(1,1.15)!.Value,8);
+        Assert.Equal(1,calculator.Observe(0,3)); // Long gap: recorded nominal interval.
+        Assert.Null(calculator.Observe(0,3)); // Nonpositive spacing is unavailable.
+        Assert.Null(calculator.Observe(-1,4));
+    }
+    [Fact] public void CpuWeightsRequireCapturedIntervalsAndHonorChanges()
+    {
+        var calculator=new CpuSampleWeightCalculator([new(100,1),new(102,2),new(106,.5)]);
+        Assert.Null(calculator.Observe(0,99.5));
+        Assert.Equal(.5,calculator.Observe(0,100));
+        Assert.Equal(2,calculator.Observe(0,102));
+        Assert.Equal(.5,calculator.Observe(0,106));
+        Assert.Equal(.4,calculator.Observe(0,106.4)!.Value,8);
+        Assert.Null(calculator.Observe(0,double.NaN));
+        Assert.Equal(.5,calculator.Observe(0,107));
+    }
     [Fact] public void AllResourcePeaksSurviveChartDownsampling()
     {
         var values=Enumerable.Range(0,50000).Select(i=>new MetricPoint(i,1,1,0,0,

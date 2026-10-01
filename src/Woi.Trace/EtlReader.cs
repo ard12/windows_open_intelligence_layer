@@ -12,6 +12,7 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
 {
     private readonly TraceLog log;
     private readonly ImportMetadata metadata;
+    private readonly CpuSampleWeights cpuWeights;
     private readonly Dictionary<int, EntityLifetime> processByIndex = new();
     private readonly Dictionary<int, EntityLifetime[]> lifetimesByPid = new();
     private readonly Dictionary<int, EntityLifetime[]> lifetimesByTid = new();
@@ -23,11 +24,12 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
     public long ContributorRecordsVisited { get; private set; }
     public TraceSession Session { get; }
     public IReadOnlyList<EntityLifetime> Entities { get; }
-    public EtlReader(TraceSession session) : this(new TraceLog(Path.Combine(session.CacheDirectory, "events.etlx")),
-        session, JsonSerializer.Deserialize<ImportMetadata>(File.ReadAllText(Path.Combine(session.CacheDirectory, "import.json")), Wire.Json)!) { }
-    public EtlReader(TraceLog traceLog, TraceSession session, ImportMetadata importMetadata)
+    public EtlReader(TraceSession session, CancellationToken token = default) : this(new TraceLog(Path.Combine(session.CacheDirectory, "events.etlx")),
+        session, JsonSerializer.Deserialize<ImportMetadata>(File.ReadAllText(Path.Combine(session.CacheDirectory, "import.json")), Wire.Json)!, token) { }
+    public EtlReader(TraceLog traceLog, TraceSession session, ImportMetadata importMetadata, CancellationToken token = default)
     {
         log = traceLog; Session = session; metadata = importMetadata;
+        try { cpuWeights = new(log, metadata.Intervals, token); } catch { log.Dispose(); throw; }
         List<EntityLifetime> entities = [];
         var positions = new Dictionary<string,int>();
         var processStarts = metadata.ProcessStarts.GroupBy(x=>x.Pid).ToDictionary(x=>x.Key,x=>x.Select(v=>v.Time).ToArray());
@@ -60,10 +62,6 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
     }
     private string ProcessId(TraceProcess p) => Session.SourceHash[..16] + ":p:" + (int)p.ProcessIndex;
     private string ThreadId(TraceThread t) => Session.SourceHash[..16] + ":t:" + (int)t.ThreadIndex;
-    private double? Weight(double ms)
-    {
-        return SamplingWeight(metadata.Intervals,ms);
-    }
     internal static double? SamplingWeight(IReadOnlyList<SamplingInterval> intervals,double ms)
     {
         int low=0,high=intervals.Count-1,found=-1;
@@ -95,7 +93,7 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
         if (data is SampledProfileTraceData sample) {
             if (sample.NonProcess) { processId = null; threadId = null; name = "Unattributed interrupt / DPC activity"; }
             if (sample.ThreadID == 0 && !sample.NonProcess) return null; // Idle samples are not busy CPU.
-            cpuWeight = Weight(data.TimeStampRelativeMSec);
+            cpuWeight = cpuWeights.Get((long)data.EventIndex);
             if (resolveTargets) target = "Instruction 0x" + sample.InstructionPointer.ToString("x");
         }
         if (data is DiskIOTraceData disk) { bytes = Math.Max(0, (long)disk.TransferSize); duration = disk.ElapsedTimeMSec; if (resolveTargets) target = disk.FileName; }

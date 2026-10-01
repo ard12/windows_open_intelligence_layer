@@ -19,6 +19,7 @@ public partial class MainViewModel
     [ObservableProperty] private string monitorMarkLabel = "Slowdown noticed";
     public event Action? MonitorChartsChanged;
     internal int? MonitorWorkerProcessId => monitorClient?.ProcessId;
+    internal ReplyDecodeDiagnostics? MonitorReplyDiagnostics => monitorClient?.Diagnostics;
 
     public async Task StartObservation()
     {

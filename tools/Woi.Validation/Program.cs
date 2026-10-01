@@ -5,6 +5,7 @@ using Woi.Trace;
 using Woi.Capture;
 
 if(args.Length==3 && args[0]=="--capture-lifecycle")return await Woi.Validation.CaptureLifecycle.Run(args[1],args[2]);
+if(args.Length==2 && args[0]=="--monitor-memory")return Woi.Validation.MonitorMemory.Run(args[1]);
 if(args.Length==2 && args[0]=="--aggregate-stress")return Woi.Validation.AggregateStress.Run(args[1]);
 if(args.Length==2 && args[0]=="--profile"){
     File.WriteAllText(Path.GetFullPath(args[1]),CaptureProfiles.Xml());return 0;

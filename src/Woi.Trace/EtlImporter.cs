@@ -111,7 +111,7 @@ public static class EtlImporter
                 if(!double.IsFinite(duration)||duration<=0)throw new WoiException("InvalidTrace","The recording has no usable positive duration.");
                 var blank=new TraceSession(hash,sourcePath,hash,ParserVersion,Wire.AnalysisVersion,final,
                     log.SessionStartTime.ToUniversalTime(),duration,log.NumberOfProcessors,log.EventCount,log.EventsLost,[],[],0,0,metadataNew.RecordedQpcFrequency);
-                using var reader=new EtlReader(log,blank,metadataNew);
+                using var reader=new EtlReader(log,blank,metadataNew,token);
                 var builder=new AnalysisBuilder();long inspected=0,unknown=0,fileBytesRecords=0,networkBytesRecords=0,unweighted=0,unresolved=0;
                 foreach(var data in log.Events) {
                     token.ThrowIfCancellationRequested();var value=reader.Normalize(data);
@@ -128,11 +128,11 @@ public static class EtlImporter
                 }
                 if(log.EventsLost>0)warnings.Add($"Windows reports {log.EventsLost:n0} lost events; the recording may be incomplete.");
                 if(unknown>0)warnings.Add($"{unknown:n0} indexed records have unsupported resource schemas; their headers remain inspectable.");
-                if(unweighted>0)warnings.Add($"{unweighted:n0} CPU samples have no recorded sampling interval. Estimates for affected selections are unavailable.");
+                if(unweighted>0)warnings.Add($"{unweighted:n0} CPU samples have no usable recorded sampling interval or sample spacing. Estimates for affected selections are unavailable.");
                 if(unresolved>0)warnings.Add($"{unresolved:n0} file/disk records have unresolved captured paths.");
                 warnings.Add("Reported event loss does not prove complete coverage. Providers may have been disabled or filtered.");
                 warnings.Add("Resource contributors do not establish why an application became unresponsive.");
-                warnings.Add("CPU estimates weight each busy sample by the recorded sampling interval. WPA native weights can differ.");
+                warnings.Add("CPU estimates use captured per-processor sample spacing, with the recorded interval for long gaps. Sampling remains statistical.");
                 warnings.Add("Disk latency is the completion record's response-time payload, separate from reconstructed issue-to-completion duration.");
                 var categories=new[]{"Process","Thread","Module","CPU","Disk","File","Network","Memory","HardFault"};
                 var capabilities=categories.Select(category=>new Capability(category,
