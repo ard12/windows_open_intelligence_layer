@@ -45,7 +45,7 @@ internal static class NativeEnvelope
                     provider.Pulse(i);
                     if ((i & 8191) == 0) timeout.Token.ThrowIfCancellationRequested();
                     // Keep generation bounded and allow the file logger to drain.
-                    if ((i & 65535) == 65535) await Task.Delay(1, timeout.Token);
+                    if ((i & 8191) == 8191) await Task.Delay(50, timeout.Token);
                 }
                 await Task.Delay(100, timeout.Token);
             }
@@ -67,10 +67,13 @@ internal static class NativeEnvelope
                     if ((recorded & 8191) == 0) timeout.Token.ThrowIfCancellationRequested();
                 };
                 reference.Process();
+                capture = new { generated=count, recorded, generationMs, sourceBytes=bytes, sourceHash,
+                    reportedLoss=reference.EventsLost, missingSequences=count-recorded, sequenceSum,
+                    expectedSequenceSum=(long)count * (count - 1) / 2, generatorBufferMiB=64,
+                    pacingEveryEvents=8192, pacingDelayMs=50 };
                 if (reference.EventsLost != 0 || recorded != count || sequenceSum != (long)count * (count - 1) / 2)
                     throw new IOException("The native generator lost events; no completeness claim is valid.");
             }
-            capture = new { generated=count, recorded, generationMs, sourceBytes=bytes, sourceHash, reportedLoss=0 };
             var start = new ProcessStartInfo(Path.GetFullPath(executable)) {
                 UseShellExecute=false, CreateNoWindow=true, RedirectStandardInput=true,
                 RedirectStandardOutput=true, RedirectStandardError=true
