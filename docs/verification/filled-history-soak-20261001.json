@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "utc": "2026-10-01T10:29:13.5073109Z",
+  "scope": "Local Windows 10 19045 desktop; twelve logical processors; concurrent developer activity and baseline soak",
+  "completed": true,
+  "requestedSeconds": 1800,
+  "durationSeconds": 1800.0788244,
+  "peakUiMiB": 199.46875,
+  "peakMonitorMiB": 114.8046875,
+  "maximumSampledCombinedMiB": 312.5859375,
+  "maximumSampledTotalAppMiB": 336.4609375,
+  "uiCpuPercentOfMachine": 0.5234869137730264,
+  "monitorCpuPercentOfMachine": 0.3485090438798453,
+  "cumulativeCoverageTargetMet": true,
+  "monitorMemoryTargetMet": true,
+  "uiPlusMonitorMemoryTargetMet": false,
+  "finalView": {
+    "snapshotCount": 788,
+    "retainedSeconds": 787.0287716,
+    "retainedProcessRows": 249921,
+    "estimatedRetainedBytes": 65175850,
+    "diagnostics": {
+      "samplingMedianMs": 59.6946,
+      "samplingP95Ms": 79.4621,
+      "samplingMaximumMs": 374.6701,
+      "missedTickGaps": 0
+    },
+    "statistics": {
+      "totalSnapshots": 1800,
+      "missedTickGaps": 0,
+      "samplingFailures": 0,
+      "invalidIntervals": 0
+    }
+  },
+  "limitations": [
+    "Local desktop soak, not independent Windows 11 or clean-machine validation.",
+    "CPU values include startup; memory samples occur every five seconds and may miss a transient combined peak.",
+    "Background/hidden-window rendering can differ from active interaction.",
+    "Concurrent machine activity is uncontrolled; this is not an isolated idle or observer-cost experiment.",
+    "Workload slowdown, physical disk-write overhead, sleep/resume and field usefulness are separate gates."
+  ]
+}

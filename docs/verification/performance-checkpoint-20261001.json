@@ -50,8 +50,8 @@
     "savedComparisons": true,
     "indexedEvents": 418378
   },
-  "memoryGate": "Both running filled-history soaks have exceeded the sampled 300 MiB UI-plus-monitor budget; final results pending",
-  "nativeLifecycle": "Harness compiled; native result pending CI",
+  "memoryGate": "Thirty-minute sharing run completed: continuity and monitor-memory targets passed; combined UI-plus-monitor maximum 312.59 MiB exceeds 300 MiB target. Original two-hour baseline remains running.",
+  "nativeLifecycle": "All five cases passed on Windows Server 2025 in Actions run 36849115092, source a9c10e5; see github-lifecycle-20261001.json.",
   "limitations": [
     "Warm cached replays with repeated worker restarts; not cold import of the maximum supported ETL envelope.",
     "Local p95 does not close the separate server or independent Windows 11 performance gates.",

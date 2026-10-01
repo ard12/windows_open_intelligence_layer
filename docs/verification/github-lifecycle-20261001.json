@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "runUrl": "https://github.com/ard12/win_OiL/actions/runs/36849115092",
+  "sourceCommit": "a9c10e5afdaefc72a3a4d80ae393c608a106d90d",
+  "conclusion": "success",
+  "platform": "Windows Server 2025 (10.0.26100), GitHub runner, two logical processors",
+  "testsPassed": 92,
+  "profiles": [
+    {
+      "profile": "FileActivity",
+      "indexedEvents": 99404,
+      "reportedLoss": 0,
+      "lifetimeResolved": true,
+      "cpuContributorIsWorkload": true,
+      "logicalFileBytes": 135321503,
+      "networkTransferBytes": 16777216,
+      "maximumCapturedWorkingSet": 168493056
+    },
+    {
+      "profile": "Resources",
+      "indexedEvents": 93640,
+      "reportedLoss": 0,
+      "lifetimeResolved": true,
+      "cpuContributorIsWorkload": true,
+      "logicalFileBytes": 0,
+      "networkTransferBytes": 16777216,
+      "maximumCapturedWorkingSet": 167944192
+    }
+  ],
+  "nativeLifecycle": {
+    "schema": 1,
+    "success": true,
+    "utc": "2026-10-01T10:29:55.733919Z",
+    "os": "Microsoft Windows NT 10.0.26100.0",
+    "failedCase": null,
+    "error": null,
+    "cases": [
+      {
+        "name": "automatic deadline",
+        "passed": true,
+        "elapsedSeconds": 5.2862502,
+        "indexedEvents": 52193,
+        "sourceIntegrityPreserved": true,
+        "evidenceAvailable": true
+      },
+      {
+        "name": "manual cancellation",
+        "passed": true,
+        "completedTraceAbsent": true
+      },
+      {
+        "name": "pipe disconnect",
+        "passed": true,
+        "completedTraceAbsent": true,
+        "ownedSessionStopped": true
+      },
+      {
+        "name": "helper crash and recovery",
+        "passed": true,
+        "completedTraceAbsent": true,
+        "recoveryAndRestart": true
+      },
+      {
+        "name": "coexistence",
+        "passed": true,
+        "helperStart": "started",
+        "separateClientSaved": true,
+        "indexedEvents": 42773
+      }
+    ],
+    "limitations": [
+      "Native transitions for fixed shipping profiles; not a Windows 11 clean-machine or all-provider compatibility claim.",
+      "Coexistence permits explicit start refusal when providers conflict; the separately owned recording must survive."
+    ]
+  },
+  "replay": {
+    "iterations": 10,
+    "totalRequests": 218,
+    "pagedEvents": 50000,
+    "restarts": 2,
+    "peakWorkerMiB": 377.9140625,
+    "p95Ms": {
+      "import": 5104.6440999999995,
+      "contributors": 229.44120000000112,
+      "metrics": 5.207899999999427,
+      "firstPage": 299.09299999999894,
+      "laterPage": 99.52759999999944,
+      "evidence": 14.60360000000037,
+      "export": 36.651200000000244
+    },
+    "sourceIntegrityPreserved": true
+  },
+  "monitor": {
+    "durationSeconds": 30.225,
+    "snapshotCount": 30,
+    "peakWorkerMiB": 37.29,
+    "workerCpuPercentOfMachine": 1.24,
+    "samplingDiagnostics": {
+      "samplingMedianMs": 6.1856,
+      "samplingP95Ms": 10.6755,
+      "samplingMaximumMs": 12.8346,
+      "missedTickGaps": 0
+    }
+  },
+  "limits": [
+    "The first lifecycle attempt failed because its harness inspected Saving before terminal completion; retained in run 36848658536.",
+    "The server monitor includes startup and still exceeds the 1% idle target.",
+    "Native desktop Windows 10/11, maximum real ETL envelope, CPU-weight parity, filled combined memory and independent usefulness remain open."
+  ]
+}
