@@ -109,10 +109,143 @@
   "priorReportPreservationVerified": true,
   "benchmarkSyntaxVerified": true,
   "ci": {
-    "legacyStartupInclusiveThirtySecondCheckRetained": true,
-    "additionalWarmupSeconds": 30,
-    "additionalMeasurementSeconds": 120,
-    "status": "pending current-source run"
+    "url": "https://github.com/ard12/win_OiL/actions/runs/36881591865",
+    "sourceCommit": "1fdbe28585720840f5e91ce081c29c32a2e044fa",
+    "status": "completed",
+    "conclusion": "success",
+    "runner": "Windows Server 2025; two logical processors",
+    "testsPassed": 110,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "allFunctionalStepsPassed": true,
+    "warm": {
+      "schema": 2,
+      "success": true,
+      "requestedMeasurementSeconds": 120,
+      "warmupSeconds": 30,
+      "warmupElapsedSeconds": 31.3099788,
+      "durationSeconds": 120.018,
+      "totalElapsedSeconds": 151.328,
+      "logicalProcessors": 2,
+      "measurementIncludesStartup": false,
+      "startupAndWarmupCpuSeconds": 0.640625,
+      "totalCpuSeconds": 1.96875,
+      "measurementCpuSeconds": 1.328125,
+      "workerCpuPercentOfMachine": 0.553,
+      "startupInclusiveCpuPercentOfMachine": 0.65,
+      "cpuUnderOnePercent": true,
+      "snapshotCount": 152,
+      "totalSnapshots": 152,
+      "measuredSnapshots": 120,
+      "cumulativeMissedTickGapEpisodes": 0,
+      "measuredMissedTickGapEpisodes": 0,
+      "samplingFailures": 0,
+      "invalidIntervals": 0,
+      "retainedSeconds": 151.0173424,
+      "retainedProcessRows": 21598,
+      "estimatedRetainedBytes": 5697720,
+      "peakWorkerMiB": 49.38,
+      "peakMemoryIncludesStartupAndWarmup": true,
+      "samplingDiagnostics": {
+        "samplingMedianMs": 6.7134,
+        "samplingP95Ms": 11.2997,
+        "samplingMaximumMs": 14.9866,
+        "missedTickGaps": 0
+      },
+      "latestUnreadableProcesses": 1,
+      "gapKinds": [
+        {
+          "kind": "ProcessAccess",
+          "count": 1
+        },
+        {
+          "kind": "ProcessImageUnavailable",
+          "count": 1
+        }
+      ],
+      "limitations": [
+        "Shared-machine headless collector measurement; the environment is not an isolated idle workload.",
+        "Only boundary status queries are sent; periodic WPF polling, rendering, ETL analysis and privileged capture have separate costs.",
+        "Sampling diagnostics summarize retained history, while cumulative counters survive eviction.",
+        "A short warmed window does not establish two-hour, sleep/resume, physical-write or observer-effect acceptance."
+      ]
+    },
+    "cold": {
+      "schema": 2,
+      "success": true,
+      "requestedMeasurementSeconds": 30,
+      "warmupSeconds": 0,
+      "warmupElapsedSeconds": 0.0,
+      "durationSeconds": 30.252,
+      "totalElapsedSeconds": 30.252,
+      "logicalProcessors": 2,
+      "measurementIncludesStartup": true,
+      "startupAndWarmupCpuSeconds": null,
+      "totalCpuSeconds": 0.84375,
+      "measurementCpuSeconds": 0.84375,
+      "workerCpuPercentOfMachine": 1.395,
+      "startupInclusiveCpuPercentOfMachine": 1.395,
+      "cpuUnderOnePercent": false,
+      "snapshotCount": 30,
+      "totalSnapshots": 30,
+      "measuredSnapshots": 30,
+      "cumulativeMissedTickGapEpisodes": 0,
+      "measuredMissedTickGapEpisodes": 0,
+      "samplingFailures": 0,
+      "invalidIntervals": 0,
+      "retainedSeconds": 29.021362,
+      "retainedProcessRows": 4298,
+      "estimatedRetainedBytes": 1133554,
+      "peakWorkerMiB": 37.85,
+      "peakMemoryIncludesStartupAndWarmup": true,
+      "samplingDiagnostics": {
+        "samplingMedianMs": 5.9995,
+        "samplingP95Ms": 13.2396,
+        "samplingMaximumMs": 14.5071,
+        "missedTickGaps": 0
+      },
+      "latestUnreadableProcesses": 1,
+      "gapKinds": [
+        {
+          "kind": "ProcessAccess",
+          "count": 1
+        },
+        {
+          "kind": "ProcessImageUnavailable",
+          "count": 1
+        }
+      ],
+      "limitations": [
+        "Shared-machine headless collector measurement; the environment is not an isolated idle workload.",
+        "Only boundary status queries are sent; periodic WPF polling, rendering, ETL analysis and privileged capture have separate costs.",
+        "Sampling diagnostics summarize retained history, while cumulative counters survive eviction.",
+        "A short warmed window does not establish two-hour, sleep/resume, physical-write or observer-effect acceptance."
+      ]
+    },
+    "replay": {
+      "success": true,
+      "totalRequests": 228,
+      "pagedEvents": 50000,
+      "restarts": 2,
+      "p95Ms": {
+        "import": 4588.001799999998,
+        "contributors": 136.55830000000424,
+        "metrics": 6.110199999999168,
+        "firstPage": 142.3607000000011,
+        "laterPage": 52.427599999999074,
+        "evidence": 33.467399999997724,
+        "export": 39.1762000000017
+      },
+      "peakWorkerBytes": 321458176,
+      "sourceIntegrityPreserved": true,
+      "cancellationAtomicity": true,
+      "damagedImportRecovery": true,
+      "crashDuringImportRecovery": true
+    },
+    "limits": [
+      "The 120-second warmed headless measurement meets its CPU target; it is not whole-UI, independent Windows 11, physical-write, observer-effect or repeated long-run acceptance.",
+      "The retained 30-second startup-inclusive figure of 1.395% is above 1%."
+    ]
   },
   "limitations": [
     "The local warmed interval had zero measured gap episodes, but one cumulative episode occurred during warm-up; it is not represented as a clean entire session.",
@@ -120,5 +253,16 @@
     "Earlier startup-inclusive server 1.161% CPU remains in the record.",
     "The sampler, history bounds and application behavior are unchanged.",
     "The original two-hour UI soak remains live and has cumulative gaps; terminal results are pending."
-  ]
+  ],
+  "longRunStatus": {
+    "status": "running",
+    "requestedSeconds": 7200,
+    "elapsedSeconds": 6280.2522664,
+    "totalSnapshots": 6231,
+    "cumulativeMissedTickGapEpisodes": 20,
+    "samplingFailures": 0,
+    "invalidIntervals": 0,
+    "terminalMemoryResult": "pending",
+    "zeroGapAcceptance": false
+  }
 }
