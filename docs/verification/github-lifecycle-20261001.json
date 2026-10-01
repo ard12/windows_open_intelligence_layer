@@ -14,7 +14,8 @@
       "cpuContributorIsWorkload": true,
       "logicalFileBytes": 135321503,
       "networkTransferBytes": 16777216,
-      "maximumCapturedWorkingSet": 168493056
+      "maximumCapturedWorkingSet": 168493056,
+      "logicalFileBytesAvailable": true
     },
     {
       "profile": "Resources",
@@ -22,9 +23,10 @@
       "reportedLoss": 0,
       "lifetimeResolved": true,
       "cpuContributorIsWorkload": true,
-      "logicalFileBytes": 0,
+      "logicalFileBytes": null,
       "networkTransferBytes": 16777216,
-      "maximumCapturedWorkingSet": 167944192
+      "maximumCapturedWorkingSet": 167944192,
+      "logicalFileBytesAvailable": false
     }
   ],
   "nativeLifecycle": {
