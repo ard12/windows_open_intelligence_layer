@@ -14,6 +14,18 @@ public partial class MainWindow
         File.Move(output+".progress.tmp", output+".progress.json", overwrite:true);
     }
 
+    private static object UiMemoryDiagnostics()
+    {
+        var info = GC.GetGCMemoryInfo();
+        return new {
+            managedBytes=GC.GetTotalMemory(false), totalAllocatedBytes=GC.GetTotalAllocatedBytes(false),
+            serverGc=System.Runtime.GCSettings.IsServerGC, lastGcIndex=info.Index,
+            committedBytesAtLastGc=info.TotalCommittedBytes, heapBytesAtLastGc=info.HeapSizeBytes,
+            fragmentedBytesAtLastGc=info.FragmentedBytes,
+            generation0Collections=GC.CollectionCount(0), generation1Collections=GC.CollectionCount(1),
+            generation2Collections=GC.CollectionCount(2)
+        };
+    }
     private async Task RunObservationSoak(int seconds, string output)
     {
         if (seconds is < 10 or > 86400) throw new ArgumentOutOfRangeException(nameof(seconds));
@@ -40,7 +52,7 @@ public partial class MainWindow
                     monitorWorkingSetBytes=worker.WorkingSet64, idleAnalysisWorkingSetBytes=idleAnalysis.WorkingSet64,
                     snapshotCount=model.Monitor.SnapshotCount, retainedSeconds=model.Monitor.RetainedSeconds,
                     retainedProcessRows=model.Monitor.RetainedProcessRows, estimatedRetainedBytes=model.Monitor.EstimatedRetainedBytes,
-                    diagnostics=model.Monitor.Diagnostics, statistics=model.Monitor.Statistics, uiManagedHeapBytes=GC.GetTotalMemory(false), replyDecoding=model.MonitorReplyDiagnostics });
+                    diagnostics=model.Monitor.Diagnostics, statistics=model.Monitor.Statistics, uiManagedHeapBytes=GC.GetTotalMemory(false), uiMemory=UiMemoryDiagnostics(), uiPrivateBytes=ui.PrivateMemorySize64, monitorPrivateBytes=worker.PrivateMemorySize64, replyDecoding=model.MonitorReplyDiagnostics });
                 var progress = new { schema=1, status="running", requestedSeconds=seconds,
                     elapsedSeconds=clock.Elapsed.TotalSeconds, pid=Environment.ProcessId,
                     snapshotCount=model.Monitor.SnapshotCount, retainedSeconds=model.Monitor.RetainedSeconds,
@@ -62,7 +74,7 @@ public partial class MainWindow
                 monitorMemoryTargetMet=worker.PeakWorkingSet64<150L*1024*1024,
                 uiPlusMonitorMemoryTargetMet=peakCombined<300L*1024*1024,
                 finalView=new { model.Monitor.SnapshotCount,model.Monitor.RetainedSeconds,model.Monitor.RetainedProcessRows,model.Monitor.EstimatedRetainedBytes,model.Monitor.Diagnostics,model.Monitor.Statistics },
-                replyDecoding=model.MonitorReplyDiagnostics, uiManagedHeapBytes=GC.GetTotalMemory(false),
+                replyDecoding=model.MonitorReplyDiagnostics, uiManagedHeapBytes=GC.GetTotalMemory(false), uiMemory=UiMemoryDiagnostics(),
                 samples, limitations=new[] { "Local desktop soak, not independent Windows 11 or clean-machine validation.",
                     "CPU values include startup; memory samples occur every five seconds and may miss a transient combined peak.",
                     "Background/hidden-window rendering can differ from active interaction.",

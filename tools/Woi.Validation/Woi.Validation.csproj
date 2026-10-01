@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../../src/Woi.Monitor/Woi.Monitor.csproj"/><ProjectReference Include="../../src/Woi.Trace/Woi.Trace.csproj"/><ProjectReference Include="../../src/Woi.Capture.Core/Woi.Capture.Core.csproj"/></ItemGroup>
+  <ItemGroup><Compile Include="../../src/Woi.Desktop/WorkerClient.cs" Link="Desktop/WorkerClient.cs"/><Compile Include="../../src/Woi.Desktop/Utf8ResponseReader.cs" Link="Desktop/Utf8ResponseReader.cs"/><ProjectReference Include="../../src/Woi.Monitor/Woi.Monitor.csproj"/><ProjectReference Include="../../src/Woi.Trace/Woi.Trace.csproj"/><ProjectReference Include="../../src/Woi.Capture.Core/Woi.Capture.Core.csproj"/></ItemGroup>
 </Project>

@@ -71,7 +71,8 @@ public sealed class WorkerClient : IDisposable
     private async Task ReadResponses()
     {
         try {
-            while (await process.StandardOutput.ReadLineAsync().ConfigureAwait(false) is { } line) {
+            using var reader = new Utf8ResponseReader(process.StandardOutput.BaseStream);
+            while (await reader.ReadLine().ConfigureAwait(false) is { } line) {
                 var before = GC.GetAllocatedBytesForCurrentThread();
                 var clock = Stopwatch.StartNew();
                 try {

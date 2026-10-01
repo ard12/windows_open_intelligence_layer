@@ -32,6 +32,13 @@ jobs:
       - name: Package the self-contained desktop and capture helper
         shell: pwsh
         run: ./scripts/publish.ps1
+      - name: Generated native ETL scale, completeness and over-limit rejection
+        shell: pwsh
+        run: |
+          foreach ($case in @(@{Name="smoke";Count=1000}, @{Name="near-limit";Count=4990000}, @{Name="over-limit";Count=5010000})) {
+            dotnet tools/Woi.Validation/bin/Release/net10.0-windows/Woi.Validation.dll --native-envelope ".artifacts/validation/ci-native-envelope/$($case.Name)" dist/WindowsOpenIntelligence/Woi.Worker.exe $case.Count
+            if ($LASTEXITCODE -ne 0) { throw "Generated native ETL validation failed: $($case.Name)" }
+          }
       - name: Both shipping capture profiles and report export
         shell: pwsh
         run: |
@@ -67,6 +74,7 @@ jobs:
             .artifacts/validation/ci-native-capture/**/*.json
             .artifacts/validation/ci-native-capture/**/*.md
             .artifacts/validation/ci-capture-lifecycle/**/*.json
+            .artifacts/validation/ci-native-envelope/*/native-envelope.json
       - name: Upload Windows application
         uses: actions/upload-artifact@v4
         with:

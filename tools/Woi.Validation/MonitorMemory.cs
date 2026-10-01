@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Woi.Core;
 using Woi.Monitor;
+using Woi.Desktop;
 
 namespace Woi.Validation;
 
@@ -41,14 +42,28 @@ internal static class MonitorMemory
         });
         var stringSerialization = Measure(() => JsonSerializer.Serialize(new Response("status", Wire.Version, "result", view), Wire.Json).Length);
         var utf8Serialization = Measure(() => JsonSerializer.SerializeToUtf8Bytes(new Response("status", Wire.Version, "result", view), Wire.Json).Length);
+        var wireBytes = Encoding.UTF8.GetBytes(json + "\n");
+        var stringFraming = Measure(() => {
+            using var stream = new MemoryStream(wireBytes);
+            using var reader = new StreamReader(stream, new UTF8Encoding(false));
+            using var document = JsonDocument.Parse(reader.ReadLine()!);
+            return document.RootElement.GetProperty("result").Deserialize<MonitorView>(Wire.Json)!.History.Count;
+        });
+        var utf8Framing = Measure(() => {
+            using var stream = new MemoryStream(wireBytes);
+            using var reader = new Utf8ResponseReader(stream);
+            using var document = JsonDocument.Parse(reader.ReadLine().GetAwaiter().GetResult()!.Value);
+            return document.RootElement.GetProperty("result").Deserialize<MonitorView>(Wire.Json)!.History.Count;
+        });
         var report = new {
             schema=1, utc=DateTime.UtcNow, synthetic=true, generatedSnapshots=1200, processesPerSnapshot=300,
             view.SnapshotCount, view.RetainedProcessRows, view.EstimatedRetainedBytes, retainedManagedBytes,
             statusUtf8Bytes=Encoding.UTF8.GetByteCount(json), decodeWithClone, decodeInDocument,
-            stringSerialization, utf8Serialization, elapsedSeconds=clock.Elapsed.TotalSeconds,
+            stringSerialization, utf8Serialization, stringFraming, utf8Framing, elapsedSeconds=clock.Elapsed.TotalSeconds,
             limitations=new[] { "Synthetic in-process allocation diagnosis, not real Windows API sampling or WPF memory acceptance.",
                 "Explicit collections isolate retained managed data in this diagnostic process; production and native soaks do not force GC.",
-                "Allocated bytes per iteration are managed thread allocations, not working set, native graphics memory or retained bytes." }
+                "Allocated bytes per iteration are managed thread allocations, not working set, native graphics memory or retained bytes.",
+                "Framing uses identical pre-encoded replies in memory and a fresh reader per iteration; pooled buffers are warmed. It is not pipe timing." }
         };
         File.WriteAllText(Path.GetFullPath(output), JsonSerializer.Serialize(report, new JsonSerializerOptions(Wire.Json) { WriteIndented=true }));
         Console.WriteLine(JsonSerializer.Serialize(report, Wire.Json));
