@@ -60,6 +60,9 @@ jobs:
       - name: Unprivileged monitor continuity and overhead smoke
         shell: pwsh
         run: ./scripts/monitor-stress.ps1 -Seconds 30 -Output .artifacts/validation/ci-monitor-stress.json
+      - name: Warmed headless monitor measurement
+        shell: pwsh
+        run: ./scripts/monitor-stress.ps1 -WarmupSeconds 30 -Seconds 120 -Output .artifacts/validation/ci-monitor-warm.json
       - name: Packaged replay stress
         shell: pwsh
         run: node scripts/stress.cjs dist/WindowsOpenIntelligence/Woi.Worker.exe .artifacts/validation/ci-stress.json 10 .artifacts/fixtures/net452/net.4.5.2.x64.etl .artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl

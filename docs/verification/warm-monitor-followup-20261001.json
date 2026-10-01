@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "utc": "2026-10-01T15:05:50.6748049Z",
+  "change": "Separate warm headless monitoring window from startup cost; bound stdio waits and preserve prior reports",
+  "localWarm": {
+    "schema": 2,
+    "success": true,
+    "requestedMeasurementSeconds": 120,
+    "warmupSeconds": 30,
+    "warmupElapsedSeconds": 30.1872896,
+    "durationSeconds": 120.036,
+    "totalElapsedSeconds": 150.223,
+    "logicalProcessors": 12,
+    "measurementIncludesStartup": false,
+    "startupAndWarmupCpuSeconds": 2.59375,
+    "totalCpuSeconds": 9.53125,
+    "measurementCpuSeconds": 6.9375,
+    "workerCpuPercentOfMachine": 0.482,
+    "startupInclusiveCpuPercentOfMachine": 0.529,
+    "cpuUnderOnePercent": true,
+    "snapshotCount": 150,
+    "totalSnapshots": 150,
+    "measuredSnapshots": 120,
+    "cumulativeMissedTickGapEpisodes": 1,
+    "measuredMissedTickGapEpisodes": 0,
+    "samplingFailures": 0,
+    "invalidIntervals": 0,
+    "retainedSeconds": 149.0774744,
+    "retainedProcessRows": 69647,
+    "estimatedRetainedBytes": 18100880,
+    "peakWorkerMiB": 52.78,
+    "peakMemoryIncludesStartupAndWarmup": true,
+    "samplingDiagnostics": {
+      "samplingMedianMs": 65.8049,
+      "samplingP95Ms": 352.7967,
+      "samplingMaximumMs": 1537.7895,
+      "missedTickGaps": 1
+    },
+    "latestUnreadableProcesses": 144,
+    "gapKinds": [
+      {
+        "kind": "MissedTicks",
+        "count": 1
+      },
+      {
+        "kind": "ProcessAccess",
+        "count": 1
+      },
+      {
+        "kind": "ProcessImageUnavailable",
+        "count": 1
+      }
+    ],
+    "limitations": [
+      "Shared-machine headless collector measurement; the environment is not an isolated idle workload.",
+      "Only boundary status queries are sent; periodic WPF polling, rendering, ETL analysis and privileged capture have separate costs.",
+      "Sampling diagnostics summarize retained history, while cumulative counters survive eviction.",
+      "A short warmed window does not establish two-hour, sleep/resume, physical-write or observer-effect acceptance."
+    ]
+  },
+  "localColdVerification": {
+    "schema": 2,
+    "success": true,
+    "requestedMeasurementSeconds": 10,
+    "warmupSeconds": 0,
+    "warmupElapsedSeconds": 0.0,
+    "durationSeconds": 10.151,
+    "totalElapsedSeconds": 10.151,
+    "logicalProcessors": 12,
+    "measurementIncludesStartup": true,
+    "startupAndWarmupCpuSeconds": null,
+    "totalCpuSeconds": 0.984375,
+    "measurementCpuSeconds": 0.984375,
+    "workerCpuPercentOfMachine": 0.808,
+    "startupInclusiveCpuPercentOfMachine": 0.808,
+    "cpuUnderOnePercent": true,
+    "snapshotCount": 10,
+    "totalSnapshots": 10,
+    "measuredSnapshots": 10,
+    "cumulativeMissedTickGapEpisodes": 0,
+    "measuredMissedTickGapEpisodes": 0,
+    "samplingFailures": 0,
+    "invalidIntervals": 0,
+    "retainedSeconds": 9.0921769,
+    "retainedProcessRows": 4548,
+    "estimatedRetainedBytes": 1181818,
+    "peakWorkerMiB": 35.87,
+    "peakMemoryIncludesStartupAndWarmup": true,
+    "samplingDiagnostics": {
+      "samplingMedianMs": 63.8085,
+      "samplingP95Ms": 81.4585,
+      "samplingMaximumMs": 81.4585,
+      "missedTickGaps": 0
+    },
+    "latestUnreadableProcesses": 145,
+    "gapKinds": [
+      {
+        "kind": "ProcessAccess",
+        "count": 1
+      }
+    ],
+    "limitations": [
+      "Shared-machine headless collector measurement; the environment is not an isolated idle workload.",
+      "Only boundary status queries are sent; periodic WPF polling, rendering, ETL analysis and privileged capture have separate costs.",
+      "Sampling diagnostics summarize retained history, while cumulative counters survive eviction.",
+      "A short warmed window does not establish two-hour, sleep/resume, physical-write or observer-effect acceptance."
+    ]
+  },
+  "priorReportPreservationVerified": true,
+  "benchmarkSyntaxVerified": true,
+  "ci": {
+    "legacyStartupInclusiveThirtySecondCheckRetained": true,
+    "additionalWarmupSeconds": 30,
+    "additionalMeasurementSeconds": 120,
+    "status": "pending current-source run"
+  },
+  "limitations": [
+    "The local warmed interval had zero measured gap episodes, but one cumulative episode occurred during warm-up; it is not represented as a clean entire session.",
+    "The warm run shared the host with the original native UI soak; it is not isolated idle, periodic WPF cost, physical writes or workload slowdown.",
+    "Earlier startup-inclusive server 1.161% CPU remains in the record.",
+    "The sampler, history bounds and application behavior are unchanged.",
+    "The original two-hour UI soak remains live and has cumulative gaps; terminal results are pending."
+  ]
+}
