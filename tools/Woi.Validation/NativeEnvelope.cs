@@ -26,6 +26,8 @@ internal static class NativeEnvelope
         var captureName = "WoiValidationEnvelope" + Guid.NewGuid().ToString("N");
         var clock = Stopwatch.StartNew();
         object? capture = null;
+        Guid providerId = Guid.Empty;
+        string? capturedEventName = null;
         try {
             if (TraceEventSession.IsElevated() != true)
                 throw new WoiException("ElevationRequired", "The development native ETL generator requires an administrator test runner.");
@@ -34,7 +36,8 @@ internal static class NativeEnvelope
             using (var recording = new TraceEventSession(captureName, source) {
                 BufferSizeMB=64, BufferQuantumKB=64, StopOnDispose=true
             }) {
-                recording.EnableProvider(provider.Guid, TraceEventLevel.Verbose);
+                providerId = provider.Guid;
+                recording.EnableProvider(providerId, TraceEventLevel.Verbose);
                 for (var i = 0; i < 200 && !provider.IsEnabled(); i++)
                     await Task.Delay(10, timeout.Token);
                 if (!provider.IsEnabled()) throw new IOException("The generated-event provider did not enable.");
@@ -55,7 +58,8 @@ internal static class NativeEnvelope
             long recorded = 0, sequenceSum = 0;
             using (var reference = new ETWTraceEventSource(source)) {
                 reference.Dynamic.All += data => {
-                    if (data.ProviderName != EnvelopeProvider.ProviderName || (int)data.ID != 1) return;
+                    if (data.ProviderGuid != providerId || (int)data.ID != 1) return;
+                    capturedEventName ??= data.EventName;
                     var sequence = Convert.ToInt32(data.PayloadByName("sequence"), CultureInfo.InvariantCulture);
                     if (sequence < 0 || sequence >= count || seen[sequence])
                         throw new IOException("A generated sequence was out of range or duplicated.");
@@ -108,7 +112,7 @@ internal static class NativeEnvelope
                 pages.Add(clock.Elapsed.TotalMilliseconds);
                 foreach (var value in page.Events) {
                     if (!indices.Add(value.Index)) throw new IOException("Paged native evidence repeated an index.");
-                    if (value.Evidence.Provider == EnvelopeProvider.ProviderName && value.Category == "Unsupported")
+                    if (value.Evidence.Provider == providerId.ToString() && value.Operation == capturedEventName && value.Category == "Unsupported")
                         selected ??= value;
                 }
                 if (!page.More) break;
@@ -116,7 +120,9 @@ internal static class NativeEnvelope
             }
             if (selected == null) throw new IOException("Generated evidence was not reachable.");
             var evidence = await client.Send<EvidenceDetail>("evidence", new { index=selected.Index }, timeout.Token);
-            if (!evidence.Payload.ContainsKey("sequence") || evidence.Observation.Evidence.TraceHash != sourceHash ||
+            if (!evidence.Payload.TryGetValue("sequence", out var recordedSequence) ||
+                !int.TryParse(recordedSequence, NumberStyles.Integer, CultureInfo.InvariantCulture, out var sequenceValue) ||
+                sequenceValue < 0 || sequenceValue >= count || !seen[sequenceValue] || evidence.Observation.Evidence.TraceHash != sourceHash ||
                 evidence.Observation.Index != selected.Index)
                 throw new IOException("Evidence did not preserve the generated payload and source coordinates.");
             var diagnostics = await client.Send<JsonElement>("diagnostics", new { }, timeout.Token);
