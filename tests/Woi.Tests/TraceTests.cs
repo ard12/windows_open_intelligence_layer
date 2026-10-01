@@ -81,6 +81,32 @@ public sealed class TraceTests(ITestOutputHelper output)
             Assert.Equal(hash,Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))));
         } finally {if(Directory.Exists(cache))Directory.Delete(cache,true);}
     }
+    [FixtureFact] public void RawIdleCpuSamplesNeedNoAttributionOrNormalizationAllocations()
+    {
+        var path=Path.Combine(Environment.GetEnvironmentVariable("WOI_FIXTURES")!,"net452","net.4.5.2.x64.etl");
+        var cache=Path.Combine(Path.GetTempPath(),"woi-idle-page-"+Guid.NewGuid().ToString("N"));
+        try {
+            var session=EtlImporter.Import(path,cache,null,default);
+            using var reader=new EtlReader(session);
+            using var raw=new ETWTraceEventSource(path);
+            long idle=0,allocated=0;
+            raw.Kernel.PerfInfoSample+=data=>{
+                if(data.ThreadID!=0 || data.NonProcess)return;
+                var before=GC.GetAllocatedBytesForCurrentThread();
+                var observation=reader.Normalize(data,true);
+                allocated+=GC.GetAllocatedBytesForCurrentThread()-before;
+                Assert.Null(observation);
+                idle++;
+            };
+            raw.Process();
+            Assert.True(idle>1000,"The fixture must exercise a substantial idle prefix.");
+            Assert.Equal(0,allocated);
+            var page=reader.QueryEvents(new(0,session.DurationMs,Category:"CPU"),default);
+            Assert.Equal(500,page.Events.Count);
+            Assert.All(page.Events,x=>Assert.True(x.Tid!=0 || x.ProcessId==null));
+            Assert.Equal(501,reader.LastEventPageProfile!.NormalizedRecords); // Busy page plus lookahead.
+        } finally {if(Directory.Exists(cache))Directory.Delete(cache,true);}
+    }
     [Fact] public void CancellationAndDamagedInputNeverPublishOrChangeSource()
     {
         var root=Path.Combine(Path.GetTempPath(),"woi-failure-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);

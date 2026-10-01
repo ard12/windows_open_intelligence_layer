@@ -145,10 +145,21 @@ public sealed class HardeningTests
         var session=EtlImporter.Import(Fixture,temp.Root,null,default);
         using var reader=new EtlReader(session);
         var first=reader.QueryEvents(new(0,session.DurationMs),default);
+        var profile=Assert.IsType<EventPageQueryProfile>(reader.LastEventPageProfile);
+        Assert.True(profile.Completed);Assert.False(profile.ContinuedIterator);Assert.False(profile.ReusedLookahead);
+        Assert.Equal(first.Events.Count,profile.ReturnedRecords);
+        Assert.True(profile.NormalizedRecords>=first.Events.Count);
+        Assert.True(profile.VisitedRecords>=profile.NormalizedRecords);
+        Assert.True(profile.AllocatedBytes>0);
+        Assert.InRange(profile.NormalizationMilliseconds,0,profile.TotalMilliseconds);
         long? cursor=first.NextCursor;var all=first.Events.Select(x=>x.Index).ToHashSet();
         for(int i=0;i<50;i++) {
             var page=reader.QueryEvents(new(0,session.DurationMs,Cursor:cursor),default);
             Assert.Equal(500,page.Events.Count);
+            profile=Assert.IsType<EventPageQueryProfile>(reader.LastEventPageProfile);
+            Assert.True(profile.Completed);Assert.True(profile.ContinuedIterator);Assert.True(profile.ReusedLookahead);
+            Assert.Equal(page.Events.Count,profile.ReturnedRecords);
+            Assert.True(profile.NormalizedRecords>=page.Events.Count-1); // One immutable lookahead is reused.
             Assert.All(page.Events,x=>Assert.True(all.Add(x.Index)));
             cursor=page.NextCursor;
         }
@@ -159,7 +170,10 @@ public sealed class HardeningTests
         Assert.All(next.Events,x=>{Assert.Equal("CPU",x.Category);Assert.True(x.Index>replay.NextCursor);});
         using var cts=new CancellationTokenSource();cts.Cancel();
         Assert.Throws<OperationCanceledException>(()=>reader.QueryEvents(new(0,session.DurationMs),cts.Token));
+        profile=Assert.IsType<EventPageQueryProfile>(reader.LastEventPageProfile);
+        Assert.False(profile.Completed);Assert.Equal(0,profile.ReturnedRecords);Assert.Equal(0,profile.VisitedRecords);
         Assert.Equal(first.Events,reader.QueryEvents(new(0,session.DurationMs),default).Events);
+        Assert.False(reader.LastEventPageProfile!.ContinuedIterator);
         Assert.Throws<WoiException>(()=>reader.QueryEvents(new(0,session.DurationMs,Cursor:-1),default));
         Assert.Throws<WoiException>(()=>reader.QueryEvents(new(0,session.DurationMs,Cursor:session.IndexedEvents),default));
     }

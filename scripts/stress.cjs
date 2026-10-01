@@ -51,6 +51,10 @@ const p95=values=>values.length?[...values].sort((a,b)=>a-b)[Math.ceil(values.le
             assert(contributors.some(x=>x.cpuSamples>0||x.diskBytes>0),'No resource contributors');
             const metrics=await timed('metrics',interval,'metrics');assert(metrics.length<=2000);
             let page=await timed('events',{...interval,category:'CPU',limit:500},'firstPage');
+            const firstPageMs=samples.firstPage.at(-1);
+            const firstPageProfile=(await worker.request('diagnostics',{})).eventPageQuery??null;
+            assert(firstPageProfile?.completed,'Event-page diagnostics are missing or incomplete');
+            assert.equal(firstPageProfile.returnedRecords,page.events.length);
             const selected=page.events[0];assert(selected);
             const detail=await timed('evidence',{index:selected.index},'evidence');
             assert.equal(detail.observation.processId,selected.processId);assert.equal(detail.observation.index,selected.index);
@@ -73,7 +77,7 @@ const p95=values=>values.length?[...values].sort((a,b)=>a-b)[Math.ceil(values.le
             const report=JSON.parse(fs.readFileSync(destination,'utf8'));assert.equal(report.session.sourceHash,hashes[index]);assert(report.contributors.length>0);
             const diagnostics=await worker.request('diagnostics',{});peak=Math.max(peak,diagnostics.peakWorkingSetBytes);
             assert(peak<2147483648,'Worker exceeded 2 GiB during repeated replay');
-            runs.push({iteration:i,fullContributorMs,partialContributorMs,fullContributorProfile,partialContributorProfile,sourceFile:path.basename(source),events:session.indexedEvents,cpuSamples:contributors.reduce((sum,x)=>sum+(x.cpuSamples||0),0),diskBytes:contributors.reduce((sum,x)=>sum+(x.diskBytes||0),0),pages,workingSetBytes:diagnostics.workingSetBytes});
+            runs.push({iteration:i,fullContributorMs,partialContributorMs,fullContributorProfile,partialContributorProfile,firstPageMs,firstPageProfile,sourceFile:path.basename(source),events:session.indexedEvents,cpuSamples:contributors.reduce((sum,x)=>sum+(x.cpuSamples||0),0),diskBytes:contributors.reduce((sum,x)=>sum+(x.diskBytes||0),0),pages,workingSetBytes:diagnostics.workingSetBytes});
             if(i%5===4){worker.process.kill();worker=launch();restarts++;}
             console.log('Stress iteration '+(i+1)+'/'+iterations+' passed: '+path.basename(source)+' contributors full='+fullContributorMs.toFixed(1)+' ms, partial='+partialContributorMs.toFixed(1)+' ms');
         }

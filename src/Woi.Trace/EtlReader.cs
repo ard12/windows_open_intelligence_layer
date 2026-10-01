@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.Diagnostics.Symbols;
@@ -8,7 +9,7 @@ using Woi.Core;
 
 namespace Woi.Trace;
 
-public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
+public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics, IEventQueryDiagnostics
 {
     private readonly TraceLog log;
     private readonly ImportMetadata metadata;
@@ -21,6 +22,7 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
     private EventQuery? activePageQuery;
     private long? expectedCursor;
     internal long PagingRecordsVisited { get; private set; }
+    public EventPageQueryProfile? LastEventPageProfile { get; private set; }
     public long ContributorRecordsVisited { get; private set; }
     public TraceSession Session { get; }
     public IReadOnlyList<EntityLifetime> Entities { get; }
@@ -73,6 +75,9 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
     }
     public Observation? Normalize(TraceEvent data, bool includeUnsupported = false, bool resolveTargets = true)
     {
+        // The global CPU-weight index already retained idle predecessor context.
+        // Idle samples yield no observation, so avoid identity/path work for them.
+        if (data is SampledProfileTraceData { ThreadID: 0, NonProcess: false }) return null;
         var category = Category(data);
         if (category == "Unsupported" && !includeUnsupported) return null;
         string? processId = null, threadId = null;
@@ -92,7 +97,7 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
         double? duration = null, memory = null, cpuWeight = null;
         if (data is SampledProfileTraceData sample) {
             if (sample.NonProcess) { processId = null; threadId = null; name = "Unattributed interrupt / DPC activity"; }
-            if (sample.ThreadID == 0 && !sample.NonProcess) return null; // Idle samples are not busy CPU.
+            // Idle samples were rejected before attribution; interrupt/DPC samples remain.
             cpuWeight = cpuWeights.Get((long)data.EventIndex);
             if (resolveTargets) target = "Instruction 0x" + sample.InstructionPointer.ToString("x");
         }
@@ -170,6 +175,16 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
             throw new WoiException("EntityMissing","The requested process lifetime is unavailable.");
         query=query with {EndMs=Math.Min(query.EndMs,Session.DurationMs)};
         var key=query with {Cursor=null};
+        var started=Stopwatch.GetTimestamp();
+        var allocatedBefore=GC.GetAllocatedBytesForCurrentThread();
+        var visitedBefore=PagingRecordsVisited;
+        var normalizationTicks=0L;
+        var normalized=0;
+        var returned=0;
+        var continued=pageIterator!=null && activePageQuery==key && query.Cursor==expectedCursor;
+        var reusedLookahead=continued && pageLookahead!=null;
+        var completed=false;
+        EventPage Complete(EventPage value) { returned=value.Events.Count;completed=true;return value; }
         try {
             token.ThrowIfCancellationRequested();
             if(pageIterator==null || activePageQuery!=key || query.Cursor!=expectedCursor) {
@@ -186,19 +201,30 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics
                 var data=pageIterator.Current;
                 if((long)data.EventIndex<=(query.Cursor??-1) || data.TimeStampRelativeMSec<query.StartMs || data.TimeStampRelativeMSec>=query.EndMs)continue;
                 if(!string.IsNullOrWhiteSpace(query.Category) && Category(data)!=query.Category)continue;
-                var value=Normalize(data,true);
+                if(data is SampledProfileTraceData { ThreadID: 0, NonProcess: false })continue;
+                var normalizationStarted=Stopwatch.GetTimestamp();
+                Observation? value;
+                try { normalized++;value=Normalize(data,true); }
+                finally { normalizationTicks+=Stopwatch.GetTimestamp()-normalizationStarted; }
                 if(value==null || (query.ProcessId!=null && value.ProcessId!=query.ProcessId) ||
                     (!string.IsNullOrWhiteSpace(query.Category) && value.Category!=query.Category) ||
                     (!string.IsNullOrWhiteSpace(query.Operation) && !value.Operation.Contains(query.Operation,StringComparison.OrdinalIgnoreCase)) ||
                     (!string.IsNullOrWhiteSpace(query.Target) && !value.Target.Contains(query.Target,StringComparison.OrdinalIgnoreCase)))continue;
                 if(result.Count==query.Limit) {
                     pageLookahead=value;expectedCursor=result[^1].Index;
-                    return new(result,expectedCursor,true);
+                    return Complete(new(result,expectedCursor,true));
                 }
                 result.Add(value);
             }
-            ResetPaging();return new(result,null,false);
+            ResetPaging();return Complete(new(result,null,false));
         } catch {ResetPaging();throw;}
+        finally {
+            var totalMs=Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+            var normalizationMs=normalizationTicks*1000d/Stopwatch.Frequency;
+            LastEventPageProfile=new(totalMs,normalizationMs,Math.Max(0,totalMs-normalizationMs),
+                PagingRecordsVisited-visitedBefore,normalized,returned,continued,reusedLookahead,completed,
+                GC.GetAllocatedBytesForCurrentThread()-allocatedBefore);
+        }
     }
     private void ResetPaging()
     {
