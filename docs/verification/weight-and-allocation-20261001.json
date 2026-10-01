@@ -243,7 +243,7 @@
     "savedComparison": true,
     "indexedEvents": 418378
   },
-  "memoryGate": "Reduced-copy 30-minute soak still running; the previous 312.59 MiB failed gate is retained.",
+  "memoryGate": "Reduced-copy 30-minute soak completed without gaps; combined maximum 308.75 MiB still fails the 300 MiB target. See analysis12-followup-20261001.json.",
   "limitations": [
     "Per-processor 110% long-gap fallback is an empirical match to the named native parser on these fixtures, not a promise for all traces or OS versions.",
     "CPU estimates stay unavailable without recorded sampling intervals or valid spacing. Full-trace and partial comparisons use the same eligibility and half-open timestamp rules.",
