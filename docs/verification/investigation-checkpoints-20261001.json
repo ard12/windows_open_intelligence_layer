@@ -1,0 +1,357 @@
+{
+  "schema": 1,
+  "date": "2026-10-01",
+  "version": "0.4.0-preview.1",
+  "os": "Windows 10 Pro 19045 x64",
+  "logicalProcessors": 12,
+  "approximateMemoryGiB": 32,
+  "tests": {
+    "failed": 0,
+    "compilerWarnings": 0,
+    "skipped": 0,
+    "passed": 89,
+    "lockedRestore": true
+  },
+  "packagedSmoke": {
+    "success": true,
+    "workerRecoveryVerified": true,
+    "monitorVerified": true,
+    "investigationVerified": true,
+    "savedComparisonVerified": true,
+    "observedLifetimes": 254,
+    "indexedEvents": 418378
+  },
+  "desktopSoak": {
+    "success": true,
+    "durationSeconds": 60.1013608,
+    "peakUiMiB": 181.1171875,
+    "peakMonitorMiB": 48.11328125,
+    "maximumSampledCombinedMiB": 223.8515625,
+    "maximumSampledTotalAppMiB": 247.359375,
+    "uiCpuPercentOfMachine": 2.3614620608279693,
+    "monitorCpuPercentOfMachine": 0.47012593321070584,
+    "monitorMemoryTargetMet": true,
+    "uiPlusMonitorMemoryTargetMet": true,
+    "finalView": {
+      "snapshotCount": 60,
+      "retainedSeconds": 59.0528215,
+      "retainedProcessRows": 16569,
+      "estimatedRetainedBytes": 4330594,
+      "diagnostics": {
+        "samplingMedianMs": 47.7719,
+        "samplingP95Ms": 68.2279,
+        "samplingMaximumMs": 77.0116,
+        "missedTickGaps": 0
+      }
+    },
+    "limitations": [
+      "Local desktop soak, not independent Windows 11 or clean-machine validation.",
+      "CPU values include startup; memory samples occur every five seconds and may miss a transient combined peak.",
+      "Background/hidden-window rendering can differ from active interaction.",
+      "Workload slowdown, physical disk-write overhead, sleep/resume and field usefulness are separate gates."
+    ]
+  },
+  "observerBenchmarks": [
+    {
+      "name": "cold-fixed",
+      "eligibleExploratoryRun": true,
+      "note": "Failed slowdown target; preserve.",
+      "trials": 3,
+      "medianCpuWorkOffMs": 3622.0787,
+      "medianCpuWorkOnMs": 3967.0425999999998,
+      "cpuWorkDifferencePercent": 9.523920614977243,
+      "taskDifferencePercent": 9.072299505423565,
+      "cpuRangeOffMs": [
+        3609.2786,
+        3982.3903
+      ],
+      "cpuRangeOnMs": [
+        3813.2781,
+        4269.7353
+      ],
+      "monitorCases": [
+        {
+          "trial": 0,
+          "peakMonitorMiB": 39.203125,
+          "monitorCpuPercentOfMachine": 0.6661876620536891,
+          "monitorSnapshotCount": 7,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 36.3787,
+            "samplingP95Ms": 1777.6537,
+            "samplingMaximumMs": 1777.6537,
+            "missedTickGaps": 1
+          }
+        },
+        {
+          "trial": 1,
+          "peakMonitorMiB": 38.66015625,
+          "monitorCpuPercentOfMachine": 0.5538097328643177,
+          "monitorSnapshotCount": 7,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 49.6201,
+            "samplingP95Ms": 902.8429,
+            "samplingMaximumMs": 902.8429,
+            "missedTickGaps": 0
+          }
+        },
+        {
+          "trial": 2,
+          "peakMonitorMiB": 39.1796875,
+          "monitorCpuPercentOfMachine": 0.5752955207867194,
+          "monitorSnapshotCount": 7,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 35.8335,
+            "samplingP95Ms": 1574.9659,
+            "samplingMaximumMs": 1574.9659,
+            "missedTickGaps": 1
+          }
+        }
+      ],
+      "localArtifact": ".artifacts/validation/observation-fixed-result-20261001/result.json"
+    },
+    {
+      "name": "warm-before-enumeration",
+      "eligibleExploratoryRun": true,
+      "note": "Exploratory shared-machine run; long sampling tails.",
+      "trials": 3,
+      "medianCpuWorkOffMs": 2967.0781,
+      "medianCpuWorkOnMs": 2898.6596,
+      "cpuWorkDifferencePercent": -2.3059217753654715,
+      "taskDifferencePercent": 0.34623404442648553,
+      "cpuRangeOffMs": [
+        2929.6229,
+        2969.5998999999997
+      ],
+      "cpuRangeOnMs": [
+        2869.6086,
+        2902.8355
+      ],
+      "monitorCases": [
+        {
+          "trial": 0,
+          "peakMonitorMiB": 39.921875,
+          "monitorCpuPercentOfMachine": 0.4690405493900907,
+          "monitorSnapshotCount": 15,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 42.1182,
+            "samplingP95Ms": 2753.3223,
+            "samplingMaximumMs": 2753.3223,
+            "missedTickGaps": 1
+          }
+        },
+        {
+          "trial": 1,
+          "peakMonitorMiB": 39.8828125,
+          "monitorCpuPercentOfMachine": 0.3926161972134904,
+          "monitorSnapshotCount": 15,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 42.6693,
+            "samplingP95Ms": 2745.5405,
+            "samplingMaximumMs": 2745.5405,
+            "missedTickGaps": 1
+          }
+        },
+        {
+          "trial": 2,
+          "peakMonitorMiB": 39.84765625,
+          "monitorCpuPercentOfMachine": 0.34450831709402524,
+          "monitorSnapshotCount": 15,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 41.4733,
+            "samplingP95Ms": 2748.2015,
+            "samplingMaximumMs": 2748.2015,
+            "missedTickGaps": 1
+          }
+        }
+      ],
+      "localArtifact": ".artifacts/validation/observation-warm-20261001/result.json"
+    },
+    {
+      "name": "enumeration-interrupted",
+      "eligibleExploratoryRun": false,
+      "note": "Long pause invalidated first trial; exclude aggregate from acceptance.",
+      "trials": 3,
+      "medianCpuWorkOffMs": 3733.78,
+      "medianCpuWorkOnMs": 3721.6643,
+      "cpuWorkDifferencePercent": -0.3244888557976222,
+      "taskDifferencePercent": 4.751867630636664,
+      "cpuRangeOffMs": [
+        2931.4022,
+        4036.2165999999997
+      ],
+      "cpuRangeOnMs": [
+        3564.2942,
+        6111.438099999999
+      ],
+      "monitorCases": [
+        {
+          "trial": 0,
+          "peakMonitorMiB": 37.72265625,
+          "monitorCpuPercentOfMachine": 0.0007082521777464244,
+          "monitorSnapshotCount": 19,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 110.9651,
+            "samplingP95Ms": 3529.6334,
+            "samplingMaximumMs": 3529.6334,
+            "missedTickGaps": 2
+          }
+        },
+        {
+          "trial": 1,
+          "peakMonitorMiB": 35.578125,
+          "monitorCpuPercentOfMachine": 0.5630843468212732,
+          "monitorSnapshotCount": 14,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 68.9923,
+            "samplingP95Ms": 2542.8725,
+            "samplingMaximumMs": 2542.8725,
+            "missedTickGaps": 1
+          }
+        },
+        {
+          "trial": 2,
+          "peakMonitorMiB": 35.76171875,
+          "monitorCpuPercentOfMachine": 0.44148177370427166,
+          "monitorSnapshotCount": 15,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 52.9497,
+            "samplingP95Ms": 1727.144,
+            "samplingMaximumMs": 1727.144,
+            "missedTickGaps": 1
+          }
+        }
+      ],
+      "localArtifact": ".artifacts/validation/observation-enumeration-20261001/result.json"
+    },
+    {
+      "name": "fresh-warm",
+      "eligibleExploratoryRun": true,
+      "note": "Warm-up guard active; measurement guard added afterward. Shared-machine variability.",
+      "trials": 3,
+      "medianCpuWorkOffMs": 3293.2358,
+      "medianCpuWorkOnMs": 3063.9528999999998,
+      "cpuWorkDifferencePercent": -6.962237565861518,
+      "taskDifferencePercent": -7.497790796007431,
+      "cpuRangeOffMs": [
+        3178.4519,
+        3373.8518
+      ],
+      "cpuRangeOnMs": [
+        2943.2891999999997,
+        3096.6227999999996
+      ],
+      "monitorCases": [
+        {
+          "trial": 0,
+          "peakMonitorMiB": 35.29296875,
+          "monitorCpuPercentOfMachine": 0.42777373487546727,
+          "monitorSnapshotCount": 15,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 42.2739,
+            "samplingP95Ms": 1043.2239,
+            "samplingMaximumMs": 1043.2239,
+            "missedTickGaps": 0
+          }
+        },
+        {
+          "trial": 1,
+          "peakMonitorMiB": 35.23046875,
+          "monitorCpuPercentOfMachine": 0.42385089661056,
+          "monitorSnapshotCount": 14,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 42.0595,
+            "samplingP95Ms": 955.364,
+            "samplingMaximumMs": 955.364,
+            "missedTickGaps": 0
+          }
+        },
+        {
+          "trial": 2,
+          "peakMonitorMiB": 35.5390625,
+          "monitorCpuPercentOfMachine": 0.4641305836538584,
+          "monitorSnapshotCount": 15,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 40.9254,
+            "samplingP95Ms": 1018.5131,
+            "samplingMaximumMs": 1018.5131,
+            "missedTickGaps": 0
+          }
+        }
+      ],
+      "localArtifact": ".artifacts/validation/observation-guarded-20261001/result.json"
+    },
+    {
+      "name": "strict-final-script",
+      "eligibleExploratoryRun": true,
+      "note": "Strict variables and both elapsed guards active; two exploratory trials.",
+      "trials": 2,
+      "medianCpuWorkOffMs": 3576.1306999999997,
+      "medianCpuWorkOnMs": 3258.6117,
+      "cpuWorkDifferencePercent": -8.878842151938127,
+      "taskDifferencePercent": -9.102618177461164,
+      "cpuRangeOffMs": [
+        3517.0217,
+        3635.2397
+      ],
+      "cpuRangeOnMs": [
+        3221.0436,
+        3296.1798
+      ],
+      "monitorCases": [
+        {
+          "trial": 0,
+          "peakMonitorMiB": 36.36328125,
+          "monitorCpuPercentOfMachine": 0.46710483664390107,
+          "monitorSnapshotCount": 15,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 49.2753,
+            "samplingP95Ms": 987.9062,
+            "samplingMaximumMs": 987.9062,
+            "missedTickGaps": 0
+          }
+        },
+        {
+          "trial": 1,
+          "peakMonitorMiB": 36.19140625,
+          "monitorCpuPercentOfMachine": 0.43139609086256353,
+          "monitorSnapshotCount": 15,
+          "samplingDiagnostics": {
+            "samplingMedianMs": 51.114,
+            "samplingP95Ms": 813.5598,
+            "samplingMaximumMs": 813.5598,
+            "missedTickGaps": 0
+          }
+        }
+      ],
+      "localArtifact": ".artifacts/validation/observation-final-20261001/result.json"
+    }
+  ],
+  "invalidInitialWorkload": "Earlier 26ms CPU phase was not observable fixed work; excluded and retained locally.",
+  "nativeCapture": {
+    "attemptedProfile": "Resources",
+    "otherProfilePassed": false,
+    "lifecycleGate": "open",
+    "etlCreated": false,
+    "status": "elevation_canceled"
+  },
+  "independentUsers": {
+    "completedSessions": 0,
+    "status": "not_started",
+    "ledger": "experiment-results.json"
+  },
+  "windows11": {
+    "independentMachines": 0,
+    "status": "not_tested"
+  },
+  "openGates": [
+    "Native profile and lifecycle validation",
+    "CPU weight parity",
+    "ETL query tails and maximum envelope",
+    "Filled-history memory and observer cost",
+    "Two-hour sessions and physical writes",
+    "Clean Windows 11 use",
+    "Independent held-out and participant evidence",
+    "Stable signing/install trust review"
+  ],
+  "caveat": "Implementation and local smoke evidence do not close independent-use or stable-release gates. Negative benchmark changes do not imply causal performance improvement."
+}

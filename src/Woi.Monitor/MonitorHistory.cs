@@ -7,7 +7,7 @@ public record RawProcess(int Pid, int SessionId, long CreationFileTime, string N
     long CpuTime100ns, ulong? ReadBytes, ulong? WriteBytes, long? PrivateBytes, long? WorkingSetBytes);
 public record RawSnapshot(long Tick, DateTime Utc, long? AvailablePhysicalBytes, long? CommitBytes,
     int EnumeratedProcesses, int UnreadableProcesses, IReadOnlyList<RawProcess> Processes,
-    IReadOnlyList<ObservationGap> Gaps);
+    IReadOnlyList<ObservationGap> Gaps, double? SamplingDurationMs = null);
 public interface IRawSampler { RawSnapshot Sample(); }
 
 public sealed class SnapshotCalculator(int logicalProcessors)
@@ -55,7 +55,7 @@ public sealed class SnapshotCalculator(int logicalProcessors)
         double? totalWrite = rows.Any(x => x.WriteBytesPerSecond != null) ? rows.Sum(x => x.WriteBytesPerSecond ?? 0) : null;
         // This is accounted process CPU, not a machine-wide utilization counter.
         return new(raw.Tick, raw.Utc, validInterval ? elapsed : null, knownCpu > 0 ? systemCpu : null, totalRead, totalWrite, raw.AvailablePhysicalBytes,
-            raw.CommitBytes, raw.EnumeratedProcesses, raw.UnreadableProcesses, rows, gaps);
+            raw.CommitBytes, raw.EnumeratedProcesses, raw.UnreadableProcesses, rows, gaps, raw.SamplingDurationMs);
     }
     private static double? Rate(ulong? current, ulong? prior, double elapsed, DateTime utc, int pid,
         string name, List<ObservationGap> gaps)
@@ -88,6 +88,7 @@ public sealed class SnapshotRing(int maximumSnapshots = 3600, int maximumRows = 
             estimatedBytes -= Estimate(removed);
         }
     }
+    public IReadOnlyList<MonitorSnapshot> Snapshots() => snapshots.ToArray();
     public IReadOnlyList<MonitorLifetime> Lifetimes(int limit = 500)
     {
         var values = snapshots.ToArray();
@@ -114,16 +115,19 @@ public sealed class SnapshotRing(int maximumSnapshots = 3600, int maximumRows = 
         public int Count { get; set; }
     }
     private static long Estimate(MonitorSnapshot value) =>
-        160L + value.Processes.Count * 192L + value.Gaps.Count * 160L;
+        160L + value.Processes.Sum(x => 192L + 2L * (x.Name.Length + x.LifetimeId.Length)) +
+        value.Gaps.Sum(x => 80L + 2L * (x.Kind.Length + x.Detail.Length));
     public MonitorView View(DateTime startedUtc, IReadOnlyList<MonitorMark> marks)
     {
         var values = snapshots.ToArray();
         var latest = values.LastOrDefault();
         var retained = values.Length < 2 ? 0 :
             (values[^1].MonotonicTick - values[0].MonotonicTick) / (double)Stopwatch.Frequency;
+        var durations = values.Select(x => x.SamplingDurationMs).OfType<double>().Order().ToArray();
+        double? Percentile(double p) => durations.Length > 0 ? durations[Math.Max(0, (int)Math.Ceiling(durations.Length * p) - 1)] : null;
         return new(startedUtc, latest?.Utc, retained, values.Length, rows, estimatedBytes,
             Downsample(values.Select(x => new MonitorPoint(x.Utc, x.IntervalSeconds, x.CpuPercent, x.ReadBytesPerSecond, x.WriteBytesPerSecond, x.AvailablePhysicalBytes,
-                x.CommitBytes, x.EnumeratedProcesses, x.UnreadableProcesses)).ToArray()),
+                x.CommitBytes, x.EnumeratedProcesses, x.UnreadableProcesses, x.MonotonicTick, x.SamplingDurationMs)).ToArray()),
             latest?.Processes.OrderByDescending(x => x.CpuPercent ?? -1)
                 .ThenByDescending(x => x.PrivateBytes ?? -1).Take(20).ToArray() ?? [],
             marks.Where(x => values.Length > 0 && x.MonotonicTick >= values[0].MonotonicTick).ToArray(),
@@ -131,7 +135,8 @@ public sealed class SnapshotRing(int maximumSnapshots = 3600, int maximumRows = 
                 var latest = group.Last();
                 return new ObservationGap(latest.Utc, latest.Kind,
                     $"{group.Count()} occurrence(s) in retained history; latest: {latest.Detail}");
-            }).OrderByDescending(x => x.Utc).Take(10).ToArray());
+            }).OrderByDescending(x => x.Utc).Take(10).ToArray(), Diagnostics: new(Percentile(.5), Percentile(.95), Percentile(1),
+                values.Sum(x => x.Gaps.Count(g => g.Kind == "MissedTicks"))));
     }
     private static IReadOnlyList<MonitorPoint> Downsample(IReadOnlyList<MonitorPoint> values)
     {
@@ -150,6 +155,6 @@ public sealed class SnapshotRing(int maximumSnapshots = 3600, int maximumRows = 
             if (ioPeak != group[0] && ioPeak != cpuPeak && ioPeak != memoryLow) result.Add(ioPeak);
         }
         if (result[^1] != values[^1]) result.Add(values[^1]);
-        return result.OrderBy(x => x.Utc).Take(2000).ToArray();
+        return result.OrderBy(x => x.MonotonicTick).Take(2000).ToArray();
     }
 }

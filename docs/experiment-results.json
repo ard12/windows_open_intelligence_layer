@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "protocol": "experiment.md",
+  "status": "not_started",
+  "decision": "pending_evidence",
+  "sessions": [],
+  "heldOutScenarios": [],
+  "independentWindows11Machines": [],
+  "realInvestigationsChangingNextStep": [],
+  "supportAndMaintenance": [],
+  "review": null
+}

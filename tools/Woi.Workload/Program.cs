@@ -3,19 +3,23 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 
-if(args.Length!=1){Console.Error.WriteLine("Usage: Woi.Workload output-directory");return 2;}
-var directory=Path.GetFullPath(args[0]);Directory.CreateDirectory(directory);
+var fixedWork = args.Length == 2 && args[0] == "--fixed-work";
+if(args.Length!=1 && !fixedWork){Console.Error.WriteLine("Usage: Woi.Workload [--fixed-work] output-directory");return 2;}
+var directory=Path.GetFullPath(args[fixedWork ? 1 : 0]);Directory.CreateDirectory(directory);
 var clock=Stopwatch.StartNew();List<object> phases=[];
+var cpuWorkers=Math.Max(1,Environment.ProcessorCount-1);
+var cpuResults=new double[cpuWorkers];
 async Task Phase(string name,Func<Task> run)
 {
     var start=clock.Elapsed.TotalMilliseconds;var utc=DateTime.UtcNow;
     await run();phases.Add(new{name,startMs=start,endMs=clock.Elapsed.TotalMilliseconds,startUtc=utc,endUtc=DateTime.UtcNow});
 }
-await Phase("idle before incident",()=>Task.Delay(4000));
-await Phase("CPU burst",()=>Task.Run(()=>Parallel.For(0,Math.Max(1,Environment.ProcessorCount-1),worker=>{
+await Phase("idle before incident",()=>Task.Delay(fixedWork ? 0 : 4000));
+await Phase("CPU burst",()=>Task.Run(()=>Parallel.For(0,cpuWorkers,worker=>{
     var timer=Stopwatch.StartNew();double result=worker+1;
-    while(timer.Elapsed.TotalSeconds<6)for(int i=0;i<100000;i++)result=Math.Sqrt(result+13.123);
-    GC.KeepAlive(result);
+    if(fixedWork) { for(int i=0;i<500_000_000;i++) result=Math.Sqrt(result+13.123); }
+    else while(timer.Elapsed.TotalSeconds<6)for(int i=0;i<100000;i++)result=Math.Sqrt(result+13.123);
+    cpuResults[worker]=result;
 })));
 await Phase("logical file writes and reads",async()=>{
     var path=Path.Combine(directory,"controlled-io.bin");byte[] buffer=new byte[1024*1024];Random.Shared.NextBytes(buffer);
@@ -36,7 +40,7 @@ await Phase("loopback TCP transfer",async()=>{
 });
 await Phase("memory allocation and resident hold",async()=>{
     var memory=new byte[128*1024*1024];for(int i=0;i<memory.Length;i+=4096)memory[i]=1;
-    await Task.Delay(5000);GC.KeepAlive(memory);
+    await Task.Delay(fixedWork ? 200 : 5000);GC.KeepAlive(memory);
 });
 await Phase("process churn",async()=>{
     for(int i=0;i<12;i++){
@@ -44,9 +48,9 @@ await Phase("process churn",async()=>{
         await process.WaitForExitAsync();
     }
 });
-await Phase("idle after incident",()=>Task.Delay(4000));
+await Phase("idle after incident",()=>Task.Delay(fixedWork ? 0 : 4000));
 File.WriteAllText(Path.Combine(directory,"workload.json"),JsonSerializer.Serialize(new{
-    schema=1,pid=Environment.ProcessId,logicalProcessors=Environment.ProcessorCount,completedUtc=DateTime.UtcNow,
+    schema=1,fixedWork,cpuIterationsPerWorker=fixedWork ? 500_000_000 : (int?)null,cpuWorkers,cpuResultChecksum=cpuResults.Sum(),pid=Environment.ProcessId,logicalProcessors=Environment.ProcessorCount,completedUtc=DateTime.UtcNow,
     durationMs=clock.Elapsed.TotalMilliseconds,phases,
     expected=new{fileWriteBytes=64*1024*1024,fileReadBytes=64*1024*1024,loopbackPayloadBytes=8*1024*1024,memoryAllocationBytes=128*1024*1024,childProcesses=12}
 },new JsonSerializerOptions{WriteIndented=true}));

@@ -77,11 +77,29 @@ public sealed class ProtocolTests
         Assert.Equal("result",(await worker.Result("export")).GetProperty("kind").GetString());
         Assert.Contains("not raw ETL offsets",File.ReadAllText(report));
     }
+    [Fact]
+    public async Task MalformedMonitorMethodDoesNotCrashAndStopExitsCleanly()
+    {
+        using var worker = new Harness(monitor: true);
+        await worker.Send("missing", "", new {});
+        Assert.Equal("ProtocolError", (await worker.Result("missing")).GetProperty("code").GetString());
+        await worker.Send("sql", "sql", new { query = "SELECT * FROM document" });
+        Assert.Equal("UnknownMethod", (await worker.Result("sql")).GetProperty("code").GetString());
+        await Task.Delay(1100);
+        await worker.Send("status", "monitor.status", new {});
+        var status = (await worker.Result("status")).GetProperty("result");
+        Assert.True(status.GetProperty("snapshotCount").GetInt32() >= 1);
+        Assert.Equal("WindowsApiSnapshot", status.GetProperty("descriptor").GetProperty("kind").GetString());
+        await worker.Send("stop", "monitor.stop", new {});
+        Assert.True((await worker.Result("stop")).GetProperty("result").GetProperty("stopped").GetBoolean());
+        await worker.Process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(0, worker.Process.ExitCode);
+    }
     private sealed class Harness:IDisposable
     {
         public Process Process{get;}
         public string Cache{get;}=Path.Combine(Path.GetTempPath(),"woi-rpc-"+Guid.NewGuid().ToString("N"));
-        public Harness() {
+        public Harness(bool monitor = false) {
             Directory.CreateDirectory(Cache);
             var sdk=new[]{Path.Combine(Root,".tools","dotnet","dotnet.exe"),
                 Environment.GetEnvironmentVariable("DOTNET_HOST_PATH"),
@@ -90,7 +108,11 @@ public sealed class ProtocolTests
             var configuration=AppContext.BaseDirectory.Contains(Path.DirectorySeparatorChar+"Release"+Path.DirectorySeparatorChar)?"Release":"Debug";
             var dll=Path.Combine(Root,"src","Woi.Worker","bin",configuration,"net10.0-windows","Woi.Worker.dll");
             var start=new ProcessStartInfo(File.Exists(sdk)?sdk:"dotnet"){UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true};
-            start.ArgumentList.Add(dll);start.ArgumentList.Add("--cache-root");start.ArgumentList.Add(Cache);
+            start.ArgumentList.Add(dll);
+            if (monitor) {
+                start.ArgumentList.Add("--monitor"); start.ArgumentList.Add("--parent"); start.ArgumentList.Add(Environment.ProcessId.ToString());
+                start.ArgumentList.Add("--parent-start"); start.ArgumentList.Add(Process.GetCurrentProcess().StartTime.ToUniversalTime().Ticks.ToString());
+            } else { start.ArgumentList.Add("--cache-root"); start.ArgumentList.Add(Cache); }
             Process=Process.Start(start)!;_=Process.StandardError.ReadToEndAsync();
         }
         public async Task Send(string id,string method,object? parameters,int version=1) {

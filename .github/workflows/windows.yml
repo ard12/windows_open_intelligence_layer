@@ -25,11 +25,11 @@ jobs:
       - name: Package the self-contained desktop and capture helper
         shell: pwsh
         run: ./scripts/publish.ps1
-      - name: Real controlled recording and report export
+      - name: Both shipping capture profiles and report export
         shell: pwsh
         run: |
           dotnet publish tools/Woi.Workload -c Release -r win-x64 --self-contained true -p:RestoreLockedMode=true -o .artifacts/workload
-          dotnet tools/Woi.Validation/bin/Release/net10.0-windows/Woi.Validation.dll --capture .artifacts/end-to-end/ci dist/WindowsOpenIntelligence/Woi.Capture.exe .artifacts/workload/Woi.Workload.exe
+          ./scripts/native-capture-matrix.ps1 -OutputDirectory .artifacts/validation/ci-native-capture
           if ($LASTEXITCODE -ne 0) { throw "Real capture-to-report validation failed." }
       - name: Five-million-observation aggregation stress
         shell: pwsh
@@ -37,7 +37,7 @@ jobs:
       - name: Packaged desktop smoke and worker recovery
         shell: pwsh
         run: |
-          $app = Start-Process dist/WindowsOpenIntelligence/WindowsOpenIntelligence.exe -ArgumentList @("--smoke-test", ".artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl", ".artifacts/validation/desktop.png", "--verify-recovery", "--verify-monitor") -WindowStyle Hidden -PassThru
+          $app = Start-Process dist/WindowsOpenIntelligence/WindowsOpenIntelligence.exe -ArgumentList @("--smoke-test", ".artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl", ".artifacts/validation/desktop.png", "--verify-recovery", "--verify-monitor", "--verify-investigations") -WindowStyle Hidden -PassThru
           if (-not $app.WaitForExit(120000)) { $app.Kill(); throw "Desktop smoke timed out." }
           if ($app.ExitCode -ne 0) { throw "Desktop smoke failed." }
       - name: Unprivileged monitor continuity and overhead smoke
@@ -54,8 +54,8 @@ jobs:
           path: |
             .artifacts/test-results/*.trx
             .artifacts/validation/*.json
-            .artifacts/end-to-end/ci/*.json
-            .artifacts/end-to-end/ci/*.md
+            .artifacts/validation/ci-native-capture/**/*.json
+            .artifacts/validation/ci-native-capture/**/*.md
       - name: Upload Windows application
         uses: actions/upload-artifact@v4
         with:

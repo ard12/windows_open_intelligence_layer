@@ -43,3 +43,24 @@ Monitor messages use the same versioned JSON request/reply envelope over stdio:
 | monitor.stop | empty object | Acknowledgement and worker exit |
 
 CPU and byte rates are nullable until a matching process lifetime has two valid counter samples. Snapshot read/write totals sum only known process rates and are labelled accounted activity. Session, PID, and creation FILETIME form the local identity. The monitor never returns ETLX indices or claims that snapshots are ETL events. Process I/O counters remain separate from physical disk transfers.
+## Investigation operations (protocol v1, additive)
+
+The monitor's `monitor.investigate` accepts a typed `InvestigationRequest`: window start/end seconds from the recorded monotonic source start, symptom, optional process lifetime ID, notes, and CPU threshold/sustained-duration settings. It pins bounded immutable evidence and returns an InvestigationView, never the full process-row history to WPF. Rate integration clips partial interval edges with an explicit proportional-activity assumption; UTC is display metadata. The request must fit retained history.
+
+Both unprivileged worker modes expose these fixed operations before an ETL is required:
+
+| Method | Parameters | Result |
+|---|---|---|
+| investigation.open | path | View; saved findings are recalculated from recorded evidence |
+| investigation.get | id | View of a pinned investigation |
+| investigation.close | id | Release pinned evidence |
+| investigation.save | id, path | Atomic versioned local SQLite container with bounded JSON evidence and SHA-256 damage checksum |
+| investigation.evidence | id, reference | Snapshot detail with source, tick, recorded UTC, units/rates, optional exact lifetime, and gaps |
+| investigation.compare | firstId, secondId, task, change, sameTaskConfirmed, applicationContext, applicationContextConfirmed | Duration/resource comparison and per-metric compatibility |
+| investigation.export | id, path, format, includeLocalPaths (false by default) | Markdown or JSON view report; full snapshots and original ETL excluded |
+| investigation.compare.export | comparison (ComparisonRequest), path, format | Shared comparison report with both source references |
+| investigation.attach.report | id, report | User-attached imported ETL report; fingerprint/parser identities remain separate |
+
+The analysis worker additionally provides `report` for the existing selected ETL interval, and `investigation.attach` (id, interval) to attach that report directly. Cross-source application comparison requires user-confirmed path/version context. Attempts below three seconds, coverage below 80% or materially different process readability suppresses resource differences; user-marked duration remains a separate measurement. No HTTP endpoint, arbitrary SQL, shell command, or privileged operation is added.
+
+Snapshot source version is snapshot-analysis-1; saved container schema is 1. Unsupported source versions and damaged/oversized containers fail explicitly. A checksum detects accidental changes; it does not authenticate a recording. Saved prose is never used instead of recalculating from evidence. Imported ETL attachments are not revalidated without the original trace, and do not establish timestamp alignment or causality.

@@ -33,11 +33,11 @@
      <Button Content="Export report" Click="ExportClicked"/>
      <Button Content="Cancel" Click="CancelClicked" IsEnabled="{Binding Busy}"/>
     </StackPanel>
-    <StackPanel><TextBlock Text="Recorded activity" FontSize="27" FontWeight="SemiBold"/><TextBlock Text="{Binding Summary.Session.SourcePath, TargetNullValue='Open an existing Windows Performance Recorder trace (.etl)'}" Foreground="#61768D" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" MaxWidth="750"/></StackPanel>
+    <StackPanel><TextBlock Text="Windows activity" FontSize="27" FontWeight="SemiBold"/><TextBlock Text="{Binding Summary.Session.SourcePath, TargetNullValue='Open an existing Windows Performance Recorder trace (.etl)'}" Foreground="#61768D" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" MaxWidth="750"/></StackPanel>
    </DockPanel>
    <Border Grid.Row="1" Style="{StaticResource Card}" Padding="12" Margin="0,0,0,12">
     <WrapPanel VerticalAlignment="Center">
-     <TextBlock Text="INTERVAL" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+     <TextBlock Text="ETL INTERVAL" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,10,0"/>
      <TextBox Text="{Binding StartSeconds, UpdateSourceTrigger=PropertyChanged}" Width="82" ToolTip="Start seconds from trace beginning"/>
      <TextBlock Text="to" VerticalAlignment="Center"/>
      <TextBox Text="{Binding EndSeconds, UpdateSourceTrigger=PropertyChanged}" Width="82" ToolTip="End seconds from trace beginning"/>
@@ -118,7 +118,7 @@
        <TextBlock Text="Collection starts only when you choose Start. It runs without elevation and keeps a bounded in-memory history; stopping or closing the app discards it." TextWrapping="Wrap" Foreground="#61768D" Margin="0,10,0,12"/>
        <WrapPanel><Button Content="Start observing" Click="StartObservationClicked" Background="#167C80" Foreground="White"/>
         <TextBox Text="{Binding MonitorMarkLabel}" Width="190" ToolTip="Mark label"/><Button Content="Mark slowdown" Click="MarkSlowdownClicked"/>
-        <Button Content="Stop observing" Click="StopObservationClicked"/></WrapPanel>
+        <Button Content="Stop observing" Click="StopObservationClicked"/><Button Content="Investigate history" Click="GoToInvestigationClicked"/></WrapPanel>
        <TextBlock Text="{Binding MonitorStatus}" TextWrapping="Wrap" Margin="4,12,0,0"/>
        <TextBlock Text="The first sample sets counter baselines. CPU is the sum of readable process CPU-time deltas, divided by elapsed time and logical processors; it is not a machine utilization counter. Process I/O bytes are accounting counters, not physical disk transfers." TextWrapping="Wrap" Foreground="#61768D" Margin="4,8,0,0"/>
       </StackPanel></Border>
@@ -192,6 +192,69 @@
       </StackPanel></Border>
       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="RECORDING COVERAGE" Style="{StaticResource Label}"/>
        <TextBlock Text="Profiles request specific providers; actual coverage is shown after import. Memory buffers retain recent events and can overwrite older activity under heavy load. The configured kernel buffer pool is 128 MiB. A duration limit bounds recording time; it does not guarantee complete history or low overhead." TextWrapping="Wrap" Foreground="#61768D" LineHeight="22"/>
+      </StackPanel></Border>
+     </StackPanel></ScrollViewer>
+    </TabItem>
+    <TabItem Header="Investigate" x:Name="InvestigationTab">
+     <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16,0,0">
+      <Border Style="{StaticResource Card}"><Expander Header="Select history, symptom, and affected application" IsExpanded="{Binding InvestigationEditorOpen}"><StackPanel>
+       <TextBlock Text="UNDERSTAND A SELECTED INTERVAL" Style="{StaticResource Label}"/>
+       <TextBlock Text="Describe the symptom, select recorded history, and inspect what the measurements support." FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap"/>
+       <WrapPanel Margin="0,12,0,0"><TextBlock Text="Symptom" VerticalAlignment="Center"/><TextBox Text="{Binding InvestigationSymptom}" Width="320"/>
+        <TextBlock Text="Start / end seconds" VerticalAlignment="Center"/><TextBox Text="{Binding InvestigationStart}" Width="80"/><TextBox Text="{Binding InvestigationEnd}" Width="80"/>
+        <Button Content="Recent 30 seconds" Click="RecentInvestigationClicked"/></WrapPanel>
+       <WrapPanel><TextBlock Text="Affected application" VerticalAlignment="Center"/><ComboBox ItemsSource="{Binding MonitorLifetimes}" SelectedItem="{Binding InvestigationProcess}" DisplayMemberPath="DisplayLabel" Width="300" Margin="8"/>
+        <Button Content="Whole PC" Click="WholePcClicked"/><Button Content="Refresh lifetimes" Click="MonitorLifetimesClicked"/>
+        <ComboBox ItemsSource="{Binding MonitorMarks}" SelectedItem="{Binding InvestigationMark}" DisplayMemberPath="Label" Width="180" Margin="8"/><Button Content="Use marked time" Click="MarkedInvestigationClicked"/></WrapPanel>
+       <WrapPanel><TextBlock Text="CPU heuristic % / seconds" VerticalAlignment="Center"/><TextBox Text="{Binding InvestigationCpuThreshold}" Width="65"/><TextBox Text="{Binding InvestigationSustainedSeconds}" Width="65"/>
+        <Button Content="Understand interval" Click="CreateInvestigationClicked" Background="#167C80" Foreground="White"/><Button Content="Open saved investigation" Click="OpenInvestigationClicked"/></WrapPanel>
+       <TextBox Text="{Binding InvestigationNotes}" ToolTip="Optional notes; these are included when saving and exporting." MinHeight="45" TextWrapping="Wrap"/>
+       <TextBlock Text="{Binding InvestigationStatus}" TextWrapping="Wrap" Margin="4,10,0,0" Foreground="#61768D"/>
+      </StackPanel></Expander></Border>
+      <Border Style="{StaticResource Card}"><StackPanel>
+       <DockPanel><ComboBox ItemsSource="{Binding Investigations}" SelectedItem="{Binding SelectedInvestigation}" DisplayMemberPath="DisplayLabel" MinWidth="360" Margin="0,0,12,8"/>
+        <WrapPanel><Button Content="Save evidence" Click="SaveInvestigationClicked"/><Button Content="Export report" Click="ExportInvestigationClicked"/><Button Content="Attach selected ETL" Click="AttachInvestigationTraceClicked"/><Button Content="Close" Click="CloseInvestigationClicked"/></WrapPanel></DockPanel>
+       <TextBlock Text="{Binding SelectedInvestigation.Investigation.Scope}" FontWeight="SemiBold" FontSize="16"/>
+       <TextBlock Text="{Binding SelectedInvestigation.Investigation.Window.DurationSeconds, StringFormat='User-selected duration: {0:F2} seconds'}" Margin="0,5"/>
+       <ListBox ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" ItemsSource="{Binding SelectedInvestigation.Investigation.Findings}" SelectedItem="{Binding SelectedFinding}" BorderThickness="0" Background="Transparent"><ListBox.ItemTemplate><DataTemplate><StackPanel Margin="0,8">
+        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="16"/><TextBlock Text="{Binding Statement}" TextWrapping="Wrap" Margin="0,5"/>
+        <TextBlock Text="{Binding Provenance, StringFormat='Provenance: {0}'}" Foreground="#61768D"/>
+        <Expander Header="Evidence limits and prerequisites"><StackPanel><ItemsControl ItemsSource="{Binding Prerequisites}"/><ItemsControl ItemsSource="{Binding Limitations}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="#61768D" TextWrapping="Wrap" FontSize="12" Margin="0,3"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Expander>
+       </StackPanel></DataTemplate></ListBox.ItemTemplate></ListBox>
+       <TextBlock Text="NEXT MEASUREMENT" Style="{StaticResource Label}" Margin="0,12,0,4"/><TextBlock Text="{Binding SelectedInvestigation.Investigation.NextMeasurement}" TextWrapping="Wrap"/>
+       <Button Content="Inspect selected finding's snapshot" Click="InvestigationEvidenceClicked" HorizontalAlignment="Left"/>
+       <TextBlock Text="An unavailable observation is reported in limitations; an empty findings list does not certify a healthy machine." TextWrapping="Wrap" Foreground="#61768D" FontSize="12"/>
+       <ItemsControl ItemsSource="{Binding SelectedInvestigation.Investigation.Limitations}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="#8A6024" Margin="0,4"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+       <TextBlock Text="{Binding SelectedInvestigation.AttachedTrace.Session.SourceHash, StringFormat='Separately attached ETL SHA-256: {0}'}" FontFamily="Consolas" TextWrapping="Wrap" Margin="0,8"/>
+       <TextBlock Text="Reports include process names, machine metadata, notes, and source coordinates. Raw ETL files and full snapshot records are excluded from reports; saved .woi files preserve snapshot evidence. Review the exported report before sharing." TextWrapping="Wrap" Foreground="#61768D" FontSize="12" Margin="0,10"/>
+      </StackPanel></Border>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="CONTRIBUTORS · double-click for snapshot evidence" Style="{StaticResource Label}"/>
+       <DataGrid x:Name="InvestigationContributors" ItemsSource="{Binding SelectedInvestigation.Investigation.Contributors}" Height="200" MouseDoubleClick="InvestigationContributorClicked"><DataGrid.Columns>
+        <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="160"/><DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
+        <DataGridTextColumn Header="CPU-seconds" Binding="{Binding CpuSeconds, StringFormat=N3, TargetNullValue=—}" Width="115"/><DataGridTextColumn Header="Accounted reads B" Binding="{Binding ReadBytes, StringFormat=N0, TargetNullValue=—}" Width="150"/>
+        <DataGridTextColumn Header="Accounted writes B" Binding="{Binding WriteBytes, StringFormat=N0, TargetNullValue=—}" Width="150"/><DataGridTextColumn Header="Peak private B" Binding="{Binding PeakPrivateBytes, StringFormat=N0, TargetNullValue=—}" Width="130"/>
+        <DataGridTextColumn Header="Lifetime" Binding="{Binding LifetimeId}" Width="220"/>
+       </DataGrid.Columns></DataGrid>
+       <TextBox Text="{Binding InvestigationEvidenceText, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="12" Height="220" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+      </StackPanel></Border>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="COMPARE TWO ATTEMPTS" Style="{StaticResource Label}"/>
+       <TextBlock Text="Select two marked attempts. For separate sessions, save and reopen both investigations first." TextWrapping="Wrap" Foreground="#61768D" Margin="0,8"/>
+       <WrapPanel><TextBlock Text="First" VerticalAlignment="Center"/><ComboBox ItemsSource="{Binding Investigations}" SelectedItem="{Binding FirstAttempt}" DisplayMemberPath="DisplayLabel" Width="430" Margin="8"/>
+        <TextBlock Text="Second" VerticalAlignment="Center"/><ComboBox ItemsSource="{Binding Investigations}" SelectedItem="{Binding SecondAttempt}" DisplayMemberPath="DisplayLabel" Width="430" Margin="8"/></WrapPanel>
+       <WrapPanel><TextBlock Text="Same task" VerticalAlignment="Center"/><TextBox Text="{Binding ComparisonTask}" Width="350"/>
+        <TextBlock Text="Change made" VerticalAlignment="Center"/><TextBox Text="{Binding ComparisonChange}" Width="350"/></WrapPanel>
+       <CheckBox Content="I confirm both intervals contain equivalent work for the same task." IsChecked="{Binding SameTaskConfirmed}" Margin="4,8"/>
+       <TextBox Text="{Binding ApplicationContext}" ToolTip="For different application lifetimes or sessions, record the application path/version context you checked."/>
+       <CheckBox Content="For different application lifetimes, I checked and confirm matching path/version context." IsChecked="{Binding ApplicationContextConfirmed}" Margin="4,8"/>
+       <WrapPanel><Button Content="Compare attempts" Click="CompareAttemptsClicked"/><Button Content="Export comparison" Click="ExportComparisonClicked"/></WrapPanel>
+       <TextBlock Text="{Binding AttemptComparison.Statement}" TextWrapping="Wrap" FontSize="15" Margin="0,10"/>
+       <DataGrid ItemsSource="{Binding AttemptComparison.Metrics}" Height="200"><DataGrid.Columns>
+        <DataGridTextColumn Header="Measurement" Binding="{Binding Name}" Width="270"/><DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="100"/>
+        <DataGridTextColumn Header="First" Binding="{Binding First, StringFormat=N3, TargetNullValue=—}" Width="120"/><DataGridTextColumn Header="Second" Binding="{Binding Second, StringFormat=N3, TargetNullValue=—}" Width="120"/>
+        <DataGridTextColumn Header="Difference %" Binding="{Binding ChangePercent, StringFormat=N2, TargetNullValue=—}" Width="110"/><DataGridCheckBoxColumn Header="Comparable" Binding="{Binding Comparable}" Width="90"/>
+        <DataGridTextColumn Header="Limitations" Binding="{Binding Limitation}" Width="*"/>
+       </DataGrid.Columns></DataGrid>
+       <ItemsControl ItemsSource="{Binding AttemptComparison.Limitations}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="#61768D" Margin="0,4"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
       </StackPanel></Border>
      </StackPanel></ScrollViewer>
     </TabItem>

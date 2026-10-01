@@ -10,6 +10,8 @@ public sealed class MonitorSession(IRawSampler sampler, int logicalProcessors)
     private readonly SnapshotRing ring = new();
     private readonly List<MonitorMark> marks = [];
     private readonly DateTime startedUtc = DateTime.UtcNow;
+    private SourceDescriptor? source;
+    private readonly string sourceId = Guid.NewGuid().ToString("N");
 
     public void SampleOnce()
     {
@@ -19,11 +21,28 @@ public sealed class MonitorSession(IRawSampler sampler, int logicalProcessors)
             raw = new(Stopwatch.GetTimestamp(), DateTime.UtcNow, null, null, 0, 0, [],
                 [new(DateTime.UtcNow, "SamplingFailure", ex.GetType().Name + ": " + ex.Message)]);
         }
-        lock (gate) ring.Add(calculator.Calculate(raw));
+        lock (gate) {
+            source ??= new(sourceId, "WindowsApiSnapshot", InvestigationAnalyzer.Version, Environment.MachineName,
+                Environment.OSVersion.VersionString, logicalProcessors, Stopwatch.Frequency, raw.Tick, raw.Utc);
+            ring.Add(calculator.Calculate(raw));
+        }
     }
     public MonitorView View()
     {
-        lock (gate) return ring.View(startedUtc, marks);
+        lock (gate) return ring.View(startedUtc, marks) with { Descriptor = source };
+    }
+    public InvestigationDocument Investigate(InvestigationRequest request)
+    {
+        SourceDescriptor descriptor; IReadOnlyList<MonitorSnapshot> retained;
+        lock (gate) {
+            descriptor = source ?? throw new WoiException("NoSnapshots", "Wait for an observation snapshot first.");
+            retained = ring.Snapshots();
+        }
+        // Immutable snapshots are analysed outside the sampling lock.
+        InvestigationAnalyzer.Validate(descriptor, retained, request);
+        var samples = retained.Where(x => InvestigationAnalyzer.Time(descriptor, x) >= Math.Max(0, request.Window.StartSeconds - 32.5) &&
+            InvestigationAnalyzer.Time(descriptor, x) <= request.Window.EndSeconds + 2.5).ToArray();
+        return InvestigationAnalyzer.Analyze(descriptor, samples, request);
     }
     public IReadOnlyList<MonitorLifetime> Lifetimes()
     {

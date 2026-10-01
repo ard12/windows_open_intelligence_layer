@@ -28,6 +28,7 @@ var serial = new SemaphoreSlim(1);
 var outputGate = new SemaphoreSlim(1);
 ITraceReader? activeReader = null; CacheStore? activeStore = null; QueryEngine? engineState = null;
 var tasks = new List<Task>();
+var investigations = new InvestigationWorkspace();
 async Task Reply(Response value) {
     await outputGate.WaitAsync();
     try { await Console.Out.WriteLineAsync(JsonSerializer.Serialize(value,Wire.Json)); await Console.Out.FlushAsync(); }
@@ -48,10 +49,16 @@ async Task Handle(Request request, CancellationTokenSource cancellation)
             var session = EtlImporter.Import(path,cacheRoot,progress,token);
             activeReader = new EtlReader(session); activeStore = new CacheStore(session.CacheDirectory,readOnly:true);
             engineState = new(activeReader,activeStore); result = engineState.Summary();
+        } else if (request.Method == "investigation.attach") {
+            var engine = engineState ?? throw new WoiException("NoTrace", "Open an ETL before attaching its evidence.");
+            result = investigations.Attach(request.Parameters.GetProperty("id").GetString()!, engine.Report(Parse<IntervalQuery>(request.Parameters.GetProperty("interval")), token));
+        } else if (request.Method.StartsWith("investigation.", StringComparison.Ordinal)) {
+            result = InvestigationRpc.Handle(investigations, request, token);
         } else {
             var engine = engineState ?? throw new WoiException("NoTrace", "Open an ETL recording first.");
             result = request.Method switch {
                 "summary" => engine.Summary(),
+                "report" => InvestigationWorkspace.CompactReport(engine.Report(Parse<IntervalQuery>(request.Parameters), token)),
                 "diagnostics" => new {pid=Environment.ProcessId,
                     peakWorkingSetBytes=System.Diagnostics.Process.GetCurrentProcess().PeakWorkingSet64,
                     workingSetBytes=System.Diagnostics.Process.GetCurrentProcess().WorkingSet64},

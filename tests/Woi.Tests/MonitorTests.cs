@@ -13,6 +13,20 @@ public sealed class MonitorTests
         new(tick, utc, 4096, 8192, processes.Length, 0, processes, []);
 
     [Fact]
+    public void NativeSamplerReadsCurrentLifetimeWithHandleBoundName()
+    {
+        using var current = System.Diagnostics.Process.GetCurrentProcess();
+        var raw = new WindowsSampler().Sample();
+        var row = Assert.Single(raw.Processes, x => x.Pid == Environment.ProcessId);
+        Assert.Equal(current.ProcessName, row.Name, ignoreCase: true);
+        Assert.Equal(current.SessionId, row.SessionId);
+        Assert.Equal(current.StartTime.ToUniversalTime().ToFileTimeUtc(), row.CreationFileTime);
+        Assert.Equal(raw.Processes.Count, raw.Processes.Select(SnapshotCalculator.Identity).Distinct().Count());
+        Assert.True(raw.EnumeratedProcesses >= raw.Processes.Count);
+        Assert.NotNull(raw.SamplingDurationMs);
+    }
+
+    [Fact]
     public void RatesNeedSameLifetimeAndFirstSampleIsBaseline()
     {
         var calculator = new SnapshotCalculator(2);
@@ -103,5 +117,28 @@ public sealed class MonitorTests
         Assert.Contains(view.History, x => x.Utc == utc.AddSeconds(1011) && x.CpuPercent == 80);
         Assert.Contains(view.History, x => x.Utc == utc.AddSeconds(2017) && x.AvailablePhysicalBytes == 1000);
         Assert.Contains(view.History, x => x.Utc == utc.AddSeconds(3001) && x.ReadBytesPerSecond == 1000);
+    }
+    [Fact]
+    public void DownsamplingKeepsMonotonicOrderAfterWallClockRollback()
+    {
+        var ring = new SnapshotRing(); var utc = DateTime.UtcNow;
+        for (var i = 0; i < 3600; i++)
+            ring.Add(new MonitorSnapshot(i * (long)Stopwatch.Frequency, utc.AddSeconds(i >= 1800 ? i - 7200 : i), 1,
+                i == 2011 ? 80 : 5, 1, 1, 10000, 20000, 0, 0, [], []));
+        var view = ring.View(utc, []);
+        Assert.Equal(0, view.History[0].MonotonicTick);
+        Assert.Equal(3599L * Stopwatch.Frequency, view.History[^1].MonotonicTick);
+        Assert.True(view.History.Zip(view.History.Skip(1)).All(pair => pair.First.MonotonicTick < pair.Second.MonotonicTick));
+        Assert.Contains(view.History, x => x.CpuPercent == 80);
+    }
+    [Fact]
+    public void NativeSamplingDurationIsPreservedAndUnknownDurationStaysUnavailable()
+    {
+        var calculator = new SnapshotCalculator(2); var utc = DateTime.UtcNow; var ring = new SnapshotRing();
+        ring.Add(calculator.Calculate(Raw(0, utc, Process(100, 0))));
+        Assert.Null(ring.View(utc, []).Diagnostics!.SamplingP95Ms);
+        ring.Add(calculator.Calculate(Raw(Stopwatch.Frequency, utc.AddSeconds(1), Process(100, 1)) with { SamplingDurationMs = 12.5 }));
+        Assert.Equal(12.5, ring.View(utc, []).Diagnostics!.SamplingP95Ms);
+        Assert.Equal(12.5, ring.View(utc, []).History[^1].SamplingDurationMs);
     }
 }

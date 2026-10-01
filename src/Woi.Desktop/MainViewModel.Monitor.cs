@@ -18,6 +18,7 @@ public partial class MainViewModel
     [ObservableProperty] private string monitorStatus = "Start observing to keep recent local history. No administrator elevation is needed.";
     [ObservableProperty] private string monitorMarkLabel = "Slowdown noticed";
     public event Action? MonitorChartsChanged;
+    internal int? MonitorWorkerProcessId => monitorClient?.ProcessId;
 
     public async Task StartObservation()
     {
@@ -84,6 +85,7 @@ public partial class MainViewModel
     {
         var wasObserving = monitorClient != null || Monitor != null;
         monitorTimer?.Stop(); monitorTimer = null;
+        DropInvestigations(monitorClient);
         monitorClient?.Dispose(); monitorClient = null;
         Monitor = null;
         MonitorHistory.Clear(); MonitorTop.Clear(); MonitorMarks.Clear(); MonitorLifetimes.Clear();

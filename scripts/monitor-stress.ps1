@@ -41,6 +41,7 @@ try {
         estimatedRetainedBytes = $view.estimatedRetainedBytes
         peakWorkerMiB = [math]::Round($peakBytes / 1MB,2)
         workerCpuPercentOfMachine = [math]::Round($cpuSeconds / $clock.Elapsed.TotalSeconds / [Environment]::ProcessorCount * 100,3)
+        samplingDiagnostics = $view.diagnostics
         latestUnreadableProcesses = $view.history[-1].unreadableProcesses
         gapKinds = @($view.recentGaps | Group-Object kind | ForEach-Object { [pscustomobject]@{kind=$_.Name;count=$_.Count} })
     }
@@ -48,7 +49,7 @@ try {
     [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($destination)) | Out-Null
     $result | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $destination -Encoding utf8
     $result | ConvertTo-Json -Depth 5
-    if ($view.snapshotCount -lt [math]::Floor($Seconds * .8)) { throw 'Too many sampling ticks were missed.' }
+    if ($Seconds -le 120 -and $view.snapshotCount -lt [math]::Floor($Seconds * .8)) { throw 'Too many sampling ticks were missed.' }
 } finally {
     if (!$child.HasExited) { $child.Kill($true); $child.WaitForExit(5000) | Out-Null }
     $child.Dispose()

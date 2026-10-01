@@ -122,3 +122,40 @@ Each capture test needs a fresh output directory. For independent parser validat
 ## Remaining acceptance
 
 A successful native capture-to-report run; real automatic stop, cancel, disconnect, recovery and coexistence; native rich-adapter and schema/loss cases; native CPU-weight agreement and WPA checks; maximum-envelope decoding; contributor tail latency; Windows 11 and local PDB testing; and the [eight-user pilot](pilot.md) remain open. This preview is not certified for all roadmap acceptance targets.
+
+## 2026-10-01 investigation checkpoints (v0.4.0-preview.1)
+
+P2 readable investigations and P4 saved evidence now have a connected WPF workflow. Findings integrate recorded monotonic rate intervals, expose CPU/memory/process-I/O quantities and prerequisites, and abstain on missing inputs. Snapshot references preserve source/tick/lifetime identities separately from ETLX coordinates. User-confirmed comparisons show duration and absolute resources; incompatible coverage has no calculated difference. Bounded .woi files preserve snapshot evidence, detect accidental corruption, and recalculate descriptions on reopen. ETL reports attach as separate excerpts; original traces are excluded.
+
+- The locked Release build passed without warnings and 89 tests passed with no skips, including the final protocol recovery, sampler identity, and soak-harness additions. Regression cases include partial edges, missing measurements, reused PIDs, clock rollback, measured-duration thresholds, persistence corruption/cancellation, source mismatch, workspace bounds, cross-session application confirmation, report-path exclusion, and sampling diagnostics.
+- The packaged smoke passed ETL import (418,378 indexed events), analysis-worker crash recovery, native API observation, two readable investigations, within-session comparison, snapshot evidence, ETL attachment, saving, stopping/discarding the observation workspace, reopening both files, and comparison/report export in the analysis workspace. The corrected findings layout was visually inspected; text wraps and the next measurement is visible.
+- P3's protocol and empty ledger are in experiment.md and experiment-results.json. No participant session, independent Windows 11 machine, or held-out accuracy result is claimed.
+- Native Resources capture was attempted through the shipping helper. Windows canceled administrator elevation; no ETL was produced. The local failure and matrix are in `.artifacts/validation/native-matrix-20261001`. FileActivity and native lifecycle/coexistence remain unverified; the earlier CPU-weight discrepancy is still open.
+- The first on/off fixed-work trial was invalid: its CPU phase lasted about 26 ms, too short for one-second sampling, and the result was not observably consumed. That run is retained in `.artifacts/validation/observation-benchmark-20261001`; its apparent target pass is not acceptance evidence. The workload was corrected to serialize a checksum and execute 500 million iterations per worker, and the benchmark now rejects CPU phases below two seconds.
+- The corrected cold-monitor run used three counterbalanced trials per condition. Median CPU work was 3,622.08 ms off versus 3,967.04 ms on (+9.52%); median whole-task duration increased 9.07%, failing the provisional <3% slowdown target. The complete case/range/diagnostic record is `.artifacts/validation/observation-fixed-result-20261001/result.json`. Shared-machine activity, startup and small-sample variance remain confounders; this is a failed measured gate, not a demonstrated universal observer effect.
+
+The next performance steps are explicit steady-state warm-up trials, a filled-history desktop soak, and diagnosis of any persistent slowdown. Windows 11 clean-machine use, two-hour/24-hour sessions, sleep/resume, physical disk-write cost, interactive UI cost, query p95, and independent usefulness remain open. See checkpoints.md for the full P2–P6 scope.
+
+### Sampler and short-run follow-up
+
+The sampler now enumerates PID values with a growing bounded buffer, rejects a potentially truncated enumeration, reads image names from the counter-owning handle, and checks creation time around the PID-based session lookup. The native regression verifies the test process's creation time, session and image name. These use the documented [EnumProcesses](https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-enumprocesses), [QueryFullProcessImageNameW](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-queryfullprocessimagenamew), and [ProcessIdToSessionId](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-processidtosessionid) APIs. This does not expand privilege or promise visibility of protected processes.
+
+The final packaged smoke passed all recovery, monitor, investigation and saved-comparison flags. Local artifacts are final-investigation-desktop.json and its rendered images. A 60-second hidden-window desktop soak passed: 60 snapshots, 16,569 process rows, no missed-tick gaps, 48.11 MiB monitor peak, 181.12 MiB UI peak, 223.85 MiB maximum sampled UI-plus-monitor memory, and 247.36 MiB including the idle analysis worker. Monitor CPU was 0.47%; UI CPU was 2.36%, both including startup. Sampling median/p95/maximum were 47.77/68.23/77.01 ms. This is short-run continuity, not filled-history, interactive UI, two-hour or Windows 11 acceptance.
+
+The first ten-second-warmed three-trial run measured median whole-task slowdown +0.35% and CPU-work difference −2.31% (observation-warm-20261001/result.json). It still recorded sampling tails around 2.75 seconds and missed ticks. The following enumeration run (observation-enumeration-20261001) was interrupted by a long pause; its first trial and combined averages are excluded from acceptance. The benchmark now rejects excessive warm-up or measurement elapsed time instead of allowing suspension to dilute CPU cost.
+
+A fresh three-trial warmed run measured whole-task difference −7.50% and CPU-work difference −6.96% (observation-guarded-20261001/result.json). Negative changes are not an application speedup claim; small counterbalanced samples and shared-machine/cache conditions remain confounders. The final two-trial script check exercised strict variables and both elapsed guards; median task difference was −9.10% and CPU-work difference −8.88% (observation-final-20261001/result.json). Mixed results leave the observer-cost gate open; the original failed cold measurement remains in this record.
+
+The CI capture step now invokes scripts/native-capture-matrix.ps1 for both fixed shipping profiles and preserves nested JSON/Markdown results even on failure. It has not acquired a successful remote native run.
+
+Reproduce the new local checks after building/publishing:
+
+~~~powershell
+.\scripts\native-capture-matrix.ps1
+.\scripts\observation-benchmark.ps1 -Trials 3 -WarmupSeconds 10
+.\dist\WindowsOpenIntelligence\WindowsOpenIntelligence.exe --observation-soak 7200 ".artifacts\validation\desktop-soak-2h.json"
+~~~
+
+The soak creates a results JSON at completion and exits. Its hidden-window mode does not replace active interaction. Benchmark scripts retain failed cases. The current distribution remains an unsigned preview; artifact checksums are not publisher authentication. See checkpoints.md for the open independent-use and release gates.
+
+A privacy-reduced machine-readable summary is [investigation-checkpoints-20261001.json](verification/investigation-checkpoints-20261001.json); raw snapshots, machine identifiers, notes and local absolute paths are excluded.

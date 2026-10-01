@@ -24,6 +24,16 @@ Windows 11 x64 is the release baseline. Local build and desktop tests ran on Win
 
 The first sample is a counter baseline. Unreadable processes, missed ticks, clock changes, and counter resets remain visible as unavailable values or collection gaps. The ring allows up to 60 minutes but also caps process rows and estimated bytes; the displayed retained duration is the actual one.
 
+### Investigate and compare recorded history
+
+1. In **Observe**, start collection before reproducing the symptom. Mark the time it occurs, then open **Investigate**.
+2. Choose the recent interval or marked time, describe the symptom, and optionally select an observed application lifetime. **Understand interval** shows up to three deterministic observations, their coverage/limits, and a next measurement. Double-click a contributor or inspect a finding to see its snapshot coordinates.
+3. Create two investigations for equivalent attempts. Confirm the same task and the change you made before comparing. Duration and absolute resource use are shown together; incompatible measurements receive no calculated difference.
+4. **Save evidence** writes a bounded local `.woi` investigation. Reopen saved files to compare separate sessions. Matching application path/version context requires explicit user confirmation; PID alone cannot match applications across sources.
+5. **Attach selected ETL** preserves the selected imported trace report as a separate evidence source. Attachment does not imply clock alignment or a common cause. Export investigation/comparison reports after reviewing included names, machine metadata, notes, and references. Original ETL files and full snapshot records are excluded from report export.
+
+Saved investigations contain recorded snapshot evidence and optional ETL report metadata, with a checksum for accidental damage detection. Findings are recalculated on reopen. This is not a tamper-proof evidence container. Local file limits are 128 MiB/container and 96 MiB/payload; pinned workspaces are bounded to eight investigations and 250,000 snapshot process rows. Close a pinned investigation to free its budget. Stopping observation discards its unsaved pinned investigations; saved files remain available.
+
 ### Record an investigation
 
 1. Choose **Record activity**, then **Resources** or **File activity** and a duration from 5 to 120 seconds.
@@ -78,3 +88,5 @@ The worker also has a diagnostic CLI:
 ~~~
 
 See [the product reassessment](docs/product-reassessment.md), [the engineering timeline](docs/engineering-plan.md), [architecture](docs/architecture.md), [capture design](docs/capture.md), [protocol](docs/protocol.md), [roadmap](docs/roadmap.md), and [contributing](CONTRIBUTING.md). Project code is MIT licensed; dependency notices are in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) and licenses/.
+
+The next-five-checkpoint status is recorded in [checkpoints](docs/checkpoints.md). The P3 [experiment protocol](docs/experiment.md) and empty results ledger distinguish preparation from participant evidence.

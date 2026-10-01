@@ -51,10 +51,14 @@ public partial class MainWindow : Window
     private async void LoadedWindow(object sender,RoutedEventArgs e)
     {
         var args=Environment.GetCommandLineArgs();
+        if(args.Length >= 4 && args[1] == "--observation-soak") {
+            if (!int.TryParse(args[2], out var seconds) || seconds is < 10 or > 86400) { Application.Current.Shutdown(2); return; }
+            await RunObservationSoak(seconds, Path.GetFullPath(args[3])); return;
+        }
         if(args.Length > 2 && args[1]=="--smoke-test") {
             var snapshot=args.Length>3?Path.GetFullPath(args[3]):Path.Combine(AppContext.BaseDirectory,"desktop.png");
             try {
-                bool monitorVerified=false; int observedLifetimes=0;
+                bool monitorVerified=false, investigationVerified=false, savedComparisonVerified=false; int observedLifetimes=0;
                 if(args.Contains("--verify-monitor")) await model!.StartObservation();
                 await model!.Open(args[2]);
                 if(!string.IsNullOrEmpty(model.Error))throw new InvalidOperationException(model.Error);
@@ -79,6 +83,36 @@ public partial class MainWindow : Window
                         throw new InvalidOperationException("Observation worker did not retain native history and a mark: "+model.MonitorStatus);
                     Views.SelectedItem=MonitorTab;await Task.Delay(250);Capture(Path.ChangeExtension(snapshot,"monitor.png"));
                     monitorVerified=true;
+                    if(args.Contains("--verify-investigations")) {
+                        await Task.Delay(1500); await model.RefreshMonitor(); model.UseRecentObservation();
+                        var end = double.Parse(model.InvestigationEnd, CultureInfo.InvariantCulture);
+                        var mid = end / 2;
+                        model.InvestigationStart = "0"; model.InvestigationEnd = mid.ToString("0.######", CultureInfo.InvariantCulture);
+                        await model.CreateInvestigation();
+                        if(model.SelectedInvestigation?.Investigation.Findings.Count is not (> 0 and <= 3)) throw new InvalidOperationException("First readable investigation failed: " + model.InvestigationStatus);
+                        var firstPath = Path.ChangeExtension(snapshot, "first.woi"); await model.SaveInvestigation(firstPath);
+                        model.InvestigationStart = mid.ToString("0.######", CultureInfo.InvariantCulture); model.InvestigationEnd = end.ToString("0.######", CultureInfo.InvariantCulture);
+                        await model.CreateInvestigation();
+                        if(model.Investigations.Count != 2) throw new InvalidOperationException("Second marked attempt failed: " + model.InvestigationStatus);
+                        await model.AttachTraceToInvestigation();
+                        if(model.SelectedInvestigation?.AttachedTrace == null) throw new InvalidOperationException("ETL attachment failed: " + model.InvestigationStatus);
+                        var secondPath = Path.ChangeExtension(snapshot, "second.woi"); await model.SaveInvestigation(secondPath);
+                        model.ComparisonTask = "Equivalent smoke-test intervals"; model.SameTaskConfirmed = true;
+                        await model.CompareAttempts();
+                        if(model.AttemptComparison == null) throw new InvalidOperationException("Within-session comparison failed: " + model.InvestigationStatus);
+                        await model.ShowSnapshotEvidence();
+                        if(!model.InvestigationEvidenceText.Contains("monotonicTick")) throw new InvalidOperationException("Snapshot evidence failed: " + model.InvestigationStatus);
+                        investigationVerified = true;
+                        model.StopObservation();
+                        if(model.Investigations.Count != 0) throw new InvalidOperationException("Unsaved pinned investigations remained after stop.");
+                        await model.OpenInvestigation(firstPath); await model.OpenInvestigation(secondPath); await model.CompareAttempts();
+                        if(model.AttemptComparison == null || model.SelectedInvestigation?.AttachedTrace == null) throw new InvalidOperationException("Saved investigation reopening/comparison failed: " + model.InvestigationStatus);
+                        await model.ExportInvestigation(Path.ChangeExtension(snapshot,"investigation.md"), "markdown");
+                        var comparisonPath = Path.ChangeExtension(snapshot,"comparison.json"); await model.ExportComparison(comparisonPath, "json");
+                        if(!File.Exists(comparisonPath)) throw new InvalidOperationException("Comparison report export failed: " + model.InvestigationStatus);
+                        savedComparisonVerified = true;
+                        Views.SelectedItem=InvestigationTab; await Task.Delay(250); Capture(Path.ChangeExtension(snapshot,"investigation.png"));
+                    }
                     model.StopObservation();
                     if(model.Monitor != null || model.MonitorHistory.Count != 0 || model.MonitorLifetimes.Count != 0)
                         throw new InvalidOperationException("Stopping observation retained unsaved history in the UI.");
@@ -92,7 +126,7 @@ public partial class MainWindow : Window
                 await model.ShowEvidence(observation); Views.SelectedIndex=2; await Task.Delay(200);
                 Capture(Path.ChangeExtension(snapshot,"evidence.png"));
                 File.WriteAllText(Path.ChangeExtension(snapshot,"json"),JsonSerializer.Serialize(new {
-                    success=true, workerRecoveryVerified=recovered, monitorVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
+                    success=true, workerRecoveryVerified=recovered, monitorVerified, investigationVerified, savedComparisonVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
                     indexedEvents=model.Summary?.Session.IndexedEvents,
                     lifetimes=model.Summary?.Processes.OrderByDescending(x=>x.EndMs-x.StartMs).Take(5),
                     capabilities=model.Summary?.Session.Capabilities
@@ -175,7 +209,7 @@ public partial class MainWindow : Window
             MonitorCpuPlot.Refresh(); MonitorMemoryPlot.Refresh(); MonitorIoPlot.Refresh(); return;
         }
         var points = view.History;
-        var x = points.Select(p => (p.Utc - view.StartedUtc).TotalSeconds).ToArray();
+        var x = points.Select(p => view.Descriptor is { } source ? (p.MonotonicTick - source.StartTick) / (double)source.MonotonicFrequency : (p.Utc - view.StartedUtc).TotalSeconds).ToArray();
         void Plot(ScottPlot.WPF.WpfPlot plot, double[] y, string title, string color)
         {
             plot.Plot.Clear();
@@ -210,6 +244,40 @@ public partial class MainWindow : Window
     private async void MonitorLifetimesClicked(object sender,RoutedEventArgs e)
     {
         if (model != null) await model.LoadMonitorLifetimes();
+    }
+    private void GoToInvestigationClicked(object sender, RoutedEventArgs e) { model?.UseRecentObservation(); Views.SelectedItem = InvestigationTab; }
+    private async void RecentInvestigationClicked(object sender, RoutedEventArgs e) { if (model != null) { await model.RefreshMonitor(); model.UseRecentObservation(); } }
+    private void MarkedInvestigationClicked(object sender, RoutedEventArgs e) => model?.UseRecentObservation(marked: true);
+    private void WholePcClicked(object sender, RoutedEventArgs e) { if (model != null) model.InvestigationProcess = null; }
+    private async void CreateInvestigationClicked(object sender, RoutedEventArgs e) { if (model != null) await model.CreateInvestigation(); }
+    private async void CloseInvestigationClicked(object sender, RoutedEventArgs e) { if (model != null) await model.CloseInvestigation(); }
+    private async void AttachInvestigationTraceClicked(object sender, RoutedEventArgs e) { if (model != null) await model.AttachTraceToInvestigation(); }
+    private async void InvestigationEvidenceClicked(object sender, RoutedEventArgs e) { if (model != null) await model.ShowSnapshotEvidence(); }
+    private async void InvestigationContributorClicked(object sender, MouseButtonEventArgs e) { if (model != null && InvestigationContributors.SelectedItem is InvestigationContributor row) await model.ShowSnapshotEvidence(row.Evidence); }
+    private async void CompareAttemptsClicked(object sender, RoutedEventArgs e) { if (model != null) await model.CompareAttempts(); }
+    private async void ExportComparisonClicked(object sender, RoutedEventArgs e)
+    {
+        if (model?.AttemptComparison == null) return;
+        var dialog = new SaveFileDialog { Filter = "Markdown (*.md)|*.md|JSON (*.json)|*.json", FileName = "attempt-comparison.md" };
+        if (dialog.ShowDialog(this) == true) await model.ExportComparison(dialog.FileName, dialog.FilterIndex == 2 ? "json" : "markdown");
+    }
+    private async void SaveInvestigationClicked(object sender, RoutedEventArgs e)
+    {
+        if (model?.SelectedInvestigation == null) return;
+        var dialog = new SaveFileDialog { Filter = "Saved investigation (*.woi)|*.woi", FileName = "investigation.woi" };
+        if (dialog.ShowDialog(this) == true) await model.SaveInvestigation(dialog.FileName);
+    }
+    private async void OpenInvestigationClicked(object sender, RoutedEventArgs e)
+    {
+        if (model == null) return;
+        var dialog = new OpenFileDialog { Filter = "Saved investigation (*.woi)|*.woi" };
+        if (dialog.ShowDialog(this) == true) await model.OpenInvestigation(dialog.FileName);
+    }
+    private async void ExportInvestigationClicked(object sender, RoutedEventArgs e)
+    {
+        if (model?.SelectedInvestigation == null) return;
+        var dialog = new SaveFileDialog { Filter = "Markdown (*.md)|*.md|JSON (*.json)|*.json", FileName = "investigation-report.md" };
+        if (dialog.ShowDialog(this) == true) await model.ExportInvestigation(dialog.FileName, dialog.FilterIndex == 2 ? "json" : "markdown");
     }
     private void RecordActivityClicked(object sender,RoutedEventArgs e)=>Views.SelectedItem=RecordTab;
     private async void StartRecordingClicked(object sender,RoutedEventArgs e)

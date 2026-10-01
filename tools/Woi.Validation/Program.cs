@@ -11,11 +11,13 @@ if(args.Length==2 && args[0]=="--profile"){
 if(args.Length<4 || args[0]!="--capture"){
     Console.Error.WriteLine("Usage: Woi.Validation --capture output-directory helper.exe workload.exe");return 2;
 }
+var profile=args.Length >= 5 ? args[4] : "FileActivity";
+CaptureProfiles.Validate(new(profile,45));
 var output=Path.GetFullPath(args[1]);Directory.CreateDirectory(output);
 try {
     using var deadline=new CancellationTokenSource(TimeSpan.FromMinutes(4));
     await using var client=await CaptureClient.Connect(Path.GetFullPath(args[2]),deadline.Token);
-    var recording=await client.Send("start",new CaptureOptions("FileActivity",45),deadline.Token);
+    var recording=await client.Send("start",new CaptureOptions(profile,45),deadline.Token);
     var workloadDirectory=Path.Combine(output,"workload");Directory.CreateDirectory(workloadDirectory);
     var start=new ProcessStartInfo(Path.GetFullPath(args[3])){UseShellExecute=false,CreateNoWindow=true,
         RedirectStandardOutput=true,RedirectStandardError=true};
@@ -46,7 +48,7 @@ try {
     var lifetime=engine.Summary().Processes.FirstOrDefault(x=>x.OsId==pid && x.StartMs<=cpuEnd && x.EndMs>cpuStart);
     var workloadEvents=reader.ReadObservations(new(0,session.DurationMs,lifetime?.Id),deadline.Token).ToArray();
     var quality=new {
-        sourceSha256=session.SourceHash,indexedEvents=session.IndexedEvents,reportedLoss=session.ReportedLostEvents,
+        profile,sourceSha256=session.SourceHash,indexedEvents=session.IndexedEvents,reportedLoss=session.ReportedLostEvents,
         controlledPid=pid,lifetimeResolved=lifetime!=null,cpuContributorIsWorkload=contributors.FirstOrDefault()?.Pid==pid,
         logicalFileBytes=workloadEvents.Where(x=>x.Category=="File").Sum(x=>x.Bytes??0),
         networkTransferBytes=workloadEvents.Where(x=>x.Category=="Network" && (x.Operation.Contains("Send")||x.Operation.Contains("Recv"))).Sum(x=>x.Bytes??0),
@@ -61,10 +63,13 @@ try {
     if(page.Events.Count==0)throw new Exception("Controlled workload CPU evidence is missing.");
     var evidence=reader.GetEvidence(page.Events[0].Index,null,deadline.Token);
     if(evidence.Observation.ProcessId!=lifetime?.Id)throw new Exception("Evidence lifetime attribution did not match.");
-    if(!quality.lifetimeResolved || !quality.cpuContributorIsWorkload || quality.logicalFileBytes<128L*1024*1024 ||
+    if(!quality.lifetimeResolved || !quality.cpuContributorIsWorkload || profile == "FileActivity" && quality.logicalFileBytes<128L*1024*1024 ||
         quality.networkTransferBytes<16L*1024*1024 || quality.maximumCapturedWorkingSet<128L*1024*1024)
         throw new Exception("Controlled recording did not meet expected attribution or coverage. See end-to-end.json.");
-    Console.WriteLine("Capture, import, contributor ranking, evidence, and report export passed.");
+    using var canonicalInput=File.OpenRead(source);
+    var finalHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(canonicalInput)).ToLowerInvariant();
+    if(finalHash != session.SourceHash || recording.Sha256 != session.SourceHash) throw new Exception("Original capture fingerprint changed during import or export.");
+    Console.WriteLine($"{profile}: capture, import, contributor ranking, evidence, source immutability, and report export passed.");
     return 0;
 }catch(Exception ex){
     File.WriteAllText(Path.Combine(output,"failure.json"),JsonSerializer.Serialize(new{error=ex.ToString()},new JsonSerializerOptions(Wire.Json){WriteIndented=true}));
