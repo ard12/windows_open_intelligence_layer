@@ -129,13 +129,13 @@
       </Grid>
       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="LATEST READABLE PROCESSES · trace-local lifetime identity" Style="{StaticResource Label}"/>
        <DataGrid ItemsSource="{Binding MonitorTop}" Height="260"><DataGrid.Columns>
-        <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="160"/><DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
-        <DataGridTextColumn Header="Session" Binding="{Binding SessionId}" Width="65"/><DataGridTextColumn Header="CPU %" Binding="{Binding CpuPercent, StringFormat=N2, TargetNullValue=—}" Width="75"/>
-        <DataGridTextColumn Header="Read B/s" Binding="{Binding ReadBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="100"/>
-        <DataGridTextColumn Header="Write B/s" Binding="{Binding WriteBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="100"/>
-        <DataGridTextColumn Header="Private bytes" Binding="{Binding PrivateBytes, StringFormat=N0, TargetNullValue=—}" Width="125"/>
-        <DataGridTextColumn Header="Working set" Binding="{Binding WorkingSetBytes, StringFormat=N0, TargetNullValue=—}" Width="125"/>
-        <DataGridTextColumn Header="Lifetime ID" Binding="{Binding LifetimeId}" Width="200"/>
+        <DataGridTextColumn Header="Process" Binding="{Binding Process.Name}" Width="160"/><DataGridTextColumn Header="PID" Binding="{Binding Process.Pid}" Width="65"/>
+        <DataGridTextColumn Header="Session" Binding="{Binding Process.SessionId}" Width="65"/><DataGridTextColumn Header="CPU %" Binding="{Binding Process.CpuPercent, StringFormat=N2, TargetNullValue=—}" Width="75"/>
+        <DataGridTextColumn Header="Read B/s" Binding="{Binding Process.ReadBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="100"/>
+        <DataGridTextColumn Header="Write B/s" Binding="{Binding Process.WriteBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="100"/>
+        <DataGridTextColumn Header="Private bytes" Binding="{Binding Process.PrivateBytes, StringFormat=N0, TargetNullValue=—}" Width="125"/>
+        <DataGridTextColumn Header="Working set" Binding="{Binding Process.WorkingSetBytes, StringFormat=N0, TargetNullValue=—}" Width="125"/>
+        <DataGridTextColumn Header="Lifetime ID" Binding="{Binding Process.LifetimeId}" Width="200"/>
        </DataGrid.Columns></DataGrid></StackPanel></Border>
       <Border Style="{StaticResource Card}"><StackPanel>
        <DockPanel><Button DockPanel.Dock="Right" Content="Refresh lifetimes" Click="MonitorLifetimesClicked"/><TextBlock Text="OBSERVED PROCESS LIFETIMES · first/last seen in retained snapshots" Style="{StaticResource Label}" VerticalAlignment="Center"/></DockPanel>

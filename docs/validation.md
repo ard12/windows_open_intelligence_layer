@@ -248,3 +248,17 @@ Final UI managed heap was 24,089,160 bytes, while its cumulative managed allocat
 Failed attempts remain visible: run 36859629969 timed out one integration-test startup wait (103 passed); the bounded harness wait moved from ten to thirty seconds, without changing product budgets. Run 36860191751 compared the provider name against GUID evidence coordinates; the validator was corrected. Run 36860972639 failed near-limit independent completeness before import; exact missing/loss counts were not retained in that first report. The generator now pauses 50 ms every 8,192 records and retains exact loss/sequence diagnostics, with all completeness checks unchanged. No failed or incomplete dataset was accepted as a size pass.
 
 The privacy-reduced result ledger is [utf8-envelope-20261001.json](verification/utf8-envelope-20261001.json). Raw original ETLs, process histories, notes and machine identifiers are excluded. Independent product usefulness, Windows 11 operation, interactive WPA review, representative maximum resource traces, physical writes, repeatable observer cost and privileged distribution trust remain open.
+
+### Stable monitor rows and allocation diagnosis
+
+109 locked Release tests pass with no skips or compiler warnings. Five new regression tests exercise unchanged marks, rolling-window eviction, duplicate/gap/clock-rollback points, stable row reordering and notifications, PID reuse and invalid identity rejection. C: had approximately 60 MiB free, causing 21 initial disk-space guard failures; the full rerun used a task-scoped temporary directory on D: and passed without weakening guards or deleting user files.
+
+The self-contained desktop smoke passes import (418,378 indexed events), recovery, observation, findings/evidence, attached ETL, save/reopen, comparison and reports. The monitor screenshot was inspected: nested measurement bindings display process name, PID, rates, memory and lifetime values.
+
+Two development-only 60-second EventPipe probes reported zero event loss. Sampled allocation weight fell from 312,736,288 to 116,272,888 bytes (about 63%). WPF property/binding allocation types were prominent in the first probe; stable display rows reduce rebuilds while preserving incoming data. Allocation ticks associate intervening bytes with a sampled type and do not identify a source stack or precise per-type totals. The instrumented 75-second probes run on a shared machine, change runtime behavior and do not establish filled-history memory or idle-overhead acceptance.
+
+~~~powershell
+dotnet tools/Woi.Validation/bin/Release/net10.0-windows/Woi.Validation.dll --ui-allocations .artifacts/validation/ui-allocations dist/WindowsOpenIntelligence/WindowsOpenIntelligence.exe 60
+~~~
+
+A separate uninstrumented thirty-minute stable-row soak is running from an isolated copy of the package. The previous 304.96 MiB combined failure remains authoritative until terminal results are recorded. No forced collections or reduction in retained coverage is used. See [stable-monitor-rows-20261001.json](verification/stable-monitor-rows-20261001.json). Rich-schema maximum ETLs, independent Windows 11 and usefulness, protected privileged storage, physical writes, repeatable observer cost and longer current-version runs remain open.

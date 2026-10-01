@@ -4,6 +4,7 @@ using Woi.Core;
 using Woi.Trace;
 using Woi.Capture;
 
+if(args.Length==4 && args[0]=="--ui-allocations")return await Woi.Validation.UiAllocations.Run(args[1],args[2],int.Parse(args[3],System.Globalization.CultureInfo.InvariantCulture));
 if(args.Length==4 && args[0]=="--native-envelope")return await Woi.Validation.NativeEnvelope.Run(args[1],args[2],int.Parse(args[3],System.Globalization.CultureInfo.InvariantCulture));
 if(args.Length==3 && args[0]=="--capture-lifecycle")return await Woi.Validation.CaptureLifecycle.Run(args[1],args[2]);
 if(args.Length==2 && args[0]=="--monitor-memory")return Woi.Validation.MonitorMemory.Run(args[1]);

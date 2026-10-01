@@ -1,0 +1,170 @@
+{
+  "schema": 1,
+  "utc": "2026-10-01T13:29:34.7497501Z",
+  "change": "Stable WPF monitor collections",
+  "platform": "Windows 10 Pro build 19045 x64",
+  "logicalProcessors": 12,
+  "tests": {
+    "skipped": 0,
+    "failed": 0,
+    "passed": 109,
+    "initialEnvironmentFailure": "21 tests failed on C-volume free-space guards; 88 passed. Full rerun on D passed without changing guards.",
+    "temporaryStorage": "Workspace D volume; C volume had insufficient free space",
+    "compilerWarnings": 0
+  },
+  "packagedSmoke": {
+    "monitorScreenshotInspected": true,
+    "indexedEvents": 418378,
+    "allAssertionsPassed": true
+  },
+  "allocationProbe": {
+    "afterTicks": 1091,
+    "afterTopTypes": [
+      {
+        "type": "System.Windows.EffectiveValueEntry[]",
+        "kind": "Small",
+        "ticks": 71,
+        "sampleWeightBytes": 7568688
+      },
+      {
+        "type": "System.Windows.InheritablePropertyChangeInfo[]",
+        "kind": "Small",
+        "ticks": 52,
+        "sampleWeightBytes": 5528128
+      },
+      {
+        "type": "EventKey",
+        "kind": "Small",
+        "ticks": 41,
+        "sampleWeightBytes": 4337592
+      },
+      {
+        "type": "ScottPlot.Tick[]",
+        "kind": "Small",
+        "ticks": 36,
+        "sampleWeightBytes": 3825000
+      },
+      {
+        "type": "MS.Internal.Text.TextProperties",
+        "kind": "Small",
+        "ticks": 34,
+        "sampleWeightBytes": 3619496
+      },
+      {
+        "type": "VolatileNode[System.IntPtr,SkiaSharp.SKObject][]",
+        "kind": "Small",
+        "ticks": 29,
+        "sampleWeightBytes": 3087216
+      },
+      {
+        "type": "System.Func`2[System.String,System.Single]",
+        "kind": "Small",
+        "ticks": 27,
+        "sampleWeightBytes": 2871136
+      },
+      {
+        "type": "System.Double[]",
+        "kind": "Small",
+        "ticks": 25,
+        "sampleWeightBytes": 2663816
+      },
+      {
+        "type": "MS.Internal.Text.LineProperties",
+        "kind": "Small",
+        "ticks": 22,
+        "sampleWeightBytes": 2353080
+      },
+      {
+        "type": "System.WeakReference",
+        "kind": "Small",
+        "ticks": 18,
+        "sampleWeightBytes": 1914336
+      }
+    ],
+    "beforeSampleWeightBytes": 312736288,
+    "beforeInstrumentedTotalUiAllocatedBytes": 410942536,
+    "reportedLossBefore": 0,
+    "sampleWeightReductionPercent": 62.82078784538109,
+    "beforeTicks": 2933,
+    "afterInstrumentedTotalUiAllocatedBytes": 153935800,
+    "afterSampleWeightBytes": 116272888,
+    "seconds": 60,
+    "provider": "Microsoft-Windows-DotNETRuntime",
+    "beforeTopTypes": [
+      {
+        "type": "System.Windows.EffectiveValueEntry[]",
+        "kind": "Small",
+        "ticks": 247,
+        "sampleWeightBytes": 26313864
+      },
+      {
+        "type": "System.Windows.InheritablePropertyChangeInfo[]",
+        "kind": "Small",
+        "ticks": 175,
+        "sampleWeightBytes": 18648008
+      },
+      {
+        "type": "MS.Internal.Text.TextProperties",
+        "kind": "Small",
+        "ticks": 77,
+        "sampleWeightBytes": 8205216
+      },
+      {
+        "type": "System.WeakReference",
+        "kind": "Small",
+        "ticks": 65,
+        "sampleWeightBytes": 6926888
+      },
+      {
+        "type": "EventKey",
+        "kind": "Small",
+        "ticks": 64,
+        "sampleWeightBytes": 6830552
+      },
+      {
+        "type": "MS.Internal.Text.LineProperties",
+        "kind": "Small",
+        "ticks": 56,
+        "sampleWeightBytes": 5969976
+      },
+      {
+        "type": "System.EventHandler",
+        "kind": "Small",
+        "ticks": 51,
+        "sampleWeightBytes": 5438472
+      },
+      {
+        "type": "System.Windows.DependencyProperty[]",
+        "kind": "Small",
+        "ticks": 41,
+        "sampleWeightBytes": 4373320
+      },
+      {
+        "type": "System.Windows.LocalValueEntry[]",
+        "kind": "Small",
+        "ticks": 41,
+        "sampleWeightBytes": 4371264
+      },
+      {
+        "type": "ScottPlot.Tick[]",
+        "kind": "Small",
+        "ticks": 39,
+        "sampleWeightBytes": 4156376
+      }
+    ],
+    "reportedLossAfter": 0
+  },
+  "filledHistory": {
+    "requestedSeconds": 1800,
+    "status": "running",
+    "acceptance": "pending terminal result",
+    "combinedBudgetMiB": 300,
+    "priorAuthoritativeCombinedMiB": 304.9609375
+  },
+  "limitations": [
+    "Runtime allocation ticks have approximate sampled type weights, not precise allocation stacks or retained-heap totals.",
+    "Instrumented 75-second probes change runtime behavior, run on a shared development machine and do not establish memory or overhead acceptance.",
+    "History coverage, process identities and collection cadence are unchanged; no forced collection or reduced retention.",
+    "Independent Windows 11 use, participants, observer cost, physical writes, repeatable longer sessions and privileged storage remain open."
+  ]
+}

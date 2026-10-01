@@ -11,7 +11,7 @@ public partial class MainViewModel
     private DispatcherTimer? monitorTimer;
     private bool monitorRefreshPending;
     public ObservableCollection<MonitorPoint> MonitorHistory { get; } = [];
-    public ObservableCollection<MonitorProcess> MonitorTop { get; } = [];
+    public ObservableCollection<MonitorProcessRow> MonitorTop { get; } = [];
     public ObservableCollection<MonitorMark> MonitorMarks { get; } = [];
     public ObservableCollection<MonitorLifetime> MonitorLifetimes { get; } = [];
     [ObservableProperty] private MonitorView? monitor;
@@ -47,9 +47,9 @@ public partial class MainViewModel
             var view = await activeClient.Send<MonitorView>("monitor.status", new {});
             if (!ReferenceEquals(monitorClient, activeClient)) return;
             Monitor = view;
-            MonitorHistory.Clear(); foreach (var point in view.History.TakeLast(120)) MonitorHistory.Add(point);
-            MonitorTop.Clear(); foreach (var process in view.TopProcesses) MonitorTop.Add(process);
-            MonitorMarks.Clear(); foreach (var mark in view.Marks) MonitorMarks.Add(mark);
+            MonitorCollections.Window(MonitorHistory, view.History.TakeLast(120).ToArray());
+            MonitorCollections.Processes(MonitorTop, view.TopProcesses);
+            MonitorCollections.Window(MonitorMarks, view.Marks);
             MonitorStatus = $"Observing locally · {view.SnapshotCount:n0} snapshots · {view.RetainedSeconds:n0}s retained · {view.RetainedProcessRows:n0} process rows · {view.History.LastOrDefault()?.UnreadableProcesses ?? 0:n0} processes unreadable this tick";
             MonitorChartsChanged?.Invoke();
         } catch (Exception ex) {
