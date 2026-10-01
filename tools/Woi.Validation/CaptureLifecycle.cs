@@ -30,9 +30,9 @@ internal static class CaptureLifecycle
             activeCase = "automatic deadline";
             await using (var client = await CaptureClient.Connect(executable, token)) {
                 var started = await client.Send("start", new CaptureOptions("Resources", 5), token);
-                var saved = await WaitFor(client, x => x.Phase != CapturePhase.Recording, token);
+                var saved = await WaitFor(client, x => x.Phase is CapturePhase.Saved or CapturePhase.Failed or CapturePhase.Cancelled, token);
                 Require(saved.Phase == CapturePhase.Saved && saved.TracePath != null && saved.ElapsedSeconds >= 5,
-                    "Automatic stop did not publish a completed recording.");
+                    "Automatic stop did not publish a completed recording: " + saved.Phase + ". " + saved.Message);
                 var session = EtlImporter.Import(saved.TracePath!, Path.Combine(output, "deadline-cache"), null, token);
                 using var reader = new EtlReader(session);
                 var page = reader.QueryEvents(new(0, session.DurationMs), token);

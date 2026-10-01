@@ -7,7 +7,7 @@ Each stdin/stdout line is one UTF-8 JSON object. Requests contain `id`, `version
 | import | path |
 | cancel | requestId |
 | summary / capabilities / bookmarks | empty object |
-| diagnostics | empty object; returns worker PID and current/peak working set |
+| diagnostics | empty object; returns worker PID, current/peak working set and optional last successful contributor query profile |
 | metrics / contributors | startMs, endMs, optional processId and ranking (CPU, Disk, Latency) |
 | events | startMs, endMs, processId, category, operation, target, cursor, limit 1–500 |
 | entity | trace-local lifetime id |
@@ -24,6 +24,8 @@ Example:
 ```
 
 Intervals are half-open. IDs and ETLX indices are valid only for the active trace. An event page returns an exclusive nextCursor when more matches exist. Consecutive pages keep a forward iterator; replayed or changed queries seek to the cursor time. Invalid cursors are rejected. Queries are serialized; cancel requests bypass that gate. Input lines are bounded during reading; oversized input is discarded. The worker rejects more than 32 pending requests with WorkerBusy. Unsupported versions, malformed JSON, and unsupported methods return structured errors. No request accepts SQL, shell commands, provider activation, or an HTTP listener.
+
+Contributor query diagnostics separate selected/baseline SQLite totals, edge replay and ranking duration, edge observation counts, raw records visited and bytes allocated on the query thread. These are developer measurements, not resource evidence or a coverage claim. The profile is null before a successful contributor query and cleared when a new one begins. Resource-only replay skips target display resolution; evidence queries still resolve captured paths and endpoints.
 
 ## Capture protocol v1
 
@@ -43,6 +45,8 @@ Monitor messages use the same versioned JSON request/reply envelope over stdio:
 | monitor.stop | empty object | Acknowledgement and worker exit |
 
 CPU and byte rates are nullable until a matching process lifetime has two valid counter samples. Snapshot read/write totals sum only known process rates and are labelled accounted activity. Session, PID, and creation FILETIME form the local identity. The monitor never returns ETLX indices or claims that snapshots are ETL events. Process I/O counters remain separate from physical disk transfers.
+Monitor status includes cumulative session statistics (total snapshots, missed-tick gaps, sampling failures and invalid intervals), independent of the evicting retained-history diagnostics. They reset on a new monitor session. Older clients may ignore these additive fields; absent statistics mean unavailable.
+
 ## Investigation operations (protocol v1, additive)
 
 The monitor's `monitor.investigate` accepts a typed `InvestigationRequest`: window start/end seconds from the recorded monotonic source start, symptom, optional process lifetime ID, notes, and CPU threshold/sustained-duration settings. It pins bounded immutable evidence and returns an InvestigationView, never the full process-row history to WPF. Rate integration clips partial interval edges with an explicit proportional-activity assumption; UTC is display metadata. The request must fit retained history.
