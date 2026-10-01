@@ -121,7 +121,7 @@ Each capture test needs a fresh output directory. For independent parser validat
 
 ## Remaining acceptance
 
-A successful native capture-to-report run; real automatic stop, cancel, disconnect, recovery and coexistence; native rich-adapter and schema/loss cases; native CPU-weight agreement and WPA checks; maximum-envelope decoding; contributor tail latency; Windows 11 and local PDB testing; and the [eight-user pilot](pilot.md) remain open. This preview is not certified for all roadmap acceptance targets.
+Supported-desktop native capture-to-report; real automatic stop, cancel, disconnect, recovery and coexistence; native rich-adapter and schema/loss cases; native CPU-weight agreement and WPA checks; maximum-envelope decoding; contributor tail latency; Windows 11 and local PDB testing; and the [eight-user pilot](pilot.md) remain open. This preview is not certified for all roadmap acceptance targets.
 
 ## 2026-10-01 investigation checkpoints (v0.4.0-preview.1)
 
@@ -146,7 +146,7 @@ The first ten-second-warmed three-trial run measured median whole-task slowdown 
 
 A fresh three-trial warmed run measured whole-task difference −7.50% and CPU-work difference −6.96% (observation-guarded-20261001/result.json). Negative changes are not an application speedup claim; small counterbalanced samples and shared-machine/cache conditions remain confounders. The final two-trial script check exercised strict variables and both elapsed guards; median task difference was −9.10% and CPU-work difference −8.88% (observation-final-20261001/result.json). Mixed results leave the observer-cost gate open; the original failed cold measurement remains in this record.
 
-The CI capture step now invokes scripts/native-capture-matrix.ps1 for both fixed shipping profiles and preserves nested JSON/Markdown results even on failure. It has not acquired a successful remote native run.
+The CI capture step now invokes scripts/native-capture-matrix.ps1 for both fixed shipping profiles and preserves nested JSON/Markdown results even on failure. It subsequently acquired the successful remote native run documented below.
 
 Reproduce the new local checks after building/publishing:
 
@@ -159,3 +159,18 @@ Reproduce the new local checks after building/publishing:
 The soak creates a results JSON at completion and exits. Its hidden-window mode does not replace active interaction. Benchmark scripts retain failed cases. The current distribution remains an unsigned preview; artifact checksums are not publisher authentication. See checkpoints.md for the open independent-use and release gates.
 
 A privacy-reduced machine-readable summary is [investigation-checkpoints-20261001.json](verification/investigation-checkpoints-20261001.json); raw snapshots, machine identifiers, notes and local absolute paths are excluded.
+
+### Successful remote native follow-up
+
+[Actions run 36841914783](https://github.com/ard12/win_OiL/actions/runs/36841914783), source f7a72f6, completed every job step on Windows Server 2025 / two logical processors. Locked tests (89), self-contained publish, both shipping capture profiles, synthetic five-million aggregation, packaged desktop recovery/investigation/persistence, monitor continuity and replay stress all passed their assertions. Application and verification artifacts were uploaded.
+
+| Profile | Indexed ETLX events | Workload is CPU leader | Logical file bytes | Network transfer records | Peak captured workload working set |
+|---|---:|---|---:|---:|---:|
+| Resources | 96,261 | Yes | Unavailable | 16,777,216 bytes | 168,022,016 bytes |
+| FileActivity | 101,967 | Yes | 135,329,692 bytes | 16,777,216 bytes | 165,482,496 bytes |
+
+Both captures reported zero loss, preserved source hashes, resolved the workload lifetime and its selected CPU evidence, and exported reports. Zero loss does not prove completeness; paths and unknown schemas still carry explicit limitations. These runs cover normal start/manual-save flow, not every failure or coexistence transition.
+
+The server replay stress handled 198 requests, 50,000 paged events and two restarts. Contributor p95 was 747.14 ms, above the 300 ms gate; first-page p95 was 148.32 ms; peak worker was about 435 MiB. Synthetic cold contributor query was 343.24 ms and metrics were 339.90 ms; repeat contributor p95 was 1.07 ms. The 30-second monitor test had no missed ticks and 37.37 MiB peak but 1.293% machine CPU including startup, exceeding the <1% idle target. A green workflow does not close these failed performance budgets.
+
+The [redacted remote ledger](verification/github-native-20261001.json) excludes raw ETLs, absolute capture paths, owner SIDs and process command lines. Supported Windows 11 desktop/clean-machine use, native failure lifecycle, CPU-weight parity, full-size real ETL, long-run observer cost and independent product evidence remain open.

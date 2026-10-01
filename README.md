@@ -1,6 +1,6 @@
 # Windows Open Intelligence
 
-A local Windows activity analyzer with optional, unprivileged recent-history observation and bounded guided WPR recording. This remains an **engineering preview**: offline analysis and observation have local checks, while the privileged recording path still needs a successful native capture run. See [verification](docs/validation.md) for measured results and open gates.
+A local Windows activity analyzer with optional, unprivileged recent-history observation and bounded guided WPR recording. This remains an **engineering preview**: offline analysis and observation have local checks, and both recording profiles passed native capture-to-report on a Windows Server CI runner. Windows 11 desktop, capture failure lifecycle, and several performance gates remain open. See [verification](docs/validation.md) for measured results and open gates.
 
 ## Run
 
@@ -77,7 +77,7 @@ $env:DOTNET_ROOT = (Resolve-Path .\.tools\dotnet).Path # local SDK development a
 
 SDK, package, and public fixture downloads use the network during development. Product analysis remains local. Node.js is needed only for the developer replay stress script. See [reproduction commands](docs/validation.md).
 
-The [Windows GitHub workflow](.github/workflows/windows.yml) builds locked dependencies, tests real ETLs, runs a native controlled recording, checks report export and desktop recovery, stresses the packaged worker, and uploads the application only after those checks succeed. The 2026-09-30 push triggered Actions, but GitHub rejected the job before any step because of an account payment or spending-limit issue. Native capture coverage is intentionally a failing gate if it cannot be demonstrated.
+The [Windows GitHub workflow](.github/workflows/windows.yml) builds locked dependencies, tests real ETLs, runs a native controlled recording, checks report export and desktop recovery, stresses the packaged worker, and uploads the application only after those checks succeed. The 2026-09-30 push triggered Actions, but GitHub rejected the job before any step because of an account payment or spending-limit issue. The subsequent [1 October CI run](https://github.com/ard12/win_OiL/actions/runs/36841914783) passed both shipping capture profiles, packaged desktop recovery/investigation/persistence, and replay/aggregation checks. This server run does not establish Windows 11 compatibility or passing every performance budget.
 
 To upload the project to GitHub, use the generated **WindowsOpenIntelligence-source.zip** contents. It contains source, locks, workflow, docs, and notices, excluding SDKs, binaries, traces, caches, and local test artifacts. Publish the separate application ZIP as a release asset after reviewing the verification gates.
 

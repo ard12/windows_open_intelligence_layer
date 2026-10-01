@@ -1,0 +1,295 @@
+{
+  "schema": 1,
+  "date": "2026-10-01",
+  "runId": 36841914783,
+  "url": "https://github.com/ard12/win_OiL/actions/runs/36841914783",
+  "sourceCommit": "f7a72f6d9acabf43c6a2dfd1f65f19c7ac577f7b",
+  "conclusion": "success",
+  "os": "Windows Server 2025",
+  "image": "windows-2025-vs2026",
+  "logicalProcessors": 2,
+  "shippingProfileCaptureAndReport": [
+    {
+      "profile": "FileActivity",
+      "sourceSha256": "f50a0207d86da4f20b39f1aaeb7454a28af2d128a135bc62d039516c6f4b7d01",
+      "indexedEvents": 101967,
+      "reportedLoss": 0,
+      "lifetimeResolved": true,
+      "cpuContributorIsWorkload": true,
+      "logicalFileBytes": 135329692,
+      "networkTransferBytes": 16777216,
+      "maximumCapturedWorkingSet": 165482496,
+      "capabilities": [
+        {
+          "category": "Process",
+          "status": "Available",
+          "events": 208,
+          "detail": "OS-reported lifetimes and parent relationships."
+        },
+        {
+          "category": "Thread",
+          "status": "Available",
+          "events": 1736,
+          "detail": "Supported observations present in the recording."
+        },
+        {
+          "category": "Module",
+          "status": "Available",
+          "events": 8029,
+          "detail": "Supported observations present in the recording."
+        },
+        {
+          "category": "CPU",
+          "status": "Available",
+          "events": 10805,
+          "detail": "Busy CPU samples; estimates require captured sampling interval metadata."
+        },
+        {
+          "category": "Disk",
+          "status": "Available",
+          "events": 284,
+          "detail": "Completed physical reads/writes and recorded latency."
+        },
+        {
+          "category": "File",
+          "status": "Available",
+          "events": 9580,
+          "detail": "Logical file operations; requested byte coverage is reported separately."
+        },
+        {
+          "category": "Network",
+          "status": "Available",
+          "events": 372,
+          "detail": "Recorded TCP/IP and UDP activity, including captured endpoints."
+        },
+        {
+          "category": "Memory",
+          "status": "Available",
+          "events": 5888,
+          "detail": "Captured process working sets; shared pages may overlap."
+        },
+        {
+          "category": "HardFault",
+          "status": "Available",
+          "events": 9,
+          "detail": "Supported observations present in the recording."
+        },
+        {
+          "category": "FileBytes",
+          "status": "Available",
+          "events": 564,
+          "detail": "Requested logical read/write bytes, separate from physical transfers."
+        },
+        {
+          "category": "NetworkBytes",
+          "status": "Available",
+          "events": 344,
+          "detail": "Supported send/receive byte records, not unique application payload."
+        },
+        {
+          "category": "ReportedLoss",
+          "status": "Available",
+          "events": 0,
+          "detail": "Windows-reported loss; zero does not establish completeness."
+        },
+        {
+          "category": "Paths",
+          "status": "Unresolved",
+          "events": 4780,
+          "detail": "Captured paths only; unresolved identifiers stay in payloads."
+        },
+        {
+          "category": "UnknownSchemas",
+          "status": "Unsupported",
+          "events": 34631,
+          "detail": "Inspectable headers without resource interpretation."
+        }
+      ]
+    },
+    {
+      "profile": "Resources",
+      "sourceSha256": "e9f6698b0638bbb01419e057c1d3ecb81855bc40157973662b6e0d4c8a6b8d59",
+      "indexedEvents": 96261,
+      "reportedLoss": 0,
+      "lifetimeResolved": true,
+      "cpuContributorIsWorkload": true,
+      "logicalFileBytes": 0,
+      "networkTransferBytes": 16777216,
+      "maximumCapturedWorkingSet": 168022016,
+      "capabilities": [
+        {
+          "category": "Process",
+          "status": "Available",
+          "events": 214,
+          "detail": "OS-reported lifetimes and parent relationships."
+        },
+        {
+          "category": "Thread",
+          "status": "Available",
+          "events": 1860,
+          "detail": "Supported observations present in the recording."
+        },
+        {
+          "category": "Module",
+          "status": "Available",
+          "events": 8228,
+          "detail": "Supported observations present in the recording."
+        },
+        {
+          "category": "CPU",
+          "status": "Available",
+          "events": 11243,
+          "detail": "Busy CPU samples; estimates require captured sampling interval metadata."
+        },
+        {
+          "category": "Disk",
+          "status": "Available",
+          "events": 555,
+          "detail": "Completed physical reads/writes and recorded latency."
+        },
+        {
+          "category": "File",
+          "status": "Available",
+          "events": 1704,
+          "detail": "Logical file operations; requested byte coverage is reported separately."
+        },
+        {
+          "category": "Network",
+          "status": "Available",
+          "events": 348,
+          "detail": "Recorded TCP/IP and UDP activity, including captured endpoints."
+        },
+        {
+          "category": "Memory",
+          "status": "Available",
+          "events": 6132,
+          "detail": "Captured process working sets; shared pages may overlap."
+        },
+        {
+          "category": "HardFault",
+          "status": "Available",
+          "events": 86,
+          "detail": "Supported observations present in the recording."
+        },
+        {
+          "category": "FileBytes",
+          "status": "NotCaptured",
+          "events": 0,
+          "detail": "Requested logical read/write bytes, separate from physical transfers."
+        },
+        {
+          "category": "NetworkBytes",
+          "status": "Available",
+          "events": 326,
+          "detail": "Supported send/receive byte records, not unique application payload."
+        },
+        {
+          "category": "ReportedLoss",
+          "status": "Available",
+          "events": 0,
+          "detail": "Windows-reported loss; zero does not establish completeness."
+        },
+        {
+          "category": "Paths",
+          "status": "Unresolved",
+          "events": 114,
+          "detail": "Captured paths only; unresolved identifiers stay in payloads."
+        },
+        {
+          "category": "UnknownSchemas",
+          "status": "Unsupported",
+          "events": 35606,
+          "detail": "Inspectable headers without resource interpretation."
+        }
+      ]
+    }
+  ],
+  "monitorSmoke": {
+    "durationSeconds": 30.207,
+    "snapshotCount": 30,
+    "retainedSeconds": 29.0124635,
+    "retainedProcessRows": 4245,
+    "estimatedRetainedBytes": 1120020,
+    "peakWorkerMiB": 37.37,
+    "workerCpuPercentOfMachine": 1.293,
+    "samplingDiagnostics": {
+      "samplingMedianMs": 5.5715,
+      "samplingP95Ms": 12.031,
+      "samplingMaximumMs": 14.5919,
+      "missedTickGaps": 0
+    },
+    "latestUnreadableProcesses": 1,
+    "gapKinds": [
+      {
+        "kind": "ProcessAccess",
+        "count": 1
+      },
+      {
+        "kind": "ProcessImageUnavailable",
+        "count": 1
+      }
+    ]
+  },
+  "replayStress": {
+    "success": true,
+    "iterations": 10,
+    "totalRequests": 198,
+    "pagedEvents": 50000,
+    "restarts": 2,
+    "peakWorkerBytes": 455913472,
+    "p95Ms": {
+      "import": 5570.162899999999,
+      "contributors": 747.1398000000008,
+      "metrics": 5.189799999999195,
+      "firstPage": 148.32010000000082,
+      "laterPage": 44.6394999999975,
+      "evidence": 12.399499999999534,
+      "export": 61.0792999999976
+    }
+  },
+  "syntheticAggregation": {
+    "schema": 1,
+    "success": true,
+    "kind": "synthetic aggregation and query stress",
+    "observations": 5000000,
+    "buckets": 210000,
+    "retainedSeconds": 10000,
+    "aggregateMs": 1758.4009,
+    "contributorsP95Ms": 1.0743,
+    "coldContributorMs": 343.2445,
+    "queryCacheEntries": 16,
+    "metricsMs": 339.9015,
+    "peakBytes": 253841408,
+    "cpuSamples": 4000000,
+    "diskBytes": 2048000000,
+    "fileBytes": 512000000,
+    "visiblePoints": 501,
+    "partialIntervalMatched": true,
+    "limitations": "This validates aggregation/query scale; it does not certify ETL decoding at five million events."
+  },
+  "desktopSmoke": {
+    "success": true,
+    "workerRecoveryVerified": true,
+    "monitorVerified": true,
+    "investigationVerified": true,
+    "savedComparisonVerified": true,
+    "indexedEvents": 418378
+  },
+  "tests": {
+    "skipped": 0,
+    "failed": 0,
+    "passed": 89
+  },
+  "performanceTargets": {
+    "shortMonitorCpuBelowOnePercent": false,
+    "contributorP95Below300ms": false
+  },
+  "limitations": [
+    "Server runner is not the supported Windows 11 desktop baseline.",
+    "Capture run covers start, controlled workload, manual save, import, attribution, evidence and reports; cancel/deadline/coexistence/recovery still require native cases.",
+    "Zero reported loss does not establish completeness.",
+    "Resources has no captured logical-file byte coverage; the scalar zero in the developer validation record is not an available product measurement.",
+    "Green workflow verifies its assertions, not every proposed performance budget.",
+    "CPU-weight agreement, maximum real ETL envelope and independent users remain open."
+  ]
+}
