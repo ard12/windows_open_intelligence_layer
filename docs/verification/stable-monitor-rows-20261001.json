@@ -579,12 +579,190 @@
   "ci": {
     "url": "https://github.com/ard12/win_OiL/actions/runs/36871281243",
     "sourceCommit": "b141836efd6b1dff42afcadb2b110fd64d301d37",
-    "status": "in_progress",
-    "verifiedCompletedSteps": [
-      "109 locked tests",
-      "Native CPU and disk references",
-      "Self-contained package",
-      "Generated native ETL near-limit completeness and over-limit rejection"
+    "status": "completed",
+    "conclusion": "success",
+    "runner": "Windows Server 2025; two logical processors",
+    "testsPassed": 109,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "nativeReferencesPassed": true,
+    "bothShippingProfilesPassed": true,
+    "lifecyclePassed": true,
+    "lifecycleCases": [
+      {
+        "name": "automatic deadline",
+        "passed": true,
+        "elapsedSeconds": 5.3692898,
+        "indexedEvents": 56398,
+        "sourceIntegrityPreserved": true,
+        "evidenceAvailable": true
+      },
+      {
+        "name": "manual cancellation",
+        "passed": true,
+        "elapsedSeconds": null,
+        "indexedEvents": null,
+        "sourceIntegrityPreserved": null,
+        "evidenceAvailable": null
+      },
+      {
+        "name": "pipe disconnect",
+        "passed": true,
+        "elapsedSeconds": null,
+        "indexedEvents": null,
+        "sourceIntegrityPreserved": null,
+        "evidenceAvailable": null
+      },
+      {
+        "name": "helper crash and recovery",
+        "passed": true,
+        "elapsedSeconds": null,
+        "indexedEvents": null,
+        "sourceIntegrityPreserved": null,
+        "evidenceAvailable": null
+      },
+      {
+        "name": "coexistence",
+        "passed": true,
+        "elapsedSeconds": null,
+        "indexedEvents": 46148,
+        "sourceIntegrityPreserved": null,
+        "evidenceAvailable": null
+      }
+    ],
+    "generatedNearLimit": {
+      "schema": 1,
+      "success": true,
+      "kind": "generated native ETL import and evidence scale",
+      "capture": {
+        "generated": 4990000,
+        "recorded": 4990000,
+        "generationMs": 36351.1852,
+        "sourceBytes": 640090112,
+        "sourceHash": "aaa1f920c6782881dd0d6838affd3fa9666858481597b6da431c6f8f374d7413",
+        "reportedLoss": 0,
+        "missingSequences": 0,
+        "sequenceSum": 12450047505000,
+        "expectedSequenceSum": 12450047505000,
+        "generatorBufferMiB": 64,
+        "pacingEveryEvents": 8192,
+        "pacingDelayMs": 50
+      },
+      "indexedEvents": 4990003,
+      "coldImportMs": 5773.9393,
+      "verifiedCachedImportMs": 1830.4561,
+      "sequentialPageP95Ms": 12.5679,
+      "pages": 20,
+      "pagedEvents": 10000,
+      "peakWorkerBytes": 159625216,
+      "derivedBytes": 539048221,
+      "originalPreserved": true,
+      "evidenceVerified": true,
+      "gates": {
+        "coldUnderTwoMinutes": true,
+        "cachedUnderFiveSeconds": true,
+        "pagesUnder300Ms": true,
+        "workerUnderTwoGiB": true,
+        "derivedUnderTwoGiB": true
+      },
+      "limitations": [
+        "Generated application-provider events exercise native ETL/ETLX decoding and indexed evidence, not resource interpretation.",
+        "Near-five-million indexed events do not certify every 1 GiB resource trace, rich stacks, or process churn.",
+        "Generator/reference memory is separate from the measured importer worker.",
+        "No kernel, process, file or network providers are enabled. No original ETL is included in default artifacts.",
+        "This is development validation, not independent Windows 11 desktop or usability evidence."
+      ]
+    },
+    "generatedOverLimit": {
+      "schema": 1,
+      "success": true,
+      "kind": "generated native ETL over-limit rejection",
+      "capture": {
+        "generated": 5010000,
+        "recorded": 5010000,
+        "generationMs": 35545.9825,
+        "sourceBytes": 642711552,
+        "sourceHash": "63510eacf28e024b838361339308b09cc8cb5024073ee156fbcfe0f22ae38af9",
+        "reportedLoss": 0,
+        "missingSequences": 0,
+        "sequenceSum": 12550047495000,
+        "expectedSequenceSum": 12550047495000,
+        "generatorBufferMiB": 64,
+        "pacingEveryEvents": 8192,
+        "pacingDelayMs": 50
+      },
+      "importMs": 3994.0812,
+      "rejectedCode": "SizeLimit",
+      "originalPreserved": true,
+      "limitations": [
+        "Generated application-provider events exercise native ETL/ETLX decoding and indexed evidence, not resource interpretation.",
+        "Near-five-million indexed events do not certify every 1 GiB resource trace, rich stacks, or process churn.",
+        "Generator/reference memory is separate from the measured importer worker.",
+        "No kernel, process, file or network providers are enabled. No original ETL is included in default artifacts.",
+        "This is development validation, not independent Windows 11 desktop or usability evidence."
+      ]
+    },
+    "desktop": {
+      "success": true,
+      "savedComparison": true,
+      "investigation": true,
+      "workerRecovery": true,
+      "monitor": true
+    },
+    "shortMonitor": {
+      "durationSeconds": 30.814,
+      "snapshotCount": 31,
+      "retainedSeconds": 30.0107329,
+      "retainedProcessRows": 4454,
+      "estimatedRetainedBytes": 1176376,
+      "peakWorkerMiB": 37.95,
+      "workerCpuPercentOfMachine": 0.658,
+      "samplingDiagnostics": {
+        "samplingMedianMs": 3.7607,
+        "samplingP95Ms": 9.2276,
+        "samplingMaximumMs": 17.9387,
+        "missedTickGaps": 0
+      },
+      "latestUnreadableProcesses": 1,
+      "gapKinds": [
+        {
+          "kind": "ProcessAccess",
+          "count": 1
+        },
+        {
+          "kind": "ProcessImageUnavailable",
+          "count": 1
+        }
+      ]
+    },
+    "replay": {
+      "success": true,
+      "totalRequests": 218,
+      "pagedEvents": 50000,
+      "restarts": 2,
+      "peakWorkerBytes": 426553344,
+      "p95Ms": {
+        "import": 3412.115600000001,
+        "contributors": 64.21830000000045,
+        "metrics": 4.55290000000241,
+        "firstPage": 366.95820000000094,
+        "laterPage": 102.65640000000349,
+        "evidence": 8.890199999998003,
+        "export": 23.60750000000189
+      },
+      "sourceIntegrityPreserved": true,
+      "damagedImportRecovery": true,
+      "cancellationAtomicity": true,
+      "crashDuringImportRecovery": true
+    },
+    "replayBudgets": {
+      "contributorsUnder300Ms": true,
+      "firstPageUnder300Ms": false
+    },
+    "limitations": [
+      "Green workflow is functional completion, not performance acceptance: first-page p95 366.96 ms exceeds 300 ms.",
+      "Server capture/reference evidence is not independent Windows 11 desktop, WPA or participant evidence.",
+      "Generated unsupported-provider scale does not establish rich resource/stack/process-churn maximum coverage."
     ]
   }
 }
