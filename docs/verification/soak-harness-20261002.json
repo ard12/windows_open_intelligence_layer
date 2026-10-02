@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "utc": "2026-10-02T16:41:58.5981812Z",
+  "actualTenSecondRun": {
+    "acceptance": {
+      "cumulativeCoverageTargetMet": true,
+      "monitorMemoryTargetMet": true,
+      "uiPlusMonitorMemoryTargetMet": true,
+      "analysisWorkerStarted": false
+    },
+    "cumulativeStatistics": {
+      "totalSnapshots": 10,
+      "missedTickGaps": 0,
+      "samplingFailures": 0,
+      "invalidIntervals": 0
+    },
+    "durationSeconds": 10.0624466,
+    "status": "completed"
+  },
+  "statusFixtures": [
+    {
+      "case": "missing-result",
+      "expected": "exited without result",
+      "actual": "exited without result",
+      "acceptanceAbsent": true
+    },
+    {
+      "case": "failed-result",
+      "expected": "failed",
+      "actual": "failed",
+      "acceptanceAbsent": true
+    },
+    {
+      "case": "too-short-result",
+      "expected": "incomplete result",
+      "actual": "incomplete result",
+      "acceptanceAbsent": true
+    },
+    {
+      "case": "incorrect-live-process-start",
+      "expected": "identity mismatch",
+      "actual": "identity mismatch",
+      "acceptanceAbsent": true
+    }
+  ],
+  "existingRunPreserved": true,
+  "originalRunStatus": "running",
+  "limits": [
+    "Synthetic status fixtures validate reporting only, not actual OS PID reuse or suspend/resume.",
+    "The short native run does not establish filled-history or long-run acceptance."
+  ]
+}

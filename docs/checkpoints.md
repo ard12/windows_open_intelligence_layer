@@ -80,3 +80,14 @@ Analysis starts when opening ETL or saved evidence rather than when launching th
 A new two-hour observation-only run uses an isolated extracted package and explicitly asserts that analysis remains stopped. Its outcome is pending; no memory improvement is claimed from the code change alone. The current process/run metadata and raw sensitive results stay local. [Redacted measurements](verification/lazy-analysis-followup-20261002.json) retain the prior terminal result, package checks and open gates. Independent users/Windows 11, active UI behavior, physical writes, task slowdown, sleep/resume and the privileged-helper boundary remain open.
 Current-source CI could not start: Actions run [37033870894](https://github.com/ard12/win_OiL/actions/runs/37033870894) for 12e6447 has no assigned runner and zero executed steps. GitHub's failure annotation identifies an account payment or spending-limit issue. This is an external infrastructure blocker, not a passing or failing application test result; prior CI successes do not establish current-source remote validation. Local extracted-package validation passed, and the existing isolated two-hour run continues.
 Local current-source fallback: locked Release build completed with zero compiler warnings/errors, and all 110 tests passed with zero skips. Temporary files and dependency caches use D:. The user chose local validation while GitHub infrastructure remains blocked; no billing changes or repeated unchanged CI retries are made. The isolated two-hour run remains live and is not replaced by short results.
+
+### Repeatable desktop soak commands
+
+Use a fresh output name and an extracted self-contained package directory that remains unchanged throughout the run. The launcher returns immediately; Status reads the existing run without launching or restarting anything. Run metadata records binary hashes, PID and creation time. Project temporary files stay on D: on this checkout. A completed functional run and its individual acceptance flags are reported separately; a live process, missing result, mismatched identity or short result never becomes a performance pass.
+
+~~~powershell
+./scripts/desktop-soak.ps1 -Seconds 7200 -PackageDirectory .artifacts/lazy-analysis-extracted-20261002 -Output .artifacts/validation/desktop-two-hour-01.json
+./scripts/desktop-soak.ps1 -Mode Status -Output .artifacts/validation/desktop-two-hour-01.json
+~~~
+
+The existing 2 October run is queried with `-Output .artifacts/validation/desktop-soak-lazy-analysis-2h-20261002.json`; keep that run intact. The launcher/status harness passed a separate ten-second native run and reporting checks for missing, failed and incomplete results and mismatched process-start metadata. Those controlled reporting fixtures do not establish actual OS PID reuse, sleep/resume, physical writes or long-run acceptance. [Harness verification](verification/soak-harness-20261002.json). The original two-hour run remains pending.
