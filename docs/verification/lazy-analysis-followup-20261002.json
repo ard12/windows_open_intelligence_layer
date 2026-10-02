@@ -75,5 +75,29 @@
     "Sleep/resume, independent Windows 11 hardware and clean-machine use",
     "Privileged capture storage and helper trust validation",
     "Eight independent pilot sessions and held-out scenario review"
-  ]
+  ],
+  "currentSourceRemote": {
+    "sourceCommit": "12e6447",
+    "runId": 37033870894,
+    "url": "https://github.com/ard12/win_OiL/actions/runs/37033870894",
+    "status": "completed",
+    "conclusion": "failure",
+    "stepsExecuted": 0,
+    "runnerAssigned": false,
+    "annotation": "Job not started: account payment or spending-limit issue reported by GitHub.",
+    "classification": "external CI infrastructure blocker; no current-source CI correctness result",
+    "userChoice": "Continue with local validation for now; do not change billing or rerun unchanged blocked CI."
+  },
+  "currentLocalTests": {
+    "sourceCommit": "12e6447",
+    "lockedReleaseBuild": true,
+    "compilerWarnings": 0,
+    "compilerErrors": 0,
+    "total": 110,
+    "passed": 110,
+    "failed": 0,
+    "skipped": 0,
+    "resultSha256": "98141c56e271bd0ce253dbe3b137f0001b6616695c4dad6c38967fd8273d93de",
+    "temporaryStorageDrive": "D:"
+  }
 }
