@@ -88,9 +88,9 @@ public partial class MainViewModel
     public async Task OpenInvestigation(string path)
     {
         try {
-            if (!client.IsAlive) { var previous = client; client.Dispose(); client = new(); AttachProgress(); DropInvestigations(previous); }
-            var view = await client.Send<InvestigationView>("investigation.open", new { path });
-            AddInvestigation(view, client); InvestigationStatus = "Reopened saved evidence; findings were recalculated with the recorded source metadata.";
+            RecoverAnalysisClient();
+            var view = await AnalysisClient.Send<InvestigationView>("investigation.open", new { path });
+            AddInvestigation(view, AnalysisClient); InvestigationStatus = "Reopened saved evidence; findings were recalculated with the recorded source metadata.";
         } catch (Exception ex) { InvestigationStatus = ex.Message; }
     }
     public async Task CloseInvestigation()
@@ -107,7 +107,7 @@ public partial class MainViewModel
             InvestigationView updated;
             if (ReferenceEquals(owner, client)) updated = await owner.Send<InvestigationView>("investigation.attach", new { id = view.Investigation.Id, interval = Interval() });
             else {
-                var report = await client.Send<Report>("report", Interval());
+                var report = await AnalysisClient.Send<Report>("report", Interval());
                 report = report with { Contributors = report.Contributors.Take(20).ToArray(), Incidents = report.Incidents.Take(20).ToArray() };
                 updated = await owner.Send<InvestigationView>("investigation.attach.report", new { id = view.Investigation.Id, report });
             }

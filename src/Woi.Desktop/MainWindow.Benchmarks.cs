@@ -36,7 +36,8 @@ public partial class MainWindow
             await model!.StartObservation(); Views.SelectedItem = MonitorTab;
             using var ui = Process.GetCurrentProcess();
             using var worker = Process.GetProcessById(model.MonitorWorkerProcessId ?? throw new InvalidOperationException("Monitor did not start."));
-            using var idleAnalysis = Process.GetProcessById(model.WorkerProcessId);
+            using var idleAnalysis = model.AnalysisWorkerProcessId is {} analysisPid ? Process.GetProcessById(analysisPid) : null;
+            var analysisStarted=idleAnalysis!=null;
             long peakCombined = 0, peakTotal = 0;
             while (clock.Elapsed.TotalSeconds < seconds) {
                 await Task.Delay(TimeSpan.FromSeconds(Math.Min(5, Math.Max(.1, seconds - clock.Elapsed.TotalSeconds))));
@@ -45,11 +46,14 @@ public partial class MainWindow
                 if (model.Monitor.SnapshotCount > 3600 || model.Monitor.RetainedProcessRows > 250000 ||
                     model.Monitor.EstimatedRetainedBytes > 64L * 1024 * 1024)
                     throw new InvalidOperationException("The observation ring exceeded its supported bounds.");
-                ui.Refresh(); worker.Refresh(); idleAnalysis.Refresh();
+                ui.Refresh(); worker.Refresh(); idleAnalysis?.Refresh();
+                if(model.AnalysisWorkerProcessId!=null && !analysisStarted)
+                    throw new InvalidOperationException("Observation-only mode unexpectedly started the analysis worker.");
+                var idleAnalysisBytes=idleAnalysis?.WorkingSet64??0; // Known absent process has no resident pages.
                 peakCombined = Math.Max(peakCombined, ui.WorkingSet64 + worker.WorkingSet64);
-                peakTotal = Math.Max(peakTotal, ui.WorkingSet64 + worker.WorkingSet64 + idleAnalysis.WorkingSet64);
+                peakTotal = Math.Max(peakTotal, ui.WorkingSet64 + worker.WorkingSet64 + idleAnalysisBytes);
                 samples.Add(new { elapsedSeconds=clock.Elapsed.TotalSeconds, uiWorkingSetBytes=ui.WorkingSet64,
-                    monitorWorkingSetBytes=worker.WorkingSet64, idleAnalysisWorkingSetBytes=idleAnalysis.WorkingSet64,
+                    monitorWorkingSetBytes=worker.WorkingSet64, idleAnalysisWorkingSetBytes=idleAnalysisBytes, analysisWorkerStarted=analysisStarted,
                     snapshotCount=model.Monitor.SnapshotCount, retainedSeconds=model.Monitor.RetainedSeconds,
                     retainedProcessRows=model.Monitor.RetainedProcessRows, estimatedRetainedBytes=model.Monitor.EstimatedRetainedBytes,
                     diagnostics=model.Monitor.Diagnostics, statistics=model.Monitor.Statistics, uiManagedHeapBytes=GC.GetTotalMemory(false), uiMemory=UiMemoryDiagnostics(), uiPrivateBytes=ui.PrivateMemorySize64, monitorPrivateBytes=worker.PrivateMemorySize64, replyDecoding=model.MonitorReplyDiagnostics });
@@ -65,7 +69,7 @@ public partial class MainWindow
             var result = new { schema=1, success=true, utc=DateTime.UtcNow, source=model.Monitor!.Descriptor,
                 durationSeconds=duration, peakUiMiB=ui.PeakWorkingSet64/1048576d,
                 peakMonitorMiB=worker.PeakWorkingSet64/1048576d, maximumSampledCombinedMiB=peakCombined/1048576d,
-                maximumSampledTotalAppMiB=peakTotal/1048576d,
+                maximumSampledTotalAppMiB=peakTotal/1048576d, analysisWorkerStarted=analysisStarted,
                 uiCpuPercentOfMachine=ui.TotalProcessorTime.TotalSeconds/duration/Environment.ProcessorCount*100,
                 monitorCpuPercentOfMachine=worker.TotalProcessorTime.TotalSeconds/duration/Environment.ProcessorCount*100,
                 cumulativeCoverageTargetMet=model.Monitor.Statistics is { } statistics &&

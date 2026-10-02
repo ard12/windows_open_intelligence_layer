@@ -58,8 +58,12 @@ public partial class MainWindow : Window
         if(args.Length > 2 && args[1]=="--smoke-test") {
             var snapshot=args.Length>3?Path.GetFullPath(args[3]):Path.Combine(AppContext.BaseDirectory,"desktop.png");
             try {
-                bool monitorVerified=false, investigationVerified=false, savedComparisonVerified=false; int observedLifetimes=0;
-                if(args.Contains("--verify-monitor")) await model!.StartObservation();
+                bool monitorVerified=false, investigationVerified=false, savedComparisonVerified=false, savedOnlyStartupVerified=false; int observedLifetimes=0;
+                if(model!.AnalysisWorkerProcessId!=null)throw new InvalidOperationException("Startup unexpectedly launched the analysis worker.");
+                if(args.Contains("--verify-monitor")) {
+                    await model.StartObservation();
+                    if(model.AnalysisWorkerProcessId!=null)throw new InvalidOperationException("Observation unexpectedly launched the analysis worker.");
+                }
                 await model!.Open(args[2]);
                 if(!string.IsNullOrEmpty(model.Error))throw new InvalidOperationException(model.Error);
                 bool recovered=false;
@@ -91,6 +95,13 @@ public partial class MainWindow : Window
                         await model.CreateInvestigation();
                         if(model.SelectedInvestigation?.Investigation.Findings.Count is not (> 0 and <= 3)) throw new InvalidOperationException("First readable investigation failed: " + model.InvestigationStatus);
                         var firstPath = Path.ChangeExtension(snapshot, "first.woi"); await model.SaveInvestigation(firstPath);
+                        using (var savedOnly = new MainViewModel()) {
+                            if(savedOnly.AnalysisWorkerProcessId!=null)throw new InvalidOperationException("Saved-only startup unexpectedly launched analysis.");
+                            await savedOnly.OpenInvestigation(firstPath);
+                            if(savedOnly.AnalysisWorkerProcessId==null || savedOnly.SelectedInvestigation?.Investigation.Id!=model.SelectedInvestigation.Investigation.Id)
+                                throw new InvalidOperationException("Opening saved evidence did not start analysis on demand: "+savedOnly.InvestigationStatus);
+                            savedOnlyStartupVerified=true;
+                        }
                         model.InvestigationStart = mid.ToString("0.######", CultureInfo.InvariantCulture); model.InvestigationEnd = end.ToString("0.######", CultureInfo.InvariantCulture);
                         await model.CreateInvestigation();
                         if(model.Investigations.Count != 2) throw new InvalidOperationException("Second marked attempt failed: " + model.InvestigationStatus);
@@ -126,7 +137,7 @@ public partial class MainWindow : Window
                 await model.ShowEvidence(observation); Views.SelectedIndex=2; await Task.Delay(200);
                 Capture(Path.ChangeExtension(snapshot,"evidence.png"));
                 File.WriteAllText(Path.ChangeExtension(snapshot,"json"),JsonSerializer.Serialize(new {
-                    success=true, workerRecoveryVerified=recovered, monitorVerified, investigationVerified, savedComparisonVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
+                    success=true, lazyAnalysisStartupVerified=true, savedOnlyStartupVerified, workerRecoveryVerified=recovered, monitorVerified, investigationVerified, savedComparisonVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
                     indexedEvents=model.Summary?.Session.IndexedEvents,
                     lifetimes=model.Summary?.Processes.OrderByDescending(x=>x.EndMs-x.StartMs).Take(5),
                     capabilities=model.Summary?.Session.Capabilities

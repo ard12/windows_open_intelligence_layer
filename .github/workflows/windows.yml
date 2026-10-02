@@ -51,12 +51,16 @@ jobs:
       - name: Five-million-observation aggregation stress
         shell: pwsh
         run: dotnet tools/Woi.Validation/bin/Release/net10.0-windows/Woi.Validation.dll --aggregate-stress .artifacts/validation/aggregate-stress.json
-      - name: Packaged desktop smoke and worker recovery
+      - name: Packaged desktop smoke, lazy analysis and worker recovery
         shell: pwsh
         run: |
           $app = Start-Process dist/WindowsOpenIntelligence/WindowsOpenIntelligence.exe -ArgumentList @("--smoke-test", ".artifacts/fixtures/allocator/SimpleAllocator-dotnet6.etl", ".artifacts/validation/desktop.png", "--verify-recovery", "--verify-monitor", "--verify-investigations") -WindowStyle Hidden -PassThru
           if (-not $app.WaitForExit(120000)) { $app.Kill(); throw "Desktop smoke timed out." }
           if ($app.ExitCode -ne 0) { throw "Desktop smoke failed." }
+          $smoke = Get-Content .artifacts/validation/desktop.json -Raw | ConvertFrom-Json
+          if ($smoke.success -ne $true -or $smoke.lazyAnalysisStartupVerified -ne $true -or $smoke.savedOnlyStartupVerified -ne $true) {
+            throw "Packaged analysis lifecycle assertions are missing or failed."
+          }
       - name: Unprivileged monitor continuity and overhead smoke
         shell: pwsh
         run: ./scripts/monitor-stress.ps1 -Seconds 30 -Output .artifacts/validation/ci-monitor-stress.json

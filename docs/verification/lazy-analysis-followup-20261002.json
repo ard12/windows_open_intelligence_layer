@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "utc": "2026-10-02T16:22:14.551531Z",
+  "change": "Finalize prior stable-row two-hour run and verify on-demand analysis worker startup",
+  "priorStableRowTwoHour": {
+    "sourceCommit": "b141836",
+    "rawReportSha256": "32d4ced7ae0f243aeec6717012bb80aa6f5c068fd10823b2591a9a1709c73414",
+    "success": true,
+    "durationSeconds": 7200.0490729,
+    "peakUiMiB": 179.68359375,
+    "peakMonitorMiB": 122.546875,
+    "maximumSampledCombinedMiB": 295.5234375,
+    "maximumSampledTotalAppMiB": 319.35546875,
+    "uiCpuPercentOfMachine": 0.2776673783411818,
+    "monitorCpuPercentOfMachine": 0.5613749354218424,
+    "cumulativeCoverageTargetMet": true,
+    "monitorMemoryTargetMet": true,
+    "uiPlusMonitorMemoryTargetMet": true,
+    "finalView": {
+      "retainedProcessRows": 249812,
+      "retainedSeconds": 496.9972,
+      "diagnostics": {
+        "samplingMedianMs": 75.2206,
+        "samplingP95Ms": 101.313,
+        "samplingMaximumMs": 197.464,
+        "missedTickGaps": 0
+      },
+      "estimatedRetainedBytes": 64834644,
+      "statistics": {
+        "totalSnapshots": 7151,
+        "missedTickGaps": 20,
+        "samplingFailures": 0,
+        "invalidIntervals": 0
+      },
+      "snapshotCount": 498
+    },
+    "limitations": [
+      "Local desktop soak, not independent Windows 11 or clean-machine validation.",
+      "CPU values include startup; memory samples occur every five seconds and may miss a transient combined peak.",
+      "Background/hidden-window rendering can differ from active interaction.",
+      "Concurrent machine activity is uncontrolled; this is not an isolated idle or observer-cost experiment.",
+      "Workload slowdown, physical disk-write overhead, sleep/resume and field usefulness are separate gates."
+    ]
+  },
+  "lazyStartupValidation": {
+    "packageSmoke": {
+      "success": true,
+      "lazyAnalysisStartupVerified": true,
+      "savedOnlyStartupVerified": true,
+      "workerRecoveryVerified": true,
+      "monitorVerified": true,
+      "investigationVerified": true,
+      "savedComparisonVerified": true,
+      "events": 500,
+      "contributors": 20,
+      "indexedEvents": 179474,
+      "observedLifetimes": 488,
+      "packageSha256": "ac2ca4ce4e3ab1bc3ef7f9d9b0f411879c71c06975f0b9f8c9a21f8859932a43"
+    },
+    "status": "packaged smoke passed; two-hour memory run live, terminal acceptance pending",
+    "soak": {
+      "status": "running",
+      "startedUtc": "2026-10-02T16:23:43.6906527Z",
+      "requestedSeconds": 7200,
+      "outputReference": "local ignored desktop-soak-lazy-analysis-2h-20261002.json",
+      "limitations": [
+        "A live process is not a terminal performance result.",
+        "Independent Windows 11, active UI, slowdown and physical-write evidence remain separate gates."
+      ]
+    }
+  },
+  "remainingGates": [
+    "Repeated current-version filled-history tests and active interaction",
+    "Physical disk writes and representative task slowdown",
+    "Sleep/resume, independent Windows 11 hardware and clean-machine use",
+    "Privileged capture storage and helper trust validation",
+    "Eight independent pilot sessions and held-out scenario review"
+  ]
+}
