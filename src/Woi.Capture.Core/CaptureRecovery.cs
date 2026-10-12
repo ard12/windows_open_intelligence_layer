@@ -7,16 +7,16 @@ public static class CaptureRecovery
 {
     public static async Task<int> Recover(string root,IWprRunner runner,CancellationToken token)
     {
-        CaptureController.EnsureLocalDirectory(root);
-        if(!Directory.Exists(root))return 0;
-        int recovered=0;var owner=WindowsIdentity.GetCurrent().User!.Value;
-        foreach(var folder in Directory.EnumerateDirectories(root)) {
+        using var storage=new CaptureStorage(root);
+        using var identity=WindowsIdentity.GetCurrent();
+        int recovered=0;var owner=identity.User!.Value;
+        foreach(var folder in Directory.EnumerateDirectories(storage.Root)) {
             token.ThrowIfCancellationRequested();
             var name=Path.GetFileName(folder);
             if(!Guid.TryParseExact(name,"N",out _))continue;
-            CaptureController.EnsureLocalDirectory(folder);
+            using var directory=storage.OpenRecording(folder);
             CaptureMetadata? metadata;
-            try {var file=Path.Combine(folder,"capture.json");if(new FileInfo(file).Length>65536)continue;metadata=JsonSerializer.Deserialize<CaptureMetadata>(File.ReadAllText(file),Wire.Json);}
+            try {using var input=storage.OpenRead(folder,"capture.json");if(input.Length>65536)continue;metadata=JsonSerializer.Deserialize<CaptureMetadata>(input,Wire.Json);}
             catch(Exception ex) when(ex is IOException or JsonException){continue;}
             if(metadata==null || metadata.Schema!=1 || metadata.OwnerSid!=owner || metadata.Instance!="WoiCapture"+name ||
                 metadata.Phase is CapturePhase.Saved or CapturePhase.Cancelled ||
@@ -25,7 +25,7 @@ public static class CaptureRecovery
             // "Not running" is harmless, but a nonzero result remains in metadata for manual review.
             if(result.ExitCode!=0 && !result.Output.Contains("0xc5583000",StringComparison.OrdinalIgnoreCase))
                 throw new WoiException("CaptureRecoveryFailed","An interrupted owned session could not be recovered: "+result.Output.Trim());
-            File.WriteAllText(Path.Combine(folder,"capture.json"),JsonSerializer.Serialize(
+            storage.WriteMetadata(folder,JsonSerializer.Serialize(
                 metadata with{Phase=CapturePhase.Cancelled,Message="Recovered interrupted recording."},Wire.Json));
             recovered++;
         }

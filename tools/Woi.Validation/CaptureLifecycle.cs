@@ -16,6 +16,7 @@ internal static class CaptureLifecycle
     {
         var output = Path.GetFullPath(outputDirectory);
         var executable = Path.GetFullPath(helperExecutable);
+        var recordingRoot = CaptureStorage.RootFor(executable);
         Directory.CreateDirectory(output);
         var cases = new List<object>();
         string? activeCase = null;
@@ -50,7 +51,7 @@ internal static class CaptureLifecycle
                 await Task.Delay(1000, token);
                 var cancelled = await client.Send("cancel", new { }, token);
                 Require(cancelled.Phase == CapturePhase.Cancelled && cancelled.TracePath == null, "Cancellation was presented as a saved trace.");
-                await AssertNoRecording(started.Instance, token);
+                await AssertNoRecording(started.Instance, recordingRoot, token);
                 cases.Add(new { name=activeCase, passed=true, completedTraceAbsent=true });
             }
 
@@ -59,15 +60,15 @@ internal static class CaptureLifecycle
             await using (var client = await CaptureClient.Connect(executable, token)) {
                 disconnectedInstance = (await client.Send("start", new CaptureOptions("Resources", 30), token)).Instance;
             }
-            await WaitForMetadata(disconnectedInstance, x => x.Phase == CapturePhase.Cancelled, token);
-            await AssertNoRecording(disconnectedInstance, token);
+            await WaitForMetadata(disconnectedInstance, recordingRoot, x => x.Phase == CapturePhase.Cancelled, token);
+            await AssertNoRecording(disconnectedInstance, recordingRoot, token);
             cases.Add(new { name=activeCase, passed=true, completedTraceAbsent=true, ownedSessionStopped=true });
 
             activeCase = "helper crash and recovery";
             string crashedInstance;
             await using (var client = await CaptureClient.Connect(executable, token)) {
                 crashedInstance = (await client.Send("start", new CaptureOptions("Resources", 30), token)).Instance;
-                var metadata = ReadMetadata(crashedInstance);
+                var metadata = ReadMetadata(crashedInstance, recordingRoot);
                 using var helper = Process.GetProcessById(metadata.HelperPid);
                 Require(Math.Abs((helper.StartTime.ToUniversalTime() - metadata.HelperStartUtc).TotalMilliseconds) < 10 &&
                     string.Equals(Path.GetFullPath(helper.MainModule!.FileName), executable, StringComparison.OrdinalIgnoreCase),
@@ -76,8 +77,8 @@ internal static class CaptureLifecycle
                 await helper.WaitForExitAsync(token);
             }
             await using (var recovered = await CaptureClient.Connect(executable, token)) {
-                Require(ReadMetadata(crashedInstance).Phase == CapturePhase.Cancelled, "Reconnect did not recover the interrupted owned session.");
-                await AssertNoRecording(crashedInstance, token);
+                Require(ReadMetadata(crashedInstance, recordingRoot).Phase == CapturePhase.Cancelled, "Reconnect did not recover the interrupted owned session.");
+                await AssertNoRecording(crashedInstance, recordingRoot, token);
                 var restarted = await recovered.Send("start", new CaptureOptions("Resources", 30), token);
                 Require(restarted.Phase == CapturePhase.Recording, "Capture could not restart after recovery.");
                 await recovered.Send("cancel", new { }, token);
@@ -124,22 +125,22 @@ internal static class CaptureLifecycle
     }
 
     private static void Require(bool condition, string message) { if (!condition) throw new IOException(message); }
-    private static string RecordingDirectory(string instance)
+    private static string RecordingDirectory(string instance, string root)
     {
         var suffix = instance.StartsWith("WoiCapture", StringComparison.Ordinal) ? instance["WoiCapture".Length..] : "";
         Require(Guid.TryParseExact(suffix, "N", out _), "Invalid owned capture instance.");
-        return Path.Combine(CaptureController.RecordingRoot, suffix);
+        return Path.Combine(root, suffix);
     }
-    private static CaptureMetadata ReadMetadata(string instance) =>
-        JsonSerializer.Deserialize<CaptureMetadata>(File.ReadAllText(Path.Combine(RecordingDirectory(instance), "capture.json")), Wire.Json)
+    private static CaptureMetadata ReadMetadata(string instance, string root) =>
+        JsonSerializer.Deserialize<CaptureMetadata>(File.ReadAllText(Path.Combine(RecordingDirectory(instance, root), "capture.json")), Wire.Json)
         ?? throw new IOException("Capture metadata is missing.");
-    private static async Task<CaptureMetadata> WaitForMetadata(string instance, Func<CaptureMetadata, bool> done, CancellationToken token)
+    private static async Task<CaptureMetadata> WaitForMetadata(string instance, string root, Func<CaptureMetadata, bool> done, CancellationToken token)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
         timeout.CancelAfter(TimeSpan.FromSeconds(75));
         while (true) {
             timeout.Token.ThrowIfCancellationRequested();
-            var metadata = ReadMetadata(instance);
+            var metadata = ReadMetadata(instance, root);
             if (done(metadata)) return metadata;
             await Task.Delay(250, timeout.Token);
         }
@@ -154,9 +155,9 @@ internal static class CaptureLifecycle
             await Task.Delay(250, timeout.Token);
         }
     }
-    private static async Task AssertNoRecording(string instance, CancellationToken token)
+    private static async Task AssertNoRecording(string instance, string root, CancellationToken token)
     {
-        Require(!File.Exists(Path.Combine(RecordingDirectory(instance), "recording.etl")), "A cancelled recording published an ETL.");
+        Require(!File.Exists(Path.Combine(RecordingDirectory(instance, root), "recording.etl")), "A cancelled recording published an ETL.");
         var status = await new WprRunner().Run(["-status", "-instancename", instance], token);
         // WPR -status returns success with this text on the English test hosts;
         // -cancel instead reports the no-recording HRESULT. Neither access denial

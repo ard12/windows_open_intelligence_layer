@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Security.Principal;
+using System.Security.AccessControl;
 using System.Text.Json;
 using System.Xml.Linq;
 using Woi.Capture;
@@ -9,9 +10,10 @@ namespace Woi.Tests;
 public sealed class CaptureTests
 {
     private sealed class Temp:IDisposable {
-        public string Root{get;}=Path.Combine(Path.GetTempPath(),"woi-capture-"+Guid.NewGuid().ToString("N"));
-        public Temp()=>Directory.CreateDirectory(Root);
-        public void Dispose()=>Directory.Delete(Root,true);
+        private readonly string parent=Path.Combine(Path.GetTempPath(),"woi-capture-"+Guid.NewGuid().ToString("N"));
+        public string Root=>Path.Combine(parent,"collector");
+        public Temp()=>Directory.CreateDirectory(parent);
+        public void Dispose()=>Directory.Delete(parent,true);
     }
     private sealed class Clock:TimeProvider {
         public DateTimeOffset Now{get;set;}=DateTimeOffset.UtcNow;
@@ -125,16 +127,51 @@ public sealed class CaptureTests
     }
     [Fact] public async Task RecoveryRefusesArbitrarySessionNamesAndKeepsLiveOwners() {
         using var temp=new Temp();var runner=new FakeRunner();
+        using var storage=new CaptureStorage(temp.Root);
         using var current=Process.GetCurrentProcess();
         var owner=WindowsIdentity.GetCurrent().User!.Value;
         void Write(string id,string instance,int pid,DateTime started) {
-            var folder=Path.Combine(temp.Root,id);Directory.CreateDirectory(folder);
-            File.WriteAllText(Path.Combine(folder,"capture.json"),JsonSerializer.Serialize(new CaptureMetadata(1,instance,owner,0,DateTime.MinValue,pid,started,new(),null,CapturePhase.Recording,null,null,null),Wire.Json));
+            var folder=storage.CreateRecording(id);
+            storage.WriteMetadata(folder,JsonSerializer.Serialize(new CaptureMetadata(1,instance,owner,0,DateTime.MinValue,pid,started,new(),null,CapturePhase.Recording,null,null,null),Wire.Json));
         }
         var dead=Guid.NewGuid().ToString("N");Write(dead,"WoiCapture"+dead,999999,DateTime.MinValue);
         var hostile=Guid.NewGuid().ToString("N");Write(hostile,"OtherToolsSession",999999,DateTime.MinValue);
         var live=Guid.NewGuid().ToString("N");Write(live,"WoiCapture"+live,current.Id,current.StartTime.ToUniversalTime());
         Assert.Equal(1,await CaptureRecovery.Recover(temp.Root,runner,default));
         var call=Assert.Single(runner.Calls);Assert.Equal("WoiCapture"+dead,call[^1]);
+    }
+    [Fact] public void ExistingWritableStorageIsRefusedWithoutChangingIt() {
+        using var temp=new Temp();Directory.CreateDirectory(temp.Root);
+        var sentinel=Path.Combine(temp.Root,"legacy.txt");File.WriteAllText(sentinel,"preserve legacy evidence");
+        Assert.Equal("InvalidRecordingStorage",Assert.Throws<WoiException>(()=>new CaptureStorage(temp.Root)).Code);
+        Assert.Equal("preserve legacy evidence",File.ReadAllText(sentinel));
+    }
+    [Fact] public void StoragePinsDirectoriesAndBindsWritesToVolumeIdentity() {
+        using var temp=new Temp();var moved=temp.Root+"-moved";
+        using(var storage=new CaptureStorage(temp.Root)) {
+            Assert.StartsWith(@"\\?\Volume{",storage.Root);
+            Assert.ThrowsAny<IOException>(()=>Directory.Move(temp.Root,moved));
+            var parent=Directory.GetParent(temp.Root)!.FullName;
+            Assert.ThrowsAny<IOException>(()=>Directory.Move(parent,parent+"-moved"));
+            var security=new DirectoryInfo(temp.Root).GetAccessControl(AccessControlSections.Access|AccessControlSections.Owner);
+            Assert.True(security.AreAccessRulesProtected);
+            var descriptor=new RawSecurityDescriptor(security.GetSecurityDescriptorBinaryForm(),0);
+            var ownerRights=Assert.Single(descriptor.DiscretionaryAcl!.Cast<CommonAce>(),x=>x.SecurityIdentifier.Value=="S-1-3-4");
+            Assert.Equal(0x20000,ownerRights.AccessMask);
+            Assert.Equal(AceFlags.ContainerInherit|AceFlags.ObjectInherit,ownerRights.AceFlags);
+        }
+        Directory.Move(temp.Root,moved);
+    }
+    [Fact] public void ProfileCreationIsExclusiveAndReadLeaseRejectsMutation() {
+        using var temp=new Temp();using var storage=new CaptureStorage(temp.Root);
+        var folder=storage.CreateRecording(Guid.NewGuid().ToString("N"));
+        var first=Path.Combine(folder,"first.tmp");var second=Path.Combine(folder,"second.tmp");
+        File.WriteAllText(first,"first");File.WriteAllText(second,"second");File.Move(first,second,true);
+        Assert.Equal("first",File.ReadAllText(second));
+        storage.WriteProfile(folder,"fixed profile");
+        Assert.ThrowsAny<IOException>(()=>storage.WriteProfile(folder,"replacement"));
+        using var input=storage.OpenRead(folder,"profile.wprp");
+        Assert.ThrowsAny<IOException>(()=>File.WriteAllText(Path.Combine(folder,"profile.wprp"),"changed"));
+        using var reader=new StreamReader(input);Assert.Equal("fixed profile",reader.ReadToEnd());
     }
 }

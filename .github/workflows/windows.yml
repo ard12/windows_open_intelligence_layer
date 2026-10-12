@@ -14,7 +14,7 @@ jobs:
       DOTNET_NOLOGO: "1"
     steps:
       - uses: actions/checkout@v7
-      - name: Source export privacy exclusions
+      - name: Source and application packaging privacy exclusions
         shell: pwsh
         run: ./scripts/test-source-export.ps1
       - uses: actions/setup-dotnet@v6
@@ -35,6 +35,9 @@ jobs:
       - name: Package the self-contained desktop and capture helper
         shell: pwsh
         run: ./scripts/publish.ps1
+      - name: Dependency identity accepts original bytes and rejects tampering
+        shell: pwsh
+        run: ./scripts/test-dependency-verification.ps1
       - name: Generated native ETL scale, completeness and over-limit rejection
         shell: pwsh
         run: |

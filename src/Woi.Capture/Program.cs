@@ -23,6 +23,7 @@ try {
             Error:"Administrator elevation is required for WPR capture.",Code:"ElevationRequired"),Wire.Json));return 1;
     }
     var runner=new WprRunner();
+    using var storage=CaptureStorage.OpenDefault();
     int recovered=await CaptureRecovery.Recover(CaptureController.RecordingRoot,runner,lifetime.Token);
     await using var controller=new CaptureController(runner,CaptureController.RecordingRoot,parentPid,parent.StartTime.ToUniversalTime());
     await writer.WriteLineAsync(JsonSerializer.Serialize(new CaptureReply("ready",CaptureWire.Version,

@@ -14,8 +14,12 @@ public sealed class WprRunner : IWprRunner
     public async Task<WprResult> Run(IReadOnlyList<string> arguments,CancellationToken token)
     {
         if(!File.Exists(Executable))throw new WoiException("WprMissing","Windows Performance Recorder is unavailable on this computer.");
+        using var storage=CaptureStorage.OpenDefault();
         var start=new ProcessStartInfo(Executable){UseShellExecute=false,CreateNoWindow=true,
             RedirectStandardOutput=true,RedirectStandardError=true};
+        start.Environment["TEMP"]=storage.Root;
+        start.Environment["TMP"]=storage.Root;
+        start.Environment["SystemTemp"]=storage.Root;
         foreach(var argument in arguments)start.ArgumentList.Add(argument);
         using var process=Process.Start(start)??throw new IOException("Windows Performance Recorder could not start.");
         var stdout=ReadBounded(process.StandardOutput);var stderr=ReadBounded(process.StandardError);

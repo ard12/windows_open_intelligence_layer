@@ -9,7 +9,7 @@ namespace Woi.Capture;
 public sealed class CaptureController : IAsyncDisposable
 {
     private readonly IWprRunner runner;
-    private readonly string root;
+    private readonly CaptureStorage storage;
     private readonly int parentPid;
     private readonly DateTime parentStartUtc;
     private readonly SemaphoreSlim gate=new(1);
@@ -21,11 +21,10 @@ public sealed class CaptureController : IAsyncDisposable
     private volatile CaptureStatus status=new(CapturePhase.Idle,"","",0,null,0,null,null,null,"Ready to record.");
     public CaptureController(IWprRunner runner,string root,int parentPid,DateTime parentStartUtc,TimeProvider? time=null)
     {
-        this.runner=runner;this.root=Path.GetFullPath(root);this.parentPid=parentPid;this.parentStartUtc=parentStartUtc;
+        this.runner=runner;storage=new(root);this.parentPid=parentPid;this.parentStartUtc=parentStartUtc;
         this.time=time??TimeProvider.System;
     }
-    public static string RecordingRoot=>Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "WindowsOpenIntelligence","recordings");
+    public static string RecordingRoot=>CaptureStorage.DefaultRoot;
     public CaptureStatus Status {
         get {
             var snapshot=status;
@@ -40,14 +39,13 @@ public sealed class CaptureController : IAsyncDisposable
         await gate.WaitAsync(token);
         try {
             if(status.Phase!=CapturePhase.Idle)throw new WoiException("CaptureState","This helper can own only one recording.");
-            EnsureLocalDirectory(root);Directory.CreateDirectory(root);
-            var drive=new DriveInfo(Path.GetPathRoot(root)!);
-            if(drive.AvailableFreeSpace<512L*1024*1024)throw new WoiException("InsufficientDiskSpace","Recording requires at least 512 MiB of free space.");
-            var id=Guid.NewGuid().ToString("N");directory=Path.Combine(root,id);Directory.CreateDirectory(directory);
+            var drive=new DriveInfo(Path.GetPathRoot(storage.DisplayRoot)!);
+            if(drive.AvailableFreeSpace<2L*1024*1024*1024)throw new WoiException("InsufficientDiskSpace","Recording requires at least 2 GiB of free space for saving and merging.");
+            var id=Guid.NewGuid().ToString("N");directory=storage.CreateRecording(id);
             options=requested;status=new(CapturePhase.Starting,"WoiCapture"+id,requested.Profile,requested.DurationSeconds,null,0,null,null,null,"Starting recording.");
             var profile=Path.Combine(directory,"profile.wprp");
-            File.WriteAllText(profile,CaptureProfiles.Xml());
-            profileLease=new FileStream(profile,FileMode.Open,FileAccess.Read,FileShare.Read);
+            storage.WriteProfile(directory,CaptureProfiles.Xml());
+            profileLease=storage.OpenRead(directory,"profile.wprp");
             WriteMetadata();
             var result=await runner.Run(["-start",profile+"!"+requested.Profile+".Light","-instancename",status.Instance],token);
             if(result.ExitCode!=0) {
@@ -74,12 +72,12 @@ public sealed class CaptureController : IAsyncDisposable
             try {
                 var result=await runner.Run(["-stop",path,"Windows Open Intelligence bounded recording","-instancename",status.Instance],token);
                 if(result.ExitCode!=0)throw new WoiException("CaptureSaveFailed","WPR could not save this recording. "+result.Output.Trim());
-                var info=new FileInfo(path);
-                if(!info.Exists || info.Length==0)throw new WoiException("CaptureSaveFailed","WPR produced no usable recording.");
-                if(info.Length>1024L*1024*1024)throw new WoiException("SizeLimit","The captured ETL exceeds the analyzer's 1 GiB limit. It remains on disk for inspection.");
-                await using var input=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read,1024*1024,true);
+                await using var input=storage.OpenRead(directory!,"recording.etl");
+                var bytes=input.Length;
+                if(bytes==0)throw new WoiException("CaptureSaveFailed","WPR produced no usable recording.");
+                if(bytes>1024L*1024*1024)throw new WoiException("SizeLimit","The captured ETL exceeds the analyzer's 1 GiB limit. It remains on disk for inspection.");
                 var hash=Convert.ToHexString(await SHA256.HashDataAsync(input,token)).ToLowerInvariant();
-                status=status with{Phase=CapturePhase.Saved,TracePath=path,TraceBytes=info.Length,Sha256=hash,Message="Recording saved. Requested coverage must be checked against imported evidence."};
+                status=status with{Phase=CapturePhase.Saved,TracePath=storage.DisplayPath(directory!,"recording.etl"),TraceBytes=bytes,Sha256=hash,Message="Recording saved read-only in collector storage. Use Save recording to keep a user-owned copy."};
                 WriteMetadata();ReleaseProfile();return Status;
             } catch(Exception ex) {
                 await CancelOwned();
@@ -114,11 +112,10 @@ public sealed class CaptureController : IAsyncDisposable
     {
         if(directory==null || options==null)return;
         using var helper=Process.GetCurrentProcess();
-        var metadata=new CaptureMetadata(1,status.Instance,WindowsIdentity.GetCurrent().User!.Value,parentPid,parentStartUtc,
+        using var identity=WindowsIdentity.GetCurrent();
+        var metadata=new CaptureMetadata(1,status.Instance,identity.User!.Value,parentPid,parentStartUtc,
             helper.Id,helper.StartTime.ToUniversalTime(),options,status.StartedUtc,status.Phase,status.Sha256,status.TraceBytes,status.Message);
-        var pending=Path.Combine(directory,"capture.json.pending");
-        File.WriteAllText(pending,JsonSerializer.Serialize(metadata,new JsonSerializerOptions(Wire.Json){WriteIndented=true}));
-        File.Move(pending,Path.Combine(directory,"capture.json"),true);
+        storage.WriteMetadata(directory,JsonSerializer.Serialize(metadata,new JsonSerializerOptions(Wire.Json){WriteIndented=true}));
     }
     public static void EnsureLocalDirectory(string path)
     {
@@ -132,6 +129,6 @@ public sealed class CaptureController : IAsyncDisposable
     private void ReleaseProfile(){profileLease?.Dispose();profileLease=null;}
     public async ValueTask DisposeAsync()
     {
-        try{await Cancel(default);}finally{ReleaseProfile();gate.Dispose();}
+        try{await Cancel(default);}finally{ReleaseProfile();storage.Dispose();gate.Dispose();}
     }
 }
