@@ -16,7 +16,7 @@ try {
         $folder=Join-Path $projectRoot $name
         foreach($item in Get-ChildItem -LiteralPath $folder -File -Recurse -Force) {
             $relative=$item.FullName.Substring($projectRoot.Length+1)
-            if($relative -match '(^|[\\/])(bin|obj)([\\/]|$)' -or $item.Extension -in @('.etl','.etlx','.db','.user')) {continue}
+            if($relative -match '(^|[\\/])(bin|obj)([\\/]|$)' -or $item.Name -like '.woi-save-*' -or $item.Extension -in @('.etl','.etlx','.db','.db-shm','.db-wal','.user','.woi','.dmp','.mdmp','.hdmp','.dump')) {continue}
             if($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {throw "Source export refuses redirected files: $relative"}
             $files+=$relative
         }

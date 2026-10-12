@@ -1,6 +1,10 @@
 # Windows Open Intelligence
 
-A local Windows activity analyzer with optional, unprivileged recent-history observation and bounded guided WPR recording. This remains an **engineering preview**: offline analysis and observation have local checks, and both recording profiles passed native capture-to-report on a Windows Server CI runner. Windows 11 desktop, capture failure lifecycle, and several performance gates remain open. See [verification](docs/validation.md) for measured results and open gates.
+An experimental Windows performance investigation utility with local recording, resource history, and evidence inspection. Deeper execution and dependency visualization is planned.
+
+This is an **engineering preview**, open for use, inspection, and contribution. Existing functionality includes ETL analysis, bounded recent-history observation, saved investigations/comparisons, and guided WPR recording. Execution/dependency graphs and application-level causal diagnosis are not implemented. Windows 11 acceptance, the elevated helper's trust/storage review, and several performance gates remain open; this is not a stable, generally recommended executable release. See [current checkpoints](docs/checkpoints.md) and [verification](docs/validation.md).
+
+The latest recorded Release build passed 110 tests on 2 October 2026. The earlier CPU-weight discrepancy was resolved on three public reference fixtures within the unchanged 1% gate. Both profiles and capture lifecycle checks passed Windows Server CI; the later Windows 10 Resources recording timed out during save, and FileActivity was not attempted in that run. The latest two-hour observation attempt was interrupted before completion. These are recorded results, not fresh launch validation.
 
 ## Run
 
@@ -52,7 +56,7 @@ The original ETL is read-only and SHA-256 fingerprinted. Reopening verifies fing
 - Import limits: 1 GiB source, five million indexed events, 2 GiB combined derived files. Exceeding a limit fails explicitly. Maximum-size ETL decoding is not certified.
 - Supported observations: process/thread lifetimes, modules, sampled CPU, physical disk transfers and recorded latency, logical file operations, TCP/IP or UDP, process working-set snapshots, and hard faults when captured.
 - Unavailable measurements stay nullable. Provider requests and zero reported loss do not establish complete capture.
-- CPU estimates use recorded sampling intervals and processor count. Rankings use sample weights when all contributing samples have known weights; otherwise they use counts. Native WPA weights differ on one older fixture by 1.55%, above the planned 1% agreement gate.
+- CPU estimates use recorded sampling intervals and processor count. Rankings use sample weights when all contributing samples have known weights; otherwise they use counts. Native TraceProcessing comparisons on three public fixtures meet the unchanged 1% weight-agreement gate; wider WPA, recording-schema, and desktop-OS validation remains open.
 - Physical disk bytes, logical file bytes, and network event bytes are separate measurements. Summed latency can overlap; it is not elapsed disk busy time.
 - ETLX indices are derived coordinates, not original ETL byte offsets. Lifetime identities govern PID/TID joins; ambiguous attribution remains unattributed.
 - Incident candidates are configurable heuristics, not diagnoses. Descriptions classify observations, resource attribution, and temporal correlation.
@@ -77,14 +81,14 @@ $env:DOTNET_ROOT = (Resolve-Path .\.tools\dotnet).Path # local SDK development a
 
 SDK, package, and public fixture downloads use the network during development. Product analysis remains local. Node.js is needed only for the developer replay stress script. See [reproduction commands](docs/validation.md).
 
-The [Windows GitHub workflow](.github/workflows/windows.yml) builds locked dependencies, tests real ETLs, runs a native controlled recording, checks report export and desktop recovery, stresses the packaged worker, and uploads the application only after those checks succeed. The 2026-09-30 push triggered Actions, but GitHub rejected the job before any step because of an account payment or spending-limit issue. The subsequent [1 October CI run](https://github.com/ard12/win_OiL/actions/runs/36841914783) passed both shipping capture profiles, packaged desktop recovery/investigation/persistence, and replay/aggregation checks. This server run does not establish Windows 11 compatibility or passing every performance budget.
+The [Windows GitHub workflow](.github/workflows/windows.yml) builds locked dependencies, tests real ETLs, runs native controlled recordings, checks report export and desktop recovery, and stresses the packaged worker before uploading artifacts. The latest recorded successful [Windows Server run](https://github.com/ard12/win_OiL/actions/runs/36881591865) passed these functional checks on source 1fdbe28. A later run for 12e6447 never started and executed zero steps, so it supplies no current-source remote validation. Server results do not establish Windows 11 compatibility or passing every performance budget.
 
-To upload the project to GitHub, use the generated **WindowsOpenIntelligence-source.zip** contents. It contains source, locks, workflow, docs, and notices, excluding SDKs, binaries, traces, caches, and local test artifacts. Publish the separate application ZIP as a release asset after reviewing the verification gates.
+The generated **WindowsOpenIntelligence-source.zip** contains source, dependency locks, workflow, docs, and notices. Git ignore rules and the independent source exporter exclude saved investigations, interrupted saves, memory dumps, traces, databases and sidecars, SDKs, binaries, and local test artifacts. Review any added reports before sharing: Markdown and JSON can still contain private evidence. The source is suitable for an experimental public repository; executable distribution remains an engineering preview subject to the open verification gates.
 
 The worker also has a diagnostic CLI:
 
 ~~~powershell
-.\dist\WindowsOpenIntelligence\Woi.Worker.exe --analyze "C:\traces\recording.etl" --output "C:\reports\incident.json"
+.\dist\WindowsOpenIntelligence\Woi.Worker.exe --analyze "D:\traces\recording.etl" --output "D:\reports\incident.json"
 ~~~
 
 See [the product reassessment](docs/product-reassessment.md), [the engineering timeline](docs/engineering-plan.md), [architecture](docs/architecture.md), [capture design](docs/capture.md), [protocol](docs/protocol.md), [roadmap](docs/roadmap.md), and [contributing](CONTRIBUTING.md). Project code is MIT licensed; dependency notices are in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) and licenses/.

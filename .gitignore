@@ -9,3 +9,11 @@ dist/
 *.db-shm
 *.db-wal
 *.user
+
+# Saved evidence, interrupted saves, and memory dumps (any extension case).
+*.[wW][oO][iI]
+.woi-save-*
+*.[dD][mM][pP]
+*.[mM][dD][mM][pP]
+*.[hH][dD][mM][pP]
+*.[dD][uU][mM][pP]

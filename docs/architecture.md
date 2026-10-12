@@ -1,5 +1,7 @@
 # Architecture and evidence boundaries
 
+The implemented views expose resource measurements, recorded lifetimes, findings, and evidence. Execution/dependency graphs and application-level causal diagnosis are planned; coincident activity and recorded parent IDs do not establish those relationships.
+
 ```text
 Canonical read-only ETL
   -> unprivileged Woi.Worker / Woi.Trace adapter

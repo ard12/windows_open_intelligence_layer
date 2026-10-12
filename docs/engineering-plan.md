@@ -1,19 +1,19 @@
 # Engineering timeline: stabilize guided capture, then validate live recording
 
-**Planning baseline: 29 September 2026.** Capacity is **one full-time engineer**, approximately 30–32 implementation hours plus 8–10 hours of tests, investigation, and documentation each week. The dates below are targets; a failed acceptance gate moves the release. They assume access to Windows 11 x64 hardware, a Windows 10 build 19045 compatibility machine, WPA, administrator elevation, eight pilot participants, and a runnable GitHub Actions account. Holiday time and unavailable participants shift the dates.
+**Planning baseline: 29 September 2026; status reconciled with recorded results through 2 October.** Capacity is **one full-time engineer**, approximately 30–32 implementation hours plus 8–10 hours of tests, investigation, and documentation each week. Dates below are the original conditional targets, not a refreshed delivery forecast. They assume Windows 11 x64 hardware, a Windows 10 build 19045 compatibility machine, WPA, administrator elevation, eight pilot participants, and an available Windows CI runner.
 
-The next milestone is a defensible **v0.3 stable guided-capture release**. The [v0.3 preview](../README.md) has 58 passing local tests and offline stress, but no completed recording through the production helper. [Measured gaps](validation.md) include 514 ms contributor-query p95 versus a 300 ms target, 1.55% native CPU-weight disagreement versus a 1% target, and no real near-1-GiB/five-million-event ETL decoding benchmark. The [first GitHub run](https://github.com/ard12/win_OiL/actions/runs/36607279091) was stopped before a runner started because GitHub reported an account payment or spending-limit issue. Neither the preview ZIP nor the existence of a workflow closes these gates.
+A stable executable remains a gated milestone; the source can be public as an **experimental open-source utility** now. The latest recorded local Release build passed 110 tests. Native CPU weights on three reference fixtures now meet the unchanged 1% gate, and later reference-query runs meet 300 ms; historical failures remain in [validation](validation.md). Windows Server CI passed both profiles and lifecycle cases. A generated 610 MiB / 4,990,003-event ETL passed scale checks, with explicit over-limit rejection; rich-resource maximum coverage remains open. The later Windows 10 Resources save timed out, FileActivity was not attempted, and the on-demand-analysis two-hour soak was interrupted. Windows 11, privileged helper trust/storage, independent usefulness and repeated performance acceptance remain open. See [current checkpoints](checkpoints.md).
 
 ## Critical path and prerequisites
 
-1. **Repository owner:** restore GitHub Actions billing/spending access. Re-run the existing Windows workflow and retain the run URL. Do not classify the billing failure as a code or test failure.
-2. **Engineer with administrator access:** run the *shipping* Woi.Capture.exe and both generated profiles through actual WPR start, stop, and ETL import. The earlier local UAC prompt was canceled. A profile-details inspection proves only that WPR can inspect the XML.
+1. **Engineer:** retain a Windows workflow result for the exact source revision. The latest recorded attempt for 12e6447 executed zero steps; prior successful runs do not validate that revision. If a runner is unavailable, retain local checks and leave the remote gate open.
+2. **Engineer with administrator access:** complete shipping-helper capture-to-report checks on Windows 10 and Windows 11. Both profiles and lifecycle cases passed Windows Server CI, but the 2 October Windows 10 Resources save exceeded its 60-second timeout; FileActivity was not attempted. Profile-details inspection alone is insufficient.
 3. **Engineer:** repair any capture/coverage failure, then reconcile analyzer correctness and performance against real recordings.
 4. **Engineer plus pilot participants:** complete security, Windows 11, scale, and usability acceptance. Only then decide whether to tag v0.3 stable and start the live recorder.
 
 Independent offline-parity and query profiling can proceed while Actions or elevation is blocked. The capture acceptance gate cannot. Reserve Windows 11 test access and recruit pilot users in Week 0 so scheduling does not begin after engineering work finishes.
 
-One first-week hypothesis deserves priority: [Microsoft's WPR profile guidance](https://learn.microsoft.com/en-us/windows-hardware/test/wpt/logging-mode) describes file and memory variants and naming constraints, while the current generator emits two memory-only profiles with different names. Local WPR profile-details validation succeeded; a real start/save test will determine whether this is a compatibility problem. Do not change profile behavior on speculation. The helper must keep its unique instance name on every command, in the final argument position specified by [WPR's command reference](https://learn.microsoft.com/en-us/windows-hardware/test/wpt/wpr-command-line-options).
+The original profile-naming hypothesis was followed by successful server start/save checks for both shipping profiles; profile inspection alone had been insufficient. Desktop save failures still require their own reproduction and repair. Keep capture commands scoped to the uniquely owned WPR instance; retain the existing ownership and recovery rules.
 
 ## Twelve-week delivery calendar
 
@@ -55,11 +55,11 @@ The CPU-weight gate cannot be closed by merely renaming the metric. If native eq
 | **Product** | Eight-user scorecard: two everyday, two developer, two power, two IT/investigation users; at least six succeed within two minutes and find supporting evidence. Preserve baseline workflow times and misinterpretations. |
 | **Distribution** | Locked dependencies, dependency notices, clean-source rebuild, self-contained extracted ZIP on a machine without SDK, no accidental ETL inclusion, versioned analysis cache, and verified asset SHA-256. |
 
-[GitHub-hosted Windows runners are Windows Server VMs](https://docs.github.com/en/actions/reference/runners/github-hosted-runners), so a successful Actions run does **not** replace testing the declared Windows 11 desktop baseline. GitHub's current billing blocker is an external prerequisite, not permission to skip the workflow. If account access remains blocked, run the same scripts locally, retain results, and keep the CI gate open.
+[GitHub-hosted Windows runners are Windows Server VMs](https://docs.github.com/en/actions/reference/runners/github-hosted-runners), so a successful Actions run does **not** replace testing the declared Windows 11 desktop baseline. If CI infrastructure is unavailable, run the same scripts locally, retain results, and keep the current-revision remote gate open.
 
 ## Conditional Stage 3: live recorder
 
-Start only after the v0.3 stable review confirms the analyzer is correct and useful. The **earliest estimate is eight more weeks, 11 January–5 March 2027**; delays to the prior gate move this entire schedule. No Stage 3 code is included in the stable-capture estimate.
+The original eight-week estimate below covers an eventual persistent/background recorder and its acceptance, conditional on correctness and usefulness. Manual bounded in-memory observation and saved investigations have since been implemented; these do not close the 24-hour recorder gate. The original 11 January–5 March 2027 dates are conditional planning targets, not a current commitment.
 
 | Window | Deliverable | Gate |
 |---|---|---|
@@ -72,4 +72,4 @@ Stages 4–6 remain conditional: temporary stacks/Registry/scheduling analysis a
 
 ## Weekly operating rule
 
-Every Friday update a shared evidence ledger with gate, fixture/source hash, machine and OS, command or UI path, expected/actual result, issue owner, and next experiment. At each two-week review choose **proceed**, **repair**, or **defer**. Do not replace a failed run with a newer successful average. If billing, elevation, Windows 11 hardware, or pilot recruitment is unavailable, continue independent work but move the dependent milestone rather than calling it complete.
+Every Friday update a shared evidence ledger with gate, fixture/source hash, machine and OS, command or UI path, expected/actual result, issue owner, and next experiment. At each two-week review choose **proceed**, **repair**, or **defer**. Do not replace a failed run with a newer successful average. If CI runner access, elevation, Windows 11 hardware, or pilot recruitment is unavailable, continue independent work but move the dependent milestone rather than calling it complete.

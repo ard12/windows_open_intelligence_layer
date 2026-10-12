@@ -57,14 +57,22 @@
       "observedLifetimes": 488,
       "packageSha256": "ac2ca4ce4e3ab1bc3ef7f9d9b0f411879c71c06975f0b9f8c9a21f8859932a43"
     },
-    "status": "packaged smoke passed; two-hour memory run live, terminal acceptance pending",
+    "status": "packaged smoke passed; two-hour memory run interrupted, no terminal acceptance",
     "soak": {
-      "status": "running",
+      "status": "interrupted at user request",
       "startedUtc": "2026-10-02T16:23:43.6906527Z",
       "requestedSeconds": 7200,
+      "interruptedUtc": "2026-10-02T16:59:58.5944594Z",
+      "lastObservedElapsedSeconds": 2169.2938519,
+      "lastObservedTotalSnapshots": 2168,
+      "lastObservedMissedTickGaps": 0,
+      "lastObservedSamplingFailures": 0,
+      "lastObservedInvalidIntervals": 0,
+      "lastSampledCombinedMiB": 289.15234375,
+      "terminalResultPresent": false,
       "outputReference": "local ignored desktop-soak-lazy-analysis-2h-20261002.json",
       "limitations": [
-        "A live process is not a terminal performance result.",
+        "Interrupted partial measurements do not establish a completed two-hour result or a terminal memory peak.",
         "Independent Windows 11, active UI, slowdown and physical-write evidence remain separate gates."
       ]
     }
@@ -84,9 +92,9 @@
     "conclusion": "failure",
     "stepsExecuted": 0,
     "runnerAssigned": false,
-    "annotation": "Job not started: account payment or spending-limit issue reported by GitHub.",
+    "annotation": "Job never started; no runner assigned and zero steps executed.",
     "classification": "external CI infrastructure blocker; no current-source CI correctness result",
-    "userChoice": "Continue with local validation for now; do not change billing or rerun unchanged blocked CI."
+    "userChoice": "Local validation retained; current-source remote validation deferred."
   },
   "currentLocalTests": {
     "sourceCommit": "12e6447",
@@ -99,5 +107,16 @@
     "skipped": 0,
     "resultSha256": "98141c56e271bd0ce253dbe3b137f0001b6616695c4dad6c38967fd8273d93de",
     "temporaryStorageDrive": "D:"
+  },
+  "localCacheRedirectAdjustment": {
+    "reason": "The elevated recorder rejects reparse points in recording-directory ancestors; moving the entire app-data folder via a junction would block capture.",
+    "physicalAppDataRootRestored": true,
+    "onlyAnalysisCacheRedirected": true,
+    "cacheStorageDrive": "D:",
+    "verifiedCacheFiles": 40,
+    "allOriginalCacheHashesPreserved": true,
+    "nativeCaptureStillRequiresUac": true,
+    "nativeCaptureAcceptance": "failed Windows 10 save attempt; Resources started but exceeded the 60-second WPR save timeout; FileActivity was not attempted",
+    "storageLimitation": "The current capture helper merges to its default AppData recordings location; a protected configurable recording location remains unimplemented."
   }
 }
