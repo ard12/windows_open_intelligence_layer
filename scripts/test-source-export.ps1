@@ -37,6 +37,7 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Could not index isolated packaging fixture.'}
     [IO.File]::WriteAllText((Join-Path $fixture 'docs/untracked-note.md'),'Untracked personal note.')
     [IO.File]::WriteAllText((Join-Path $fixture 'src/NewCode.cs'),'// New review-checkout source must be retained.')
+    [IO.File]::WriteAllText((Join-Path $fixture 'src/app.manifest'),'<assembly manifestVersion="1.0"/>')
     [IO.File]::WriteAllText((Join-Path $fixture 'src/.env.local'),'synthetic secret')
     & (Join-Path $fixture 'scripts/export-source.ps1')
     $zip=[IO.Compression.ZipFile]::OpenRead((Join-Path $fixture 'dist/WindowsOpenIntelligence-source.zip'))
@@ -45,7 +46,7 @@ try {
         foreach($entry in $entries) {
             if(Test-PackagePrivatePath $entry){throw "Private file reached source ZIP: $entry"}
         }
-        foreach($required in @('README.md','LICENSE','WindowsOpenIntelligence.slnx','scripts/package-files.ps1','docs/control.md','licenses/control.md','src/NewCode.cs')) {
+        foreach($required in @('README.md','LICENSE','WindowsOpenIntelligence.slnx','scripts/package-files.ps1','docs/control.md','licenses/control.md','src/NewCode.cs','src/app.manifest')) {
             if($required -notin $entries){throw "Source archive is missing $required"}
         }
         if('docs/untracked-note.md' -in $entries){throw 'Untracked personal document reached source ZIP.'}

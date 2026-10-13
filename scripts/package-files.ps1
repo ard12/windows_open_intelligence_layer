@@ -38,7 +38,7 @@ function Get-PackageFiles([string]$ProjectRoot,[string[]]$Roots,[string[]]$Requi
             $untracked=@(& git -C $ProjectRoot -c core.quotepath=false ls-files --others --exclude-standard)
             if($LASTEXITCODE -ne 0){throw 'Could not inspect new source files.'}
             # Keep review-checkout code buildable without including untracked personal docs.
-            $files+=@($untracked | Where-Object {$_ -match '^(src|tests|tools|scripts)/.*\.(cs|xaml|csproj|json|ps1|cjs|props|targets|config)$'})
+            $files+=@($untracked | Where-Object {$_ -match '^(src|tests|tools|scripts)/.*\.(cs|xaml|csproj|json|ps1|cjs|props|targets|config|manifest)$'})
         }
     } else {
         # Source ZIPs have no Git metadata; retain the same fixed roots and privacy policy.

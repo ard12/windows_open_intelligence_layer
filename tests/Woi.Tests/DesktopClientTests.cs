@@ -84,6 +84,24 @@ public sealed class DesktopClientTests
         await worker.WaitForExitAsync();
         await Assert.ThrowsAnyAsync<IOException>(() => import.WaitAsync(TimeSpan.FromSeconds(5)));
     }
+    [FixtureFact]
+    public async Task WorkerExecutableImportsAndReopensLongCachePaths()
+    {
+        using var directory=new TemporaryDirectory();var root=directory.Root;
+        while(root.Length<1100)root=Path.Combine(root,"nested-worker-cache");
+        var start=Start(monitor:false,root);
+        start.Environment["DOTNET_ROOT"]=Path.GetDirectoryName(start.FileName)!;
+        // Launch the apphost: dotnet.exe's own manifest can hide missing executable settings.
+        start.FileName=Path.ChangeExtension(start.ArgumentList[0],"exe");start.ArgumentList.RemoveAt(0);
+        using var client=new WorkerClient(start);
+        using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        var fixture=Path.Combine(Environment.GetEnvironmentVariable("WOI_FIXTURES")!,"allocator","SimpleAllocator-dotnet6.etl");
+        var first=await client.Send<Summary>("import",new{path=fixture},timeout.Token);
+        var reopened=await client.Send<Summary>("import",new{path=fixture},timeout.Token);
+        Assert.True(first.Session.IndexedEvents>0);
+        Assert.Equal(first.Session.SourceHash,reopened.Session.SourceHash);
+        Assert.Equal(first.Session.CacheDirectory,reopened.Session.CacheDirectory);
+    }
     [Fact]
     public async Task Utf8RepliesKeepLineFramingUnicodeAndSerializationFailureAtomic()
     {
