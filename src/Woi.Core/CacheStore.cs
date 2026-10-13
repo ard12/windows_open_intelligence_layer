@@ -15,7 +15,7 @@ public sealed class CacheStore : IDisposable
         if (!readOnly) Directory.CreateDirectory(directory);
         connection = new SqliteConnection(new SqliteConnectionStringBuilder {
             DataSource = Path.Combine(directory, "analysis.db"), Mode = readOnly ? SqliteOpenMode.ReadOnly : SqliteOpenMode.ReadWriteCreate,
-            Pooling = false
+            Pooling = false, Vfs = "win32-longpath" // Preserve Windows file locking while supporting deep cache paths.
         }.ToString());
         connection.Open();
         if (readOnly) return;
@@ -158,7 +158,7 @@ public sealed class CacheStore : IDisposable
     public void AddBookmark(Bookmark value)
     {
         using var state=new SqliteConnection(new SqliteConnectionStringBuilder {
-            DataSource=Path.Combine(directory,"bookmarks.db"),Mode=SqliteOpenMode.ReadWriteCreate,Pooling=false
+            DataSource=Path.Combine(directory,"bookmarks.db"),Mode=SqliteOpenMode.ReadWriteCreate,Pooling=false,Vfs="win32-longpath"
         }.ToString());
         state.Open();using var command=state.CreateCommand();
         command.CommandText="CREATE TABLE IF NOT EXISTS bookmarks(id TEXT PRIMARY KEY,json TEXT NOT NULL)";
@@ -174,7 +174,7 @@ public sealed class CacheStore : IDisposable
         var path=Path.Combine(directory,"bookmarks.db");
         if(!File.Exists(path))path=Path.Combine(directory,"analysis.db");
         using var state=new SqliteConnection(new SqliteConnectionStringBuilder {
-            DataSource=path,Mode=SqliteOpenMode.ReadOnly,Pooling=false
+            DataSource=path,Mode=SqliteOpenMode.ReadOnly,Pooling=false,Vfs="win32-longpath"
         }.ToString());
         state.Open();using var command=state.CreateCommand();
         command.CommandText="SELECT json FROM bookmarks ORDER BY id";

@@ -103,10 +103,12 @@ public sealed class InvestigationTests
         var sample = Sample(1) with { Processes = [Sample(1).Processes[0] with { LifetimeId = "wrong" }] };
         Assert.Equal("InvalidEvidence", Assert.Throws<WoiException>(() => InvestigationAnalyzer.Analyze(Source(), new[] { Sample(0), sample }, new(new(0, 1), "identity"))).Code);
     }
-    [Fact]
-    public void SaveReopenRebuildsFindingsFromRecordedEvidenceAndMetadata()
+    [Theory][InlineData(false)][InlineData(true)]
+    public void SaveReopenRebuildsFindingsFromRecordedEvidenceAndMetadata(bool longPath)
     {
-        using var temp = new Temp(); var path = Path.Combine(temp.Path, "saved.woi");
+        using var temp = new Temp(); var parent=temp.Path;
+        if(longPath)while(parent.Length<1100)parent=Path.Combine(parent,"nested-investigation-directory");
+        Directory.CreateDirectory(parent);var path = Path.Combine(parent, "saved.woi");
         var doc = Document();
         var forged = doc with { Investigation = doc.Investigation with { Findings = [doc.Investigation.Findings[0] with { Statement = "unsupported diagnosis" }] } };
         InvestigationStore.Save(path, forged);

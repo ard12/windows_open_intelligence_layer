@@ -21,7 +21,7 @@ public static class InvestigationStore
             throw new WoiException("InsufficientDiskSpace", "Insufficient free space for an atomic investigation save.");
         var temp = Path.Combine(parent, ".woi-save-" + Guid.NewGuid().ToString("N") + ".tmp");
         try {
-            using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = temp, Pooling = false }.ToString())) {
+            using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = temp, Pooling = false, Vfs = "win32-longpath" }.ToString())) {
                 connection.Open();
                 using var transaction = connection.BeginTransaction();
                 using var command = connection.CreateCommand(); command.Transaction = transaction;
@@ -40,7 +40,7 @@ public static class InvestigationStore
         if (!File.Exists(path)) throw new WoiException("MissingInvestigation", "The saved investigation was not found.");
         if (new FileInfo(path).Length > MaximumFileBytes) throw new WoiException("EvidenceLimit", "The saved investigation exceeds 128 MiB.");
         try {
-            using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+            using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = SqliteOpenMode.ReadOnly, Pooling = false, Vfs = "win32-longpath" }.ToString());
             connection.Open();
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT schema_version,length(payload),payload,sha256 FROM document LIMIT 2";

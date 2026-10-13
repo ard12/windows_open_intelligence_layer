@@ -81,6 +81,21 @@ public sealed class HardeningTests
         Assert.Empty(Directory.GetDirectories(temp.Root));
         Assert.Equal(digest,SHA256.HashData(File.ReadAllBytes(Fixture)));
     }
+    [FixtureFact] public void ImportAndBookmarksSupportLongCachePaths()
+    {
+        using var temp=new Temp();var root=temp.Root;
+        while(root.Length<1100)root=Path.Combine(root,"nested-cache-directory");
+        var session=EtlImporter.Import(Fixture,root,null,default);
+        Assert.True(Path.Combine(session.CacheDirectory,"analysis.db").Length>1100);
+        var bookmark=new Bookmark("long-path","saved evidence",0,100);
+        using(var store=new CacheStore(session.CacheDirectory)) {
+            Assert.Empty(store.Bookmarks());store.AddBookmark(bookmark);
+        }
+        var reopened=EtlImporter.Import(Fixture,root,null,default);
+        Assert.Equal(session.CacheDirectory,reopened.CacheDirectory);
+        using var readOnly=new CacheStore(reopened.CacheDirectory,true);
+        Assert.Equal(bookmark,Assert.Single(readOnly.Bookmarks()));
+    }
     [FixtureTheory]
     [InlineData("source","SizeLimit")]
     [InlineData("events","SizeLimit")]
