@@ -136,6 +136,92 @@ public sealed class MonitorTests
         Assert.Contains(view.History, x => x.Utc == utc.AddSeconds(3001) && x.ReadBytesPerSecond == 1000);
     }
     [Fact]
+    public void DownsamplingDoesNotHideUnavailableMeasurementsAndKeepsRawEvidence()
+    {
+        var ring = new SnapshotRing(); var utc = DateTime.UtcNow;
+        for (var i = 0; i < 3600; i++)
+            ring.Add(new MonitorSnapshot(i * (long)Stopwatch.Frequency, utc.AddSeconds(i), i == 1013 ? null : 1,
+                i == 1013 ? null : 5, i == 1013 ? null : 10, i == 1013 ? null : 20,
+                i == 2013 ? null : 10000, i == 3013 ? null : 20000, 0, 0, [], []));
+        var history = ring.View(utc, []).History;
+        Assert.InRange(history.Count, 1, 2000);
+        var rateBlock = history.Where(x => x.MonotonicTick >= 1008L * Stopwatch.Frequency && x.MonotonicTick < 1016L * Stopwatch.Frequency).ToArray();
+        Assert.NotEmpty(rateBlock);
+        Assert.All(rateBlock, x => {
+            Assert.Null(x.IntervalSeconds); Assert.Null(x.CpuPercent);
+            Assert.Null(x.ReadBytesPerSecond); Assert.Null(x.WriteBytesPerSecond);
+        });
+        Assert.Contains(history, x => x.AvailablePhysicalBytes == null);
+        Assert.Contains(history, x => x.CommitBytes == null);
+        Assert.Equal(5, ring.Snapshots()[1008].CpuPercent);
+        Assert.Null(ring.Snapshots()[1013].CpuPercent);
+        Assert.Equal(3600, ring.Snapshots().Count);
+        Assert.Equal(3599L * Stopwatch.Frequency, history[^1].MonotonicTick);
+    }
+
+    [Fact]
+    public void DownsamplingKeepsTheFinalBlockUnavailableInsteadOfReintroducingItsEndpoint()
+    {
+        var ring = new SnapshotRing(); var utc = DateTime.UtcNow;
+        for (var i = 0; i < 3600; i++)
+            ring.Add(new MonitorSnapshot(i * (long)Stopwatch.Frequency, utc.AddSeconds(i), 1,
+                i == 3597 ? null : 5, 10, 20, 10000, 20000, 0, 0, [], []));
+        var history = ring.View(utc, []).History;
+        Assert.Equal(3599L * Stopwatch.Frequency, history[^1].MonotonicTick);
+        Assert.Null(history[^1].CpuPercent);
+        Assert.Equal(5, ring.Snapshots()[^1].CpuPercent);
+    }
+
+    [Theory]
+    [InlineData(-3600)]
+    [InlineData(3600)]
+    public void WallClockChangeDoesNotAlterMonotonicRates(int clockOffset)
+    {
+        var calculator = new SnapshotCalculator(2); var utc = DateTime.UtcNow;
+        calculator.Calculate(Raw(0, utc, Process(100, 0)));
+        var changed = calculator.Calculate(Raw(Stopwatch.Frequency, utc.AddSeconds(1 + clockOffset),
+            Process(100, 10_000_000, 100, 200)));
+        Assert.Equal(1, changed.IntervalSeconds); Assert.Equal(50, changed.CpuPercent);
+        Assert.Equal(100, changed.ReadBytesPerSecond); Assert.Equal(200, changed.WriteBytesPerSecond);
+        Assert.Contains(changed.Gaps, x => x.Kind == "ClockChange");
+        Assert.DoesNotContain(changed.Gaps, x => x.Kind == "MissedTicks");
+    }
+
+    [Fact]
+    public void LongPauseInvalidatesRatesAndRecoveryUsesTheResumedBaseline()
+    {
+        var calculator = new SnapshotCalculator(2); var utc = DateTime.UtcNow;
+        calculator.Calculate(Raw(0, utc, Process(100, 0, 0, 0)));
+        var resumed = calculator.Calculate(Raw(3601L * Stopwatch.Frequency, utc.AddSeconds(3601),
+            Process(100, 50_000_000, 10000, 20000)));
+        Assert.Null(resumed.IntervalSeconds); Assert.Null(resumed.CpuPercent);
+        Assert.Null(resumed.ReadBytesPerSecond); Assert.Null(resumed.WriteBytesPerSecond);
+        Assert.Equal(4096, resumed.AvailablePhysicalBytes);
+        Assert.Contains(resumed.Gaps, x => x.Kind == "MissedTicks");
+        var recovered = calculator.Calculate(Raw(3602L * Stopwatch.Frequency, utc.AddSeconds(3602),
+            Process(100, 60_000_000, 10100, 20200)));
+        Assert.Equal(50, recovered.CpuPercent);
+        Assert.Equal(100, recovered.ReadBytesPerSecond); Assert.Equal(200, recovered.WriteBytesPerSecond);
+        Assert.Empty(recovered.Gaps);
+    }
+
+    [Fact]
+    public void SamplingFailureRequiresFreshBaselineInsteadOfAssumingZeroActivity()
+    {
+        var calculator = new SnapshotCalculator(2); var utc = DateTime.UtcNow;
+        calculator.Calculate(Raw(0, utc, Process(100, 0)));
+        var failed = calculator.Calculate(Raw(Stopwatch.Frequency, utc.AddSeconds(1)) with {
+            AvailablePhysicalBytes = null, CommitBytes = null,
+            Gaps = [new(utc.AddSeconds(1), "SamplingFailure", "Controlled failure")]
+        });
+        Assert.Null(failed.CpuPercent); Assert.Null(failed.ReadBytesPerSecond); Assert.Null(failed.AvailablePhysicalBytes);
+        var baseline = calculator.Calculate(Raw(2L * Stopwatch.Frequency, utc.AddSeconds(2), Process(100, 20_000_000)));
+        Assert.Null(baseline.CpuPercent); Assert.Null(baseline.ReadBytesPerSecond);
+        var recovered = calculator.Calculate(Raw(3L * Stopwatch.Frequency, utc.AddSeconds(3), Process(100, 30_000_000)));
+        Assert.Equal(50, recovered.CpuPercent);
+    }
+
+    [Fact]
     public void DownsamplingKeepsMonotonicOrderAfterWallClockRollback()
     {
         var ring = new SnapshotRing(); var utc = DateTime.UtcNow;

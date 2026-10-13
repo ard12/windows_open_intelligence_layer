@@ -154,6 +154,7 @@ public sealed class SnapshotRing(int maximumSnapshots = 3600, int maximumRows = 
         var result = new List<MonitorPoint>(2000);
         for (var i = 0; i < values.Count; i += step) {
             var group = values.Skip(i).Take(step).ToArray();
+            var start = result.Count;
             result.Add(group[0]);
             var cpuPeak = group.MaxBy(x => x.CpuPercent ?? -1)!;
             if (cpuPeak != group[0]) result.Add(cpuPeak);
@@ -162,8 +163,23 @@ public sealed class SnapshotRing(int maximumSnapshots = 3600, int maximumRows = 
             var ioPeak = group.MaxBy(x => x.ReadBytesPerSecond == null && x.WriteBytesPerSecond == null
                 ? -1 : (x.ReadBytesPerSecond ?? 0) + (x.WriteBytesPerSecond ?? 0))!;
             if (ioPeak != group[0] && ioPeak != cpuPeak && ioPeak != memoryLow) result.Add(ioPeak);
+            if (i + step >= values.Count && !result.Skip(start).Contains(group[^1])) result.Add(group[^1]);
+            // Conservatively blank a chart block rather than hide unavailable samples between extrema.
+            var missingInterval = group.Any(x => x.IntervalSeconds == null);
+            var missingCpu = group.Any(x => x.CpuPercent == null);
+            var missingRead = group.Any(x => x.ReadBytesPerSecond == null);
+            var missingWrite = group.Any(x => x.WriteBytesPerSecond == null);
+            var missingMemory = group.Any(x => x.AvailablePhysicalBytes == null);
+            var missingCommit = group.Any(x => x.CommitBytes == null);
+            for (var j = start; j < result.Count; j++) result[j] = result[j] with {
+                IntervalSeconds = missingInterval ? null : result[j].IntervalSeconds,
+                CpuPercent = missingCpu ? null : result[j].CpuPercent,
+                ReadBytesPerSecond = missingRead ? null : result[j].ReadBytesPerSecond,
+                WriteBytesPerSecond = missingWrite ? null : result[j].WriteBytesPerSecond,
+                AvailablePhysicalBytes = missingMemory ? null : result[j].AvailablePhysicalBytes,
+                CommitBytes = missingCommit ? null : result[j].CommitBytes
+            };
         }
-        if (result[^1] != values[^1]) result.Add(values[^1]);
         return result.OrderBy(x => x.MonotonicTick).Take(2000).ToArray();
     }
 }

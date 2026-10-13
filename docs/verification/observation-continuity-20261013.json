@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "checkpoint": "P6 observation continuity",
+  "recordedUtc": "2026-10-13T11:50:14.8907621Z",
+  "baseCommit": "02770d2e5d3cacaeaf837ee8ff54772579caf7b9",
+  "scope": "Post-release checkpoint; local package only. The published v0.4.0-preview.1 assets remain unchanged.",
+  "build": {
+    "configuration": "Release",
+    "errors": 0,
+    "warnings": 0
+  },
+  "tests": {
+    "newCases": 9,
+    "skipped": 0,
+    "passed": 125,
+    "failed": 0
+  },
+  "package": {
+    "dependencyIdentityVerified": true,
+    "packageVersionPairs": 80,
+    "sha256": "a37c86bf0089ae34260dba45961ef27d213b8e22635032e13ec3ea7beedfbb9b",
+    "selfContained": true,
+    "privateFilenameRegressionCases": 34,
+    "lockFiles": 11,
+    "desktopWorkflowVerified": true,
+    "knownNuGetAdvisoryMatches": 0
+  },
+  "implementation": {
+    "chartSamplesMaximum": 2000,
+    "pauseChartLines": "broken",
+    "downsampledMissingMetrics": "unavailable for the whole display block",
+    "combinedIoMissingCounter": "unavailable",
+    "clockBasis": "recorded monotonic time",
+    "originalSnapshotEvidence": "unchanged"
+  },
+  "limitations": [
+    "Controlled pause/failure/clock tests do not establish actual Windows power-transition handling.",
+    "No independent Windows 11 or participant evidence was collected.",
+    "Privileged attacks, helper signing, physical writes and repeated two-hour acceptance remain open.",
+    "The local desktop screenshot contains live machine activity and is excluded from publication."
+  ]
+}

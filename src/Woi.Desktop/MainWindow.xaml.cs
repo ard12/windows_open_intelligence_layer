@@ -220,9 +220,9 @@ public partial class MainWindow : Window
             MonitorCpuPlot.Refresh(); MonitorMemoryPlot.Refresh(); MonitorIoPlot.Refresh(); return;
         }
         var points = view.History;
-        var x = points.Select(p => view.Descriptor is { } source ? (p.MonotonicTick - source.StartTick) / (double)source.MonotonicFrequency : (p.Utc - view.StartedUtc).TotalSeconds).ToArray();
-        void Plot(ScottPlot.WPF.WpfPlot plot, double[] y, string title, string color)
+        void Plot(ScottPlot.WPF.WpfPlot plot, Func<MonitorPoint, double> measure, string title, string color)
         {
+            var (x, y) = MonitorChartSeries.Create(points, view.Descriptor, view.StartedUtc, measure);
             plot.Plot.Clear();
             plot.Plot.Title(title);
             plot.Plot.XLabel("Seconds observing");
@@ -235,12 +235,11 @@ public partial class MainWindow : Window
             }
             plot.Refresh();
         }
-        Plot(MonitorCpuPlot, points.Select(p => p.CpuPercent ?? double.NaN).ToArray(),
+        Plot(MonitorCpuPlot, p => p.CpuPercent ?? double.NaN,
             "Accounted process CPU", "#167C80");
-        Plot(MonitorMemoryPlot, points.Select(p => p.AvailablePhysicalBytes is { } bytes
-            ? bytes / 1073741824d : double.NaN).ToArray(), "Available memory", "#5876B5");
-        Plot(MonitorIoPlot, points.Select(p => p.ReadBytesPerSecond == null && p.WriteBytesPerSecond == null
-            ? double.NaN : ((p.ReadBytesPerSecond ?? 0) + (p.WriteBytesPerSecond ?? 0)) / 1048576d).ToArray(),
+        Plot(MonitorMemoryPlot, p => p.AvailablePhysicalBytes is { } bytes
+            ? bytes / 1073741824d : double.NaN, "Available memory", "#5876B5");
+        Plot(MonitorIoPlot, MonitorChartSeries.IoMiBPerSecond,
             "Accounted process read + write", "#9569AA");
     }
     private async void StartObservationClicked(object sender,RoutedEventArgs e)

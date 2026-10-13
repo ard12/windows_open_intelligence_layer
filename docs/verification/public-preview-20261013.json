@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "repo": "https://github.com/ard12/windows_open_intelligence_layer",
+  "tag": "v0.4.0-preview.1",
+  "commit": "02770d2e5d3cacaeaf837ee8ff54772579caf7b9",
+  "engineeringPrerelease": true,
+  "releaseUrl": "https://github.com/ard12/windows_open_intelligence_layer/releases/tag/v0.4.0-preview.1",
+  "mainCi": {
+    "conclusion": "success",
+    "tests": 116,
+    "run": 38366891321
+  },
+  "tagCi": {
+    "conclusion": "success",
+    "run": 38368677456
+  },
+  "applicationSha256": "a1a53cdacdd9d843b277be74d599759c102b8f6e6e395b7b5e7144797481b2ea",
+  "sourceSha256": "01a8d05109b44f373dc68289f1c091a82ce8a67f79566c3a2a8c8928a4fde91f",
+  "anonymousDownloadsVerified": true,
+  "publishedDesktop": {
+    "savedComparison": true,
+    "success": true,
+    "workerRecovery": true,
+    "monitor": true,
+    "investigation": true
+  },
+  "sourceArchiveBuild": {
+    "success": true,
+    "errors": 0,
+    "warnings": 0
+  },
+  "remaining": [
+    "independent Windows 11 acceptance",
+    "elevated medium-token same-SID attack validation",
+    "helper signing and distribution trust",
+    "service temporary-write measurement",
+    "native graphics maintenance and wider performance/retention gates"
+  ],
+  "scope": "Published v0.4.0-preview.1 evidence; later working-tree checkpoints require their own validation."
+}

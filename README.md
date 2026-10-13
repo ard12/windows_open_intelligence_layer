@@ -61,6 +61,8 @@ Windows 11 x64 is the release baseline. Local build and desktop tests ran on Win
 
 The first sample is a counter baseline. Unreadable processes, missed ticks, clock changes, and counter resets remain visible as unavailable values or collection gaps. The ring allows up to 60 minutes but also caps process rows and estimated bytes; the displayed retained duration is the actual one.
 
+Charts break across collection pauses. Long histories use at most 2,000 chart samples; a downsampled block with missing measurements leaves that metric blank. Investigations use the original retained snapshots, including every recorded gap.
+
 ### Investigate and compare recorded history
 
 1. In **Observe**, start collection before reproducing the symptom. Mark the time it occurs, then open **Investigate**.

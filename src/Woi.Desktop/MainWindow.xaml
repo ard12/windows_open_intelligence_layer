@@ -156,7 +156,8 @@
        <Border Grid.Column="1" Style="{StaticResource Card}"><StackPanel><TextBlock Text="RECENT COLLECTION GAPS" Style="{StaticResource Label}"/>
         <ItemsControl ItemsSource="{Binding Monitor.RecentGaps}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding Detail}" TextWrapping="Wrap" Margin="0,4" Foreground="#8A6024"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
       </Grid>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="RECENT ONE-SECOND SAMPLES" Style="{StaticResource Label}"/>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="RESOURCE HISTORY · CHART SAMPLES" Style="{StaticResource Label}"/>
+       <TextBlock Text="Charts break across collection pauses. In long histories, a chart block with missing measurements leaves that metric blank; the original one-second evidence remains available in investigations." TextWrapping="Wrap" Foreground="#61768D" Margin="0,4,0,8"/>
        <DataGrid ItemsSource="{Binding MonitorHistory}" Height="220"><DataGrid.Columns>
         <DataGridTextColumn Header="Time UTC" Binding="{Binding Utc, StringFormat=HH:mm:ss}" Width="105"/>
         <DataGridTextColumn Header="Rate interval s" Binding="{Binding IntervalSeconds, StringFormat=N2, TargetNullValue=—}" Width="110"/><DataGridTextColumn Header="Accounted CPU %" Binding="{Binding CpuPercent, StringFormat=N2, TargetNullValue=—}" Width="145"/>
