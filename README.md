@@ -1,12 +1,45 @@
 # Windows Open Intelligence
 
-An experimental Windows performance investigation utility with local recording, resource history, and evidence inspection. Deeper execution and dependency visualization is planned.
+**Understand what Windows was doing when your PC slowed down.**
+
+Windows Open Intelligence brings recorded activity, resource contributors, and supporting events into one local desktop app. Open a Windows trace, select the moment that matters, and follow each finding back to its evidence. You can also observe recent activity, save investigations, and compare equivalent attempts.
+
+[![Windows build and verification](https://github.com/ard12/windows_open_intelligence_layer/actions/workflows/windows.yml/badge.svg)](https://github.com/ard12/windows_open_intelligence_layer/actions/workflows/windows.yml)
+[Engineering preview](https://github.com/ard12/windows_open_intelligence_layer/releases) · [MIT license](LICENSE) · [Contributing](CONTRIBUTING.md)
+
+## What you can investigate
+
+| Start with a question | Explore the evidence |
+|---|---|
+| Which processes used resources during this interval? | CPU sample rankings, physical disk activity, captured file/network events and process lifetimes. |
+| What changed between two attempts? | Saved investigations and comparisons with explicit measurement-compatibility checks. |
+| What supports this finding? | Event details, attribution basis, captured stacks and trace-local evidence coordinates. |
+
+Analysis runs locally, with no cloud account or upload required. Collection must already be running, or you need an existing ETL: the app cannot recover activity that was never recorded.
 
 This is an **engineering preview**, open for use, inspection, and contribution. Existing functionality includes ETL analysis, bounded recent-history observation, saved investigations/comparisons, and guided WPR recording. Execution/dependency graphs and application-level causal diagnosis are not implemented. Windows 11 acceptance, the elevated helper's trust/storage review, and several performance gates remain open; this is not a stable, generally recommended executable release. See [current checkpoints](docs/checkpoints.md) and [verification](docs/validation.md).
 
-The latest recorded Release build passed 110 tests on 2 October 2026. The earlier CPU-weight discrepancy was resolved on three public reference fixtures within the unchanged 1% gate. Both profiles and capture lifecycle checks passed Windows Server CI; the later Windows 10 Resources recording timed out during save, and FileActivity was not attempted in that run. The latest two-hour observation attempt was interrupted before completion. These are recorded results, not fresh launch validation.
+The 13 October local Release build passed **113 tests with zero skips**, and the extracted desktop passed its analysis, recovery, observation and saved-investigation checks. Packaged replay handled 228 requests and 50,000 paged events. Dependency identity/advisory checks and package privacy regressions passed. These local results do not close the native Windows 11, elevated storage or helper-trust gates; see [the release-remediation record](docs/verification/release-remediation-2026-10-13.md).
+
+## See it working
+
+These are genuine captures from the locally tested preview, using Microsoft's public `SimpleAllocator-dotnet6.etl` sample. They show recorded sample data, rather than measurements of your computer. [Screenshot provenance](docs/screenshots/README.md).
+
+**Summary — choose an interval and compare the processes contributing recorded activity.**
+
+![Summary view with resource charts, contributor rankings and evidence limitations](docs/screenshots/summary.png)
+
+**Explorer — connect activity to process lifetimes and browse individual events.**
+
+![Explorer view with process lifetime timelines and paged CPU events](docs/screenshots/explorer.png)
+
+**Evidence — inspect the recorded event, provenance and captured stack.**
+
+![Evidence view showing trace coordinates, event fields and captured stack addresses](docs/screenshots/evidence.png)
 
 ## Run
+
+Start with the [preview releases](https://github.com/ard12/windows_open_intelligence_layer/releases). Read each release's validation notes and asset list; a source-only preview requires the build instructions below. Previews are experimental and may be unsigned.
 
 Extract **WindowsOpenIntelligence-win-x64.zip** into a local folder and open **WindowsOpenIntelligence.exe**. Keep the application, worker, recording helper, DLLs, and runtime files together. The package is self-contained; users do not need Visual Studio or the .NET SDK.
 
@@ -96,3 +129,7 @@ The worker also has a diagnostic CLI:
 See [the product reassessment](docs/product-reassessment.md), [the engineering timeline](docs/engineering-plan.md), [architecture](docs/architecture.md), [capture design](docs/capture.md), [protocol](docs/protocol.md), [roadmap](docs/roadmap.md), and [contributing](CONTRIBUTING.md). Project code is MIT licensed; dependency notices are in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) and licenses/.
 
 The next-five-checkpoint status is recorded in [checkpoints](docs/checkpoints.md). The P3 [experiment protocol](docs/experiment.md) and empty results ledger distinguish preparation from participant evidence.
+
+## About the maintainer
+
+Created and maintained by [ard12](https://github.com/ard12). This project aims to make Windows performance investigations easier to follow: start with a symptom, narrow the interval, and inspect the evidence behind each finding. Contributions that improve clarity, correctness and reproducible Windows validation are welcome.
