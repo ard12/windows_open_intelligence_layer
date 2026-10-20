@@ -1,0 +1,321 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "project": "Windows Open Intelligence",
+  "head": "610f2c1",
+  "workingTree": "existing unrelated edits; research describes inspected source rather than only the published release",
+  "scope": "Feature selection and qualification plan; no competitor execution, code implementation, benchmark or publication.",
+  "referenceAppCount": 13,
+  "candidateCount": 12,
+  "firstPacket": {
+    "ids": [
+      "R1",
+      "R2",
+      "R3"
+    ],
+    "estimatedEngineeringDays": {
+      "min": 7,
+      "max": 13
+    },
+    "additionalIntegrationDays": {
+      "min": 1,
+      "max": 2
+    },
+    "externalReleaseAcceptanceIncluded": false
+  },
+  "evidence": {
+    "id": "ev_dc96228afd52fc229cb4e16f4751a35a46206fa3b34ae267f439b571114fd334",
+    "operation": "inspect_pe_resources",
+    "confidence": "observed",
+    "authority": "shipped-artifact",
+    "provider": {
+      "id": "rea-pe-resources",
+      "name": "REA PE resource parser",
+      "version": "1"
+    },
+    "artifact": {
+      "name": "Procmon64.exe",
+      "productVersion": "4.12",
+      "bytes": 2237720,
+      "sha256": "28495e642b2a465474a4edc58380eaf8b7ee580f3fbcb4141061deadafe9b885"
+    },
+    "coverage": {
+      "status": "complete",
+      "examined_entries": 597,
+      "resources": 292
+    },
+    "selectedResourceNames": [
+      "COLUMNCHOOSER",
+      "FILTER_CONTROL",
+      "ORGANIZE_FILTERS",
+      "SAVE_FILTER",
+      "CONTEXT_PROCESSTREE"
+    ],
+    "localBundle": ".artifacts/apps-feature-study-20261020/rea-evidence-bundle.json",
+    "limitations": [
+      "Static PE32/PE32+ type/name/language resource inventory; payloads other than RT_GROUP_ICON remain opaque.",
+      "Icon candidates are resource-table relationships. Language fallback, image decoding and actual shell/window loading are not observed.",
+      "Exact shared byte ranges are retained; non-identical overlapping resource structures or payloads are rejected."
+    ],
+    "interpretation": "Resource presence only. Same deterministic evidence identity as the prior inspection; not independent algorithm or runtime validation."
+  },
+  "sources": [
+    {
+      "id": "system-informer",
+      "name": "System Informer",
+      "url": "https://github.com/winsiderss/systeminformer",
+      "basis": "prior pinned-source study",
+      "priorStudy": "docs/research/system-informer-study-and-feature-plan-2026-10-19.md"
+    },
+    {
+      "id": "process-monitor",
+      "name": "Process Monitor",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/procmon",
+      "basis": "official documentation plus static shipped resources"
+    },
+    {
+      "id": "perfview",
+      "name": "PerfView",
+      "url": "https://github.com/microsoft/perfview",
+      "basis": "prior pinned-source study",
+      "priorStudy": "docs/research/perfview-cpu-stack-study-2026-10-20.md"
+    },
+    {
+      "id": "wpa",
+      "name": "Windows Performance Analyzer",
+      "url": "https://learn.microsoft.com/en-us/windows-hardware/test/wpt/cpu-analysis",
+      "basis": "official documentation and prior timeline study"
+    },
+    {
+      "id": "visual-studio",
+      "name": "Visual Studio Profiler",
+      "url": "https://learn.microsoft.com/en-us/visualstudio/profiling/cpu-usage?view=vs-2022",
+      "basis": "official documentation"
+    },
+    {
+      "id": "firefox-profiler",
+      "name": "Firefox Profiler",
+      "url": "https://raw.githubusercontent.com/firefox-devtools/profiler/main/docs-user/guide-getting-started.md",
+      "basis": "official documentation"
+    },
+    {
+      "id": "perfetto",
+      "name": "Perfetto",
+      "url": "https://perfetto.dev/docs/visualization/perfetto-ui",
+      "basis": "official documentation"
+    },
+    {
+      "id": "process-explorer",
+      "name": "Process Explorer",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/process-explorer",
+      "basis": "official documentation"
+    },
+    {
+      "id": "vmmap",
+      "name": "VMMap",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/vmmap",
+      "basis": "official documentation"
+    },
+    {
+      "id": "rammap",
+      "name": "RAMMap",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/rammap",
+      "basis": "official documentation"
+    },
+    {
+      "id": "tcpview",
+      "name": "TCPView",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/tcpview",
+      "basis": "official documentation"
+    },
+    {
+      "id": "presentmon",
+      "name": "PresentMon",
+      "url": "https://github.com/GameTechDev/PresentMon/blob/main/README-ConsoleApplication.md",
+      "basis": "official documentation"
+    },
+    {
+      "id": "latencymon",
+      "name": "LatencyMon",
+      "url": "https://resplendence.com/latencymon_technical",
+      "basis": "official documentation"
+    }
+  ],
+  "additionalSources": [
+    "https://raw.githubusercontent.com/firefox-devtools/profiler/main/docs-user/guide-filtering-call-trees.md",
+    "https://raw.githubusercontent.com/firefox-devtools/profiler/main/docs-user/guide-ui-tour-timeline.md",
+    "https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information",
+    "https://learn.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getextendedtcptable"
+  ],
+  "candidates": [
+    {
+      "id": "R1",
+      "name": "Export review and selectable omissions",
+      "references": [
+        "firefox-profiler"
+      ],
+      "requirement": "existing evidence",
+      "estimatedEngineeringDays": {
+        "min": 3,
+        "max": 5
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R2",
+      "name": "Thread-scoped CPU investigation",
+      "references": [
+        "visual-studio",
+        "wpa",
+        "firefox-profiler"
+      ],
+      "requirement": "existing evidence; propagate query scope",
+      "estimatedEngineeringDays": {
+        "min": 3,
+        "max": 5
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R3",
+      "name": "Show hottest sampled path",
+      "references": [
+        "visual-studio"
+      ],
+      "requirement": "existing evidence",
+      "estimatedEngineeringDays": {
+        "min": 1,
+        "max": 3
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R4",
+      "name": "Memory explanation panel",
+      "references": [
+        "vmmap",
+        "rammap"
+      ],
+      "requirement": "existing counters only",
+      "estimatedEngineeringDays": {
+        "min": 2,
+        "max": 4
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R5",
+      "name": "Hard-fault contributors and evidence",
+      "references": [
+        "wpa",
+        "latencymon"
+      ],
+      "requirement": "existing events; attribution qualification required",
+      "estimatedEngineeringDays": {
+        "min": 2,
+        "max": 4
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R6",
+      "name": "Captured module finder",
+      "references": [
+        "process-explorer"
+      ],
+      "requirement": "existing module inventory; bounded query required",
+      "estimatedEngineeringDays": {
+        "min": 1,
+        "max": 3
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R7",
+      "name": "Literal stack inclusion filter",
+      "references": [
+        "firefox-profiler",
+        "perfview"
+      ],
+      "requirement": "existing captured stacks",
+      "estimatedEngineeringDays": {
+        "min": 2,
+        "max": 4
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R8",
+      "name": "Pin and hide relevant lanes",
+      "references": [
+        "perfetto"
+      ],
+      "requirement": "display only; lanes prerequisite excluded from estimate",
+      "estimatedEngineeringDays": {
+        "min": 2,
+        "max": 3
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R9",
+      "name": "Qualified scheduling and wait timeline",
+      "references": [
+        "wpa",
+        "perfetto"
+      ],
+      "requirement": "new scheduling schemas; qualification and native validation",
+      "estimatedEngineeringDays": {
+        "min": 10,
+        "max": 20
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R10",
+      "name": "On-demand endpoint snapshot difference",
+      "references": [
+        "tcpview"
+      ],
+      "requirement": "new acquisition and persistence",
+      "estimatedEngineeringDays": {
+        "min": 3,
+        "max": 6
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R11",
+      "name": "PresentMon CSV attachment",
+      "references": [
+        "presentmon"
+      ],
+      "requirement": "new versioned importer",
+      "estimatedEngineeringDays": {
+        "min": 4,
+        "max": 8
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    },
+    {
+      "id": "R12",
+      "name": "DPC and ISR timing by driver",
+      "references": [
+        "latencymon",
+        "wpa"
+      ],
+      "requirement": "new duration schemas; qualification prerequisite",
+      "estimatedEngineeringDays": {
+        "min": 5,
+        "max": 15
+      },
+      "status": "proposed_not_implemented_by_this_study"
+    }
+  ],
+  "limitations": [
+    "Publisher documentation is mutable and not a version-pinned executable contract.",
+    "Existing source studies are retained references rather than a new whole-codebase review.",
+    "Effort is estimated; usefulness and acquisition overhead are unmeasured.",
+    "Existing release security, Windows 11 and performance gates remain open."
+  ]
+}

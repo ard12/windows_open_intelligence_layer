@@ -24,7 +24,9 @@ $dll=Join-Path $scratch 'SQLitePCLRaw.core.dll'
 Copy-Item -LiteralPath (Join-Path $packageRoot ($package+'/'+$asset)) -Destination $dll
 $successReport=Join-Path $scratch 'valid.json'
 & (Join-Path $PSScriptRoot 'verify-dependencies.ps1') -BundlePath $scratch -OutputPath $successReport
-if(!(Get-Content -LiteralPath $successReport -Raw | ConvertFrom-Json).success){throw 'Valid package-byte fixture did not pass.'}
+$validReport=Get-Content -LiteralPath $successReport -Raw | ConvertFrom-Json
+if(!$validReport.success){throw 'Valid package-byte fixture did not pass.'}
+if(!$validReport.dotnetChannel.sdk -or !$validReport.dotnetChannel.declaredSdk){throw 'Observed and declared SDK identities are missing.'}
 $bytes=[IO.File]::ReadAllBytes($dll)
 $bytes[$bytes.Length-1]=$bytes[$bytes.Length-1] -bxor 1
 [IO.File]::WriteAllBytes($dll,$bytes)

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO.Pipes;
 using System.Security.Principal;
 using System.Security.AccessControl;
 using System.Text.Json;
@@ -27,10 +28,12 @@ public sealed class CaptureTests
         public List<string[]> Calls{get;}=[];
         public string? Failure{get;set;}
         public bool AlreadyStopped{get;set;}
+        public bool TimeoutOnStop{get;set;}
         public Task<WprResult> Run(IReadOnlyList<string> args,CancellationToken token) {
             token.ThrowIfCancellationRequested();Calls.Add(args.ToArray());
             if(args[0]=="-cancel" && AlreadyStopped)return Task.FromResult(new WprResult(1,"0xC5583000: no recording is running"));
             if(args[0]==Failure)return Task.FromResult(new WprResult(1,"simulated failure"));
+            if(args[0]=="-stop" && TimeoutOnStop){File.WriteAllBytes(args[1],[1,2,3]);throw new WoiException("CaptureTimeout","Windows Performance Recorder -stop exceeded its command timeout. stdout: native merge stage; stderr: diagnostic");}
             if(args[0]=="-stop")File.WriteAllBytes(args[1],[1,2,3,4,5,6]);
             return Task.FromResult(new WprResult(0,"okay"));
         }
@@ -64,6 +67,9 @@ public sealed class CaptureTests
         var metadata=JsonSerializer.Deserialize<CaptureMetadata>(File.ReadAllText(Path.Combine(Path.GetDirectoryName(saved.TracePath!)!,"capture.json")),Wire.Json)!;
         Assert.Equal(saved.Sha256,metadata.Sha256);
         Assert.All(runner.Calls,x=>{Assert.Equal("-instancename",x[^2]);Assert.Equal(recording.Instance,x[^1]);});
+        var stop=Assert.Single(runner.Calls,x=>x[0]=="-stop");
+        Assert.Equal("-skipPdbGen",stop[^3]);
+        Assert.DoesNotContain(runner.Calls.Where(x=>x[0]!="-stop"),x=>x.Contains("-skipPdbGen"));
         Assert.DoesNotContain(runner.Calls,x=>x[0]=="-cancel");
     }
     [Fact] public async Task DeadlineAutomaticallySavesAndManualCancelPublishesNoTrace() {
@@ -104,11 +110,36 @@ public sealed class CaptureTests
         Assert.Equal("CaptureSaveFailed",error.Code);Assert.Equal(CapturePhase.Failed,controller.Status.Phase);
         Assert.Null(controller.Status.TracePath);
     }
+    [Fact] public async Task StopTimeoutKeepsNativeDiagnosticAndNeverPublishesPartialTrace() {
+        using var temp=new Temp();var runner=new FakeRunner{TimeoutOnStop=true,AlreadyStopped=true};
+        await using var controller=Controller(runner,temp);await controller.Start(new(),default);
+        var error=await Assert.ThrowsAsync<WoiException>(()=>controller.Stop(default));
+        Assert.Equal("CaptureTimeout",error.Code);Assert.Contains("native merge stage",error.Message);
+        Assert.Equal(CapturePhase.Failed,controller.Status.Phase);Assert.Null(controller.Status.TracePath);
+        Assert.Null(controller.Status.Sha256);Assert.Null(controller.Status.TraceBytes);
+        var metadata=JsonSerializer.Deserialize<CaptureMetadata>(File.ReadAllText(Assert.Single(Directory.GetFiles(temp.Root,"capture.json",SearchOption.AllDirectories))),Wire.Json)!;
+        Assert.Equal(CapturePhase.Failed,metadata.Phase);Assert.Equal(error.Message,metadata.Message);
+        Assert.Null(metadata.Sha256);Assert.Null(metadata.Bytes);
+        Assert.Equal(3,new FileInfo(Assert.Single(Directory.GetFiles(temp.Root,"recording.etl",SearchOption.AllDirectories))).Length);
+        Assert.Single(runner.Calls,x=>x[0]=="-cancel");Assert.All(runner.Calls,x=>Assert.Equal(controller.Status.Instance,x[^1]));
+    }
     [Fact] public async Task ParentDisconnectDisposalCancelsRecordingWithoutSaving() {
         using var temp=new Temp();var runner=new FakeRunner();
         var controller=Controller(runner,temp);await controller.Start(new(),default);await controller.DisposeAsync();
         Assert.Single(runner.Calls,x=>x[0]=="-cancel");
         Assert.Empty(Directory.GetFiles(temp.Root,"recording.etl",SearchOption.AllDirectories));
+    }
+    [Fact] public async Task PipeIdentityAcceptsItsProcessAndRejectsUnexpectedPeers() {
+        var name="woi.capture.test."+Guid.NewGuid().ToString("N");
+        using var server=new NamedPipeServerStream(name,PipeDirection.InOut,1,PipeTransmissionMode.Byte,PipeOptions.Asynchronous);
+        using var client=new NamedPipeClientStream(".",name,PipeDirection.InOut,PipeOptions.Asynchronous);
+        using var deadline=new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var connected=server.WaitForConnectionAsync(deadline.Token);
+        await client.ConnectAsync(deadline.Token);await connected;
+        PipeIdentity.RequirePeer(server,Environment.ProcessId,true);
+        PipeIdentity.RequirePeer(client,Environment.ProcessId,false);
+        Assert.Equal("CapturePeerMismatch",Assert.Throws<WoiException>(()=>PipeIdentity.RequirePeer(server,int.MaxValue,true)).Code);
+        Assert.Equal("CapturePeerMismatch",Assert.Throws<WoiException>(()=>PipeIdentity.RequirePeer(client,int.MaxValue,false)).Code);
     }
     [Fact] public async Task ProtocolRejectsVersionsAndUnknownCommandsWithoutStartingWpr() {
         using var temp=new Temp();var runner=new FakeRunner();await using var controller=Controller(runner,temp);

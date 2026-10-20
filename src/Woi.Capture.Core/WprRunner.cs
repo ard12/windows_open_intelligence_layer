@@ -21,23 +21,48 @@ public sealed class WprRunner : IWprRunner
         start.Environment["TMP"]=storage.Root;
         start.Environment["SystemTemp"]=storage.Root;
         foreach(var argument in arguments)start.ArgumentList.Add(argument);
+        return await RunProcess(start,arguments[0],TimeSpan.FromSeconds(60),token);
+    }
+    internal static async Task<WprResult> RunProcess(ProcessStartInfo start,string operation,TimeSpan timeout,CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
         using var process=Process.Start(start)??throw new IOException("Windows Performance Recorder could not start.");
-        var stdout=ReadBounded(process.StandardOutput);var stderr=ReadBounded(process.StandardError);
-        using var deadline=CancellationTokenSource.CreateLinkedTokenSource(token);deadline.CancelAfter(TimeSpan.FromSeconds(60));
+        using var drain=new CancellationTokenSource();
+        var stdout=ReadBounded(process.StandardOutput,drain.Token);
+        var stderr=ReadBounded(process.StandardError,drain.Token);
+        using var deadline=CancellationTokenSource.CreateLinkedTokenSource(token);deadline.CancelAfter(timeout);
+        var interrupted=false;
+        string? cleanupError=null;
         try {await process.WaitForExitAsync(deadline.Token);}
         catch(OperationCanceledException) {
-            if(!process.HasExited)process.Kill(true);
-            await process.WaitForExitAsync();
-            if(!token.IsCancellationRequested)throw new WoiException("CaptureTimeout","Windows Performance Recorder exceeded its command timeout.");
-            throw;
+            interrupted=true;
+            try {
+                if(!process.HasExited)process.Kill(true);
+                using var reap=new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await process.WaitForExitAsync(reap.Token);
+            } catch(Exception ex) when(ex is InvalidOperationException or System.ComponentModel.Win32Exception or OperationCanceledException) {
+                cleanupError=ex.Message;
+            }
         }
-        return new(process.ExitCode,(await stdout)+"\n"+(await stderr));
+        // A descendant may inherit a redirected handle after the owned process exits.
+        drain.CancelAfter(TimeSpan.FromSeconds(2));
+        var output="stdout:\n"+await stdout+"\nstderr:\n"+await stderr;
+        if(cleanupError!=null)throw new WoiException("CaptureCleanupFailed",$"Windows Performance Recorder {operation} could not be reaped: {cleanupError}\n{output}");
+        if(interrupted) {
+            var message=$"Windows Performance Recorder {operation} "+(token.IsCancellationRequested?"was cancelled.":"exceeded its command timeout.")+"\n"+output;
+            if(token.IsCancellationRequested)throw new OperationCanceledException(message,token);
+            throw new WoiException("CaptureTimeout",message);
+        }
+        return new(process.ExitCode,output);
     }
-    private static async Task<string> ReadBounded(TextReader reader)
+    private static async Task<string> ReadBounded(TextReader reader,CancellationToken token)
     {
-        StringBuilder result=new();char[] buffer=new char[4096];
-        while(true){int count=await reader.ReadAsync(buffer);if(count==0)break;
-            if(result.Length<32768)result.Append(buffer,0,Math.Min(count,32768-result.Length));}
-        return result.ToString();
+        StringBuilder result=new();char[] buffer=new char[4096];var truncated=false;var incomplete=false;
+        try {
+            while(true){int count=await reader.ReadAsync(buffer.AsMemory(),token);if(count==0)break;
+                // Both streams must fit the 64 KiB reply even when JSON escapes every character.
+                int retained=Math.Min(count,4096-result.Length);result.Append(buffer,0,retained);truncated|=retained<count;}
+        } catch(OperationCanceledException) when(token.IsCancellationRequested) {incomplete=true;}
+        return result+(truncated?"\n[output truncated]":"")+(incomplete?"\n[output drain incomplete]":"");
     }
 }

@@ -14,15 +14,18 @@ public sealed class MonitorSession(IRawSampler sampler, int logicalProcessors, S
     private SourceDescriptor? source;
     private readonly string sourceId = Guid.NewGuid().ToString("N");
 
-    public void SampleOnce()
+    public void SampleOnce(CancellationToken token = default)
     {
         RawSnapshot raw;
-        try { raw = sampler.Sample(); }
+        token.ThrowIfCancellationRequested();
+        try { raw = sampler.Sample(token); }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
         catch (Exception ex) {
             raw = new(Stopwatch.GetTimestamp(), DateTime.UtcNow, null, null, 0, 0, [],
                 [new(DateTime.UtcNow, "SamplingFailure", ex.GetType().Name + ": " + ex.Message)]);
         }
         lock (gate) {
+            token.ThrowIfCancellationRequested();
             source ??= new(sourceId, "WindowsApiSnapshot", InvestigationAnalyzer.Version, Environment.MachineName,
                 Environment.OSVersion.VersionString, logicalProcessors, Stopwatch.Frequency, raw.Tick, raw.Utc);
             var snapshot = calculator.Calculate(raw);
@@ -68,8 +71,8 @@ public sealed class MonitorSession(IRawSampler sampler, int logicalProcessors, S
     }
     public async Task Run(CancellationToken token)
     {
-        SampleOnce();
+        SampleOnce(token);
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-        while (await timer.WaitForNextTickAsync(token)) SampleOnce();
+        while (await timer.WaitForNextTickAsync(token)) SampleOnce(token);
     }
 }

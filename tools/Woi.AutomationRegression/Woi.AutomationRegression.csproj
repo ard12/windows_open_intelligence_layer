@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><OutputType>WinExe</OutputType><UseWPF>true</UseWPF></PropertyGroup>
+ <ItemGroup>
+  <Reference Include="WindowsOpenIntelligence"><HintPath>$(ApplicationDirectory)/WindowsOpenIntelligence.dll</HintPath></Reference>
+  <Reference Include="Woi.Core"><HintPath>$(ApplicationDirectory)/Woi.Core.dll</HintPath></Reference>
+  <Reference Include="CommunityToolkit.Mvvm"><HintPath>$(ApplicationDirectory)/CommunityToolkit.Mvvm.dll</HintPath></Reference>
+ </ItemGroup>
+</Project>

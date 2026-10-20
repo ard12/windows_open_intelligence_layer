@@ -110,8 +110,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
         var events = await AnalysisClient.Send<EventPage>("events", eventQuery, token);
         var history = ProcessHistory == null ? null : await AnalysisClient.Send<ProcessHistoryPage>("processHistory",
             new ProcessHistoryQuery(interval.StartMs, interval.EndMs, ProcessHistory.Focus?.Id), token);
-        var stacks = CpuStacks == null ? null : await AnalysisClient.Send<CpuStackPage>("cpuStacks",
-            new CpuStackQuery(interval.StartMs, interval.EndMs, interval.ProcessId, Grouping: StackGrouping), token);
+        var stackThreads = CpuStacks == null ? null : await ReadStackThreads(interval.ProcessId, token);
+        var stackQuery = StackQuery(interval);
+        var stacks = CpuStacks == null ? null : await AnalysisClient.Send<CpuStackPage>("cpuStacks", stackQuery, token);
         token.ThrowIfCancellationRequested();
         // Publish one coherent scope only after every requested analysis succeeds.
         Metrics.Clear(); foreach(var x in metrics) Metrics.Add(x);
@@ -119,7 +120,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Explanation = EvidenceLanguage.Explain(interval,contributors,Summary.Session.Capabilities,Summary.Session.Warnings);
         PublishFirstEventPage(eventQuery, events);
         if (history != null) PublishProcessHistory(history);
-        if (stacks != null) PublishCpuStacks(stacks, []);
+        if (stacks != null) { PublishStackThreads(stackThreads!, stackQuery.ThreadId, stacks); PublishCpuStacks(stacks, []); }
         CommitTimeline(interval);
         ChartsChanged?.Invoke();
         Status = $"{Events.Count:n0} events on this page · interval {interval.StartMs/1000:n3}–{interval.EndMs/1000:n3}s · {(SelectedProcess?.Name ?? "all processes")}";
@@ -182,6 +183,26 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public Task Export(string path,string format) => Run(async token=>{
         await AnalysisClient.Send<object>("export",new { path,format,interval=Interval() },token); Status="Evidence report saved locally.";
     });
+    public async Task<Report?> ReportForExport()
+    {
+        Report? result = null;
+        await Run(async token => {
+            var report = await AnalysisClient.Send<Report>("exportReport", AppliedInterval ?? Interval(), token);
+            token.ThrowIfCancellationRequested(); result = report;
+        });
+        return result;
+    }
+    public async Task<AttemptComparisonExport?> ComparisonForExport()
+    {
+        AttemptComparisonExport? result = null;
+        await Run(async token => {
+            if (comparisonOwner?.IsAlive != true || lastComparisonRequest == null)
+                throw new WoiException("MissingComparison", "Compare two confirmed attempts before exporting.");
+            var report = await comparisonOwner.Send<AttemptComparisonExport>("investigation.compare.report", new { comparison = lastComparisonRequest }, token);
+            token.ThrowIfCancellationRequested(); result = report;
+        });
+        return result;
+    }
     public void Cancel() => operation?.Cancel();
     public void Dispose()
     {

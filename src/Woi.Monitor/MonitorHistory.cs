@@ -8,7 +8,7 @@ public record RawProcess(int Pid, int SessionId, long CreationFileTime, string N
 public record RawSnapshot(long Tick, DateTime Utc, long? AvailablePhysicalBytes, long? CommitBytes,
     int EnumeratedProcesses, int UnreadableProcesses, IReadOnlyList<RawProcess> Processes,
     IReadOnlyList<ObservationGap> Gaps, double? SamplingDurationMs = null);
-public interface IRawSampler { RawSnapshot Sample(); }
+public interface IRawSampler { RawSnapshot Sample(CancellationToken token = default); }
 
 public sealed class SnapshotCalculator(int logicalProcessors)
 {

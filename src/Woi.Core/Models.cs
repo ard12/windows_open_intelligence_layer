@@ -22,7 +22,7 @@ public record EvidenceReference(string TraceHash, string ParserVersion, long Etl
 public record EntityLifetime(string Id, string Kind, int OsId, string Name, double StartMs, double EndMs,
     bool StartKnown, bool EndKnown, string? OwnerId, string? ParentId, string ImagePath, string CommandLine)
 {
-    public string DisplayLabel => $"{Name} · PID {OsId} · {StartMs/1000:F3}s";
+    public string DisplayLabel => $"{Name} · {(Kind == "Thread" ? "TID" : "PID")} {OsId} · {StartMs/1000:F3}s";
 }
 public record TraceSession(string Id, string SourcePath, string SourceHash, string ParserVersion,
     string AnalysisVersion, string CacheDirectory, DateTime StartUtc, double DurationMs, int ProcessorCount,

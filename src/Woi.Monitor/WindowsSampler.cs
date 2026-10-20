@@ -12,18 +12,21 @@ public sealed class WindowsSampler : IRawSampler
     private readonly char[] imageBuffer = new char[32768];
     public static int LogicalProcessorCount => Native.GetActiveProcessorCount(ushort.MaxValue);
 
-    public RawSnapshot Sample()
+    public RawSnapshot Sample(CancellationToken token = default)
     {
+        token.ThrowIfCancellationRequested();
         var startedTick = Stopwatch.GetTimestamp();
         var processes = new List<RawProcess>();
         var gaps = new List<ObservationGap>();
         var unreadable = 0;
         var imageUnavailable = 0;
-        var count = EnumerateProcesses();
+        var count = EnumerateProcesses(token);
         for (var index = 0; index < count; index++) {
+            token.ThrowIfCancellationRequested();
             var pid = processIds[index];
             try {
                 using var handle = Native.OpenProcess(0x1000, false, pid);
+                token.ThrowIfCancellationRequested();
                 if (handle.IsInvalid ||
                     !Native.GetProcessTimes(handle, out var creation, out _, out var kernel, out var user) ||
                     creation <= 0) {
@@ -31,11 +34,13 @@ public sealed class WindowsSampler : IRawSampler
                     continue;
                 }
                 // Missing optional counters stay unavailable rather than becoming zero.
+                token.ThrowIfCancellationRequested();
                 ulong? read = null, write = null;
                 if (Native.GetProcessIoCounters(handle, out var io)) {
                     read = io.ReadTransferCount;
                     write = io.WriteTransferCount;
                 }
+                token.ThrowIfCancellationRequested();
                 long? privateBytes = null, workingSet = null;
                 var memory = new Native.ProcessMemoryCountersEx {
                     Size = (uint)Marshal.SizeOf<Native.ProcessMemoryCountersEx>()
@@ -46,17 +51,21 @@ public sealed class WindowsSampler : IRawSampler
                 }
                 // Obtain the image from the opened lifetime and bracket the
                 // PID-based session lookup with matching creation times.
+                token.ThrowIfCancellationRequested();
                 if (!Native.ProcessIdToSessionId(pid, out var session) || session > int.MaxValue) {
                     unreadable++;
                     continue;
                 }
+                token.ThrowIfCancellationRequested();
                 using var identityCheck = Native.OpenProcess(0x1000, false, pid);
+                token.ThrowIfCancellationRequested();
                 if (identityCheck.IsInvalid ||
                     !Native.GetProcessTimes(identityCheck, out var checkedCreation, out _, out _, out _) ||
                     checkedCreation != creation) {
                     unreadable++;
                     continue;
                 }
+                token.ThrowIfCancellationRequested();
                 uint imageLength = (uint)imageBuffer.Length;
                 var name = "Image unavailable";
                 if (Native.QueryFullProcessImageNameW(handle, 0, imageBuffer, ref imageLength))
@@ -69,6 +78,7 @@ public sealed class WindowsSampler : IRawSampler
             catch (OverflowException) { unreadable++; }
         }
 
+        token.ThrowIfCancellationRequested();
         long? available = null, commit = null;
         var info = new Native.PerformanceInformation { Size = (uint)Marshal.SizeOf<Native.PerformanceInformation>() };
         if (Native.GetPerformanceInfo(ref info, info.Size)) {
@@ -81,14 +91,16 @@ public sealed class WindowsSampler : IRawSampler
             $"{unreadable} enumerated processes could not be identified or read this tick."));
         if (imageUnavailable > 0) gaps.Add(new(utc, "ProcessImageUnavailable",
             $"{imageUnavailable} identified process lifetimes had no readable image name; their readable counters are retained."));
+        token.ThrowIfCancellationRequested();
         var completedTick = Stopwatch.GetTimestamp();
         return new(completedTick, utc, available, commit, count, unreadable,
             processes, gaps, (completedTick - startedTick) * 1000d / Stopwatch.Frequency);
     }
 
-    private int EnumerateProcesses()
+    private int EnumerateProcesses(CancellationToken token)
     {
         while (true) {
+            token.ThrowIfCancellationRequested();
             var capacity = checked((uint)(processIds.Length * sizeof(int)));
             if (!Native.EnumProcesses(processIds, capacity, out var needed))
                 throw new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not enumerate process IDs.");

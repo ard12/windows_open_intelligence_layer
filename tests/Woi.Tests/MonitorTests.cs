@@ -257,10 +257,76 @@ public sealed class MonitorTests
         Assert.Equal(1, view.Statistics.SamplingFailures);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CancellingAnActiveSampleDoesNotPublishFailureOrPartialSnapshot(bool throwOnCancellation)
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var release = new ManualResetEventSlim();
+        var entered = new TaskCompletionSource<CancellationToken>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var source = new DelegateSampler(token => {
+            using var registration = token.Register(release.Set);
+            entered.SetResult(token);
+            if (!release.Wait(TimeSpan.FromSeconds(10))) throw new TimeoutException("Controlled sampler was not released.");
+            if (throwOnCancellation) token.ThrowIfCancellationRequested();
+            return Raw(Stopwatch.GetTimestamp(), DateTime.UtcNow, Process(100, 0));
+        });
+        var session = new MonitorSession(source, 2);
+        var running = Task.Run(() => session.Run(cancellation.Token));
+        try {
+            Assert.Equal(cancellation.Token, await entered.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+            cancellation.Cancel();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => running.WaitAsync(TimeSpan.FromSeconds(10)));
+            var view = session.View();
+            Assert.Equal(0, view.SnapshotCount);
+            Assert.Empty(view.History);
+            Assert.Null(view.Descriptor);
+            Assert.Equal(0, view.Statistics!.TotalSnapshots);
+            Assert.Equal(0, view.Statistics.SamplingFailures);
+            Assert.DoesNotContain(view.RecentGaps, x => x.Kind == "SamplingFailure");
+        } finally {
+            release.Set(); cancellation.Cancel();
+            try { await running.WaitAsync(TimeSpan.FromSeconds(10)); }
+            catch (OperationCanceledException) { }
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SessionStillPublishesGenuineSamplingFailureAsGap(bool unexpectedCancellation)
+    {
+        var session = new MonitorSession(new DelegateSampler(_ => {
+            if (unexpectedCancellation) throw new OperationCanceledException("Controlled failure");
+            throw new IOException("Controlled failure");
+        }), 2);
+        session.SampleOnce();
+        var view = session.View();
+        Assert.Equal(1, view.Statistics!.TotalSnapshots);
+        Assert.Equal(1, view.Statistics.SamplingFailures);
+        Assert.Contains(view.RecentGaps, x => x.Kind == "SamplingFailure" && x.Detail.Contains("Controlled failure"));
+    }
+
+    [Fact]
+    public void NativeSamplerRejectsPreCancelledRequest()
+    {
+        using var cancellation = new CancellationTokenSource(); cancellation.Cancel();
+        Assert.ThrowsAny<OperationCanceledException>(() => new WindowsSampler().Sample(cancellation.Token));
+    }
+
+    private sealed class DelegateSampler(Func<CancellationToken, RawSnapshot> sample) : IRawSampler
+    {
+        public RawSnapshot Sample(CancellationToken token = default) => sample(token);
+    }
+
     private sealed class SequenceSampler(IEnumerable<RawSnapshot> samples) : IRawSampler
     {
         private readonly Queue<RawSnapshot> remaining = new(samples);
-        public RawSnapshot Sample() => remaining.Dequeue();
+        public RawSnapshot Sample(CancellationToken token = default) {
+            token.ThrowIfCancellationRequested();
+            return remaining.Dequeue();
+        }
     }
 
     [Fact]

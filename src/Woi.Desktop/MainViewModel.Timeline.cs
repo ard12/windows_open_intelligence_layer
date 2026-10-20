@@ -148,7 +148,7 @@ public partial class MainViewModel
     });
     public Task ExportIntervalComparison(string path) => Run(_ => {
         if (IntervalComparison == null) throw new WoiException("MissingComparison", "Compare two intervals first.");
-        File.WriteAllText(InvestigationStore.Local(path), JsonSerializer.Serialize(IntervalComparison, new JsonSerializerOptions(Wire.Json) { WriteIndented = true }));
+        ReportExport.Write(path, "json", IntervalComparison);
         Status = "Comparison totals and the displayed contributor page saved with source hash and exact ranges.";
         return Task.CompletedTask;
     });

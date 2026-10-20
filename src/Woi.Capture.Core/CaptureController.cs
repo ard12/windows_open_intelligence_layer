@@ -70,7 +70,8 @@ public sealed class CaptureController : IAsyncDisposable
             status=status with{ElapsedSeconds=Status.ElapsedSeconds,Phase=CapturePhase.Saving,Message="Saving and merging the captured recording."};WriteMetadata();
             var path=Path.Combine(directory!,"recording.etl");
             try {
-                var result=await runner.Run(["-stop",path,"Windows Open Intelligence bounded recording","-instancename",status.Instance],token);
+                // Dynamic .NET PDB generation is optional merge work; capture keeps recorded module events.
+                var result=await runner.Run(["-stop",path,"Windows Open Intelligence bounded recording","-skipPdbGen","-instancename",status.Instance],token);
                 if(result.ExitCode!=0)throw new WoiException("CaptureSaveFailed","WPR could not save this recording. "+result.Output.Trim());
                 await using var input=storage.OpenRead(directory!,"recording.etl");
                 var bytes=input.Length;

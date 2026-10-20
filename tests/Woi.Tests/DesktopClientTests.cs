@@ -172,7 +172,7 @@ public sealed class DesktopClientTests
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (root != null && !File.Exists(Path.Combine(root.FullName, "WindowsOpenIntelligence.slnx"))) root=root.Parent;
         var folder = root?.FullName ?? throw new IOException("Solution root not found.");
-        var sdk = new[] { Path.Combine(folder, ".tools", "dotnet", "dotnet.exe"), Environment.GetEnvironmentVariable("DOTNET_HOST_PATH"),
+        var sdk = new[] { Environment.GetEnvironmentVariable("DOTNET_HOST_PATH"), Path.Combine(folder, ".tools", "dotnet", "dotnet.exe"),
             Path.Combine(Environment.GetEnvironmentVariable("DOTNET_ROOT") ?? "", "dotnet.exe") }.FirstOrDefault(x => x != null && File.Exists(x)) ?? "dotnet";
         var configuration = AppContext.BaseDirectory.Contains(Path.DirectorySeparatorChar + "Release" + Path.DirectorySeparatorChar) ? "Release" : "Debug";
         var start = new ProcessStartInfo(sdk) { UseShellExecute=false, CreateNoWindow=true, RedirectStandardInput=true,

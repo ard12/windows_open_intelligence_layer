@@ -20,6 +20,7 @@ public partial class MainWindow : Window
         SizeChanged += (_,_) => {
             EventFilterScroll.MaxHeight = Math.Clamp(ActualHeight - 600, 140, 360);
             CpuStackHeaderScroll.MaxHeight = Math.Clamp(ActualHeight - 660, 60, 160);
+            CpuStackControlsScroll.MaxHeight = Math.Clamp(ActualHeight - 650, 75, 180);
             IntervalHeaderScroll.MaxHeight = Math.Clamp(ActualHeight - 660, 60, 130);
         };
         try {
@@ -57,6 +58,8 @@ public partial class MainWindow : Window
         if(args.Length > 2 && args[1]=="--smoke-test") {
             var snapshot=args.Length>3?Path.GetFullPath(args[3]):Path.Combine(AppContext.BaseDirectory,"desktop.png");
             try {
+                if (!AppContext.TryGetSwitch("Switch.System.Windows.Automation.Peers.ItemAutomationPeerKeepsItsItemAlive", out var configured) || !configured)
+                    throw new InvalidOperationException("The startup WPF item-peer lifetime mitigation is not configured.");
                 bool monitorVerified=false, investigationVerified=false, savedComparisonVerified=false, savedOnlyStartupVerified=false; int observedLifetimes=0;
                 if(model!.AnalysisWorkerProcessId!=null)throw new InvalidOperationException("Startup unexpectedly launched the analysis worker.");
                 if(args.Contains("--verify-monitor")) {
@@ -115,8 +118,7 @@ public partial class MainWindow : Window
                         model.ComparisonTask = "Equivalent smoke-test intervals"; model.SameTaskConfirmed = true;
                         await model.CompareAttempts();
                         if(model.AttemptComparison == null) throw new InvalidOperationException("Within-session comparison failed: " + model.InvestigationStatus);
-                        await model.ShowSnapshotEvidence();
-                        if(!model.InvestigationEvidenceText.Contains("monotonicTick")) throw new InvalidOperationException("Snapshot evidence failed: " + model.InvestigationStatus);
+                        if(!await model.ShowSnapshotEvidence() || !model.InvestigationEvidenceText.Contains("monotonicTick")) throw new InvalidOperationException("Snapshot evidence failed: " + model.InvestigationStatus);
                         investigationVerified = true;
                         model.StopObservation();
                         if(model.Investigations.Count != 0) throw new InvalidOperationException("Unsaved pinned investigations remained after stop.");
@@ -126,6 +128,8 @@ public partial class MainWindow : Window
                         var comparisonPath = Path.ChangeExtension(snapshot,"comparison.json"); await model.ExportComparison(comparisonPath, "json");
                         if(!File.Exists(comparisonPath)) throw new InvalidOperationException("Comparison report export failed: " + model.InvestigationStatus);
                         savedComparisonVerified = true;
+                        await VerifyExportReview(model.SelectedInvestigation, snapshot, "investigation");
+                        await VerifyExportReview(await model.ComparisonForExport(), snapshot, "attempt-comparison");
                         Views.SelectedItem=InvestigationTab; await Task.Delay(250); Capture(Path.ChangeExtension(snapshot,"investigation.png"));
                     }
                     model.StopObservation();
@@ -142,6 +146,7 @@ public partial class MainWindow : Window
                 Capture(Path.ChangeExtension(snapshot,"evidence.png"));
                 await VerifyEventFilters(snapshot);
                 await VerifyCpuStacks(snapshot);
+                await VerifyExportReview(await model.ReportForExport(), snapshot, "report");
                 await VerifyTimelineComparison(snapshot);
                 await model.LoadProcessHistory();
                 if (model.ProcessHistory is not { } history || history.TotalLifetimes != model.Summary!.Processes.Count || !string.IsNullOrEmpty(model.Error))
@@ -174,8 +179,11 @@ public partial class MainWindow : Window
                 await model.AllHistoryFamilies();
                 Views.SelectedItem = ProcessHistoryTab; await Task.Delay(200);
                 Capture(Path.ChangeExtension(snapshot,"history.png"));
+                await VerifyAccessibility(snapshot);
                 File.WriteAllText(Path.ChangeExtension(snapshot,"json"),JsonSerializer.Serialize(new {
-                    success=true, timelineComparisonVerified=true, cpuStacksVerified=true, eventFiltersVerified=true, eventNavigationVerified=true, processHistoryVerified=true, historyCancellationVerified=true, historyErrorPreserved=true, recordedFamilyVerified, lazyAnalysisStartupVerified=true, savedOnlyStartupVerified, workerRecoveryVerified=recovered, monitorVerified, investigationVerified, savedComparisonVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
+                    success=true, accessibleControlNamesVerified=true, keyboardNavigationVerified=true, timelineComparisonVerified=true, cpuStacksVerified=true, eventFiltersVerified=true, eventNavigationVerified=true, processHistoryVerified=true, historyCancellationVerified=true, historyErrorPreserved=true, recordedFamilyVerified, lazyAnalysisStartupVerified=true, savedOnlyStartupVerified, workerRecoveryVerified=recovered, monitorVerified, investigationVerified, savedComparisonVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
+                    threadCpuScopeVerified=true, hottestPathVerified=true, reviewedTraceAndStackExportsVerified=true,
+                    reviewedInvestigationExportsVerified=savedComparisonVerified, reviewedIntervalExportVerified=true,
                     indexedEvents=model.Summary?.Session.IndexedEvents,
                     cpuStackCoverage = model.CpuStacks == null ? null : new { model.CpuStacks.Selected, model.CpuStacks.WithStacks, model.CpuStacks.WithoutStacks,
                         model.CpuStacks.UnresolvedSamples, model.CpuStacks.TruncatedSamples, model.CpuStacks.TotalRows },
@@ -313,13 +321,12 @@ public partial class MainWindow : Window
     private async void CloseInvestigationClicked(object sender, RoutedEventArgs e) { if (model != null) await model.CloseInvestigation(); }
     private async void AttachInvestigationTraceClicked(object sender, RoutedEventArgs e) { if (model != null) await model.AttachTraceToInvestigation(); }
     private async void InvestigationEvidenceClicked(object sender, RoutedEventArgs e) { if (model != null) await model.ShowSnapshotEvidence(); }
-    private async void InvestigationContributorClicked(object sender, MouseButtonEventArgs e) { if (model != null && InvestigationContributors.SelectedItem is InvestigationContributor row) await model.ShowSnapshotEvidence(row.Evidence); }
+    private async void InvestigationContributorClicked(object sender, RoutedEventArgs e) => await ActivateSelection(InvestigationContributors);
     private async void CompareAttemptsClicked(object sender, RoutedEventArgs e) { if (model != null) await model.CompareAttempts(); }
     private async void ExportComparisonClicked(object sender, RoutedEventArgs e)
     {
-        if (model?.AttemptComparison == null) return;
-        var dialog = new SaveFileDialog { Filter = "Markdown (*.md)|*.md|JSON (*.json)|*.json", FileName = "attempt-comparison.md" };
-        if (dialog.ShowDialog(this) == true) await model.ExportComparison(dialog.FileName, dialog.FilterIndex == 2 ? "json" : "markdown");
+        if (model?.AttemptComparison == null || model.Busy) return;
+        if (await model.ComparisonForExport() is { } report) ReviewAndExport(report, "attempt-comparison");
     }
     private async void SaveInvestigationClicked(object sender, RoutedEventArgs e)
     {
@@ -333,11 +340,9 @@ public partial class MainWindow : Window
         var dialog = new OpenFileDialog { Filter = "Saved investigation (*.woi)|*.woi" };
         if (dialog.ShowDialog(this) == true) await model.OpenInvestigation(dialog.FileName);
     }
-    private async void ExportInvestigationClicked(object sender, RoutedEventArgs e)
+    private void ExportInvestigationClicked(object sender, RoutedEventArgs e)
     {
-        if (model?.SelectedInvestigation == null) return;
-        var dialog = new SaveFileDialog { Filter = "Markdown (*.md)|*.md|JSON (*.json)|*.json", FileName = "investigation-report.md" };
-        if (dialog.ShowDialog(this) == true) await model.ExportInvestigation(dialog.FileName, dialog.FilterIndex == 2 ? "json" : "markdown");
+        if (model?.Busy == false && model.SelectedInvestigation is { } report) ReviewAndExport(report, "investigation-report");
     }
     private void RecordActivityClicked(object sender,RoutedEventArgs e)=>Views.SelectedItem=RecordTab;
     private async void StartRecordingClicked(object sender,RoutedEventArgs e)
@@ -368,24 +373,14 @@ public partial class MainWindow : Window
     private async void BookmarkClicked(object sender,RoutedEventArgs e) { if(model!=null)await model.SaveBookmark(); }
     private async void BookmarkSelected(object sender,System.Windows.Controls.SelectionChangedEventArgs e) { if(model?.Busy==false)await model.SelectBookmark(BookmarkList.SelectedItem as Bookmark); }
     private async void SettingsClicked(object sender,RoutedEventArgs e) { if(model!=null)await model.Configure(); }
-    private async void EventClicked(object sender,RoutedEventArgs e)
-    {
-        if(model == null || model.Busy || EventGrid.SelectedItem is not Observation row)return;
-        await model.ShowEvidence(row); if (model.Error.Length == 0 && model.Status == "Captured event loaded.") Views.SelectedIndex=2;
-    }
+    private async void EventClicked(object sender, RoutedEventArgs e) => await ActivateSelection(EventGrid);
     private async void EntityClicked(object sender,RoutedEventArgs e)
     {
         if(model == null || model.Busy || model.SelectedProcess is not { } process)return;
         await model.ShowEntity(process); if (model.Error.Length == 0 && model.Status == "Captured process loaded.") Views.SelectedIndex=2;
     }
-    private async void ContributorClicked(object sender,MouseButtonEventArgs e)
-    {
-        if(model==null)return; await model.SelectContributor(ContributorGrid.SelectedItem as Contributor); Views.SelectedIndex=1;
-    }
-    private async void IncidentClicked(object sender,MouseButtonEventArgs e)
-    {
-        if(model!=null)await model.SelectIncident(IncidentList.SelectedItem as Incident);
-    }
+    private async void ContributorClicked(object sender, RoutedEventArgs e) => await ActivateSelection(ContributorGrid);
+    private async void IncidentClicked(object sender, RoutedEventArgs e) => await ActivateSelection(IncidentList);
     private async void SymbolsClicked(object sender,RoutedEventArgs e)
     {
         if(model == null || model.Busy || model.EvidenceEventIndex == null)return;
@@ -395,8 +390,7 @@ public partial class MainWindow : Window
     private async void ExportClicked(object sender,RoutedEventArgs e)
     {
         if(model?.Summary==null || model.Busy)return;
-        var dialog=new SaveFileDialog{Filter="Markdown report (*.md)|*.md|JSON evidence report (*.json)|*.json",FileName="incident-report.md"};
-        if(dialog.ShowDialog(this)==true)await model.Export(dialog.FileName,dialog.FilterIndex==2?"json":"markdown");
+        if (await model.ReportForExport() is { } report) ReviewAndExport(report, "incident-report");
     }
     private void ChartSelectionChanged(object sender,System.Windows.Controls.SelectionChangedEventArgs e)=>RenderCharts();
 }

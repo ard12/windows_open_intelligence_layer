@@ -1,0 +1,166 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "baselineCommit": "6ae5768e98580e0afa8b4e81813b6b6f183aabb6",
+  "scope": "R1 export review, R2 thread CPU scope, R3 hottest sampled path; local dirty-tree validation",
+  "platform": "Microsoft Windows 10.0.19045",
+  "sdk": "10.0.402",
+  "runtime": "10.0.13",
+  "build": {
+    "succeeded": true,
+    "warnings": 0,
+    "errors": 0
+  },
+  "tests": {
+    "total": 166,
+    "passed": 166,
+    "failed": 0,
+    "skipped": 0
+  },
+  "packagedDesktop": {
+    "success": true,
+    "indexedEvents": 418378,
+    "threadCpuScopeVerified": true,
+    "hottestPathVerified": true,
+    "reviewedTraceAndStackExportsVerified": true,
+    "reviewedInvestigationExportsVerified": true,
+    "reviewedIntervalExportVerified": true,
+    "cpuStacksVerified": true,
+    "eventFiltersVerified": true,
+    "timelineComparisonVerified": true,
+    "processHistoryVerified": true,
+    "recordedFamilyVerified": false,
+    "workerRecoveryVerified": true,
+    "monitorVerified": true,
+    "investigationVerified": true,
+    "savedComparisonVerified": true,
+    "accessibleControlNamesVerified": true,
+    "keyboardNavigationVerified": true
+  },
+  "limitations": [
+    "Fixture has no qualifying recorded parent-family edge; optional assertion is false.",
+    "WPF modal controls and file writer tested; OS Save File picker was not automated.",
+    "No fresh advisory lookup, WPA GUI run, Windows 11, elevated capture, long-duration or maximum-envelope benchmark.",
+    "Local results do not change release readiness."
+  ],
+  "sourceFiles": [
+    {
+      "path": "docs/checkpoints.md",
+      "sha256": "f1340b289a0e31bf37ba996813430a50f0f9f15dfbb7ac4b5799a0b8fb63effb"
+    },
+    {
+      "path": "docs/verification/first-three-features-2026-10-20.md",
+      "sha256": "c306220676fec2f0297e7f83c633ff553f31c9f7fa98dc9447c6196844ba810f"
+    },
+    {
+      "path": "README.md",
+      "sha256": "5cbd8b312f55d1997cfd1703a01fd273a593dc0a2deaf41135860cdf922c0f66"
+    },
+    {
+      "path": "src/Woi.Core/CpuStacks.cs",
+      "sha256": "c16cf205899c686e629b6446f619155e084a9e298468f5b75cef4053571171cf"
+    },
+    {
+      "path": "src/Woi.Core/InvestigationWorkspace.cs",
+      "sha256": "b19a38edb9c858f7099f4daaef92000569f914d8901d0f0e918bff71b19845b7"
+    },
+    {
+      "path": "src/Woi.Core/Models.cs",
+      "sha256": "9ffa2246ac07597e495e57e99448bcfba41b985b2e386d39b97d3504108f7c87"
+    },
+    {
+      "path": "src/Woi.Core/QueryEngine.cs",
+      "sha256": "549918950effb1c18ef0e4e667af4b44d5fb9a4e18fae185ba367f154fa25fff"
+    },
+    {
+      "path": "src/Woi.Core/ReportExport.cs",
+      "sha256": "7a3388c0d6cec99e86a4f791edd9f1b50a3dd27a8bd47dda4177108985aeee6d"
+    },
+    {
+      "path": "src/Woi.Desktop/ExportReviewWindow.cs",
+      "sha256": "3141c677f9bb8d8b20fb0e3e3eedcd6285ff85a39b6ba7987db20ab69adb0472"
+    },
+    {
+      "path": "src/Woi.Desktop/MainViewModel.CpuStacks.cs",
+      "sha256": "7af6ce2398205aa922763eeab2f621e61c0d97727fe8823d7ba48c7d832ea894"
+    },
+    {
+      "path": "src/Woi.Desktop/MainViewModel.cs",
+      "sha256": "d67bc5accf7701bcf1fe4c2c3cf5b7b9c9cf8af20940ab0683704f0c8258b6a4"
+    },
+    {
+      "path": "src/Woi.Desktop/MainViewModel.Timeline.cs",
+      "sha256": "85ddefcb3f2ac57302f08a13e95a8b1397b12e221f5cb7410a9c4b794a08fb40"
+    },
+    {
+      "path": "src/Woi.Desktop/MainWindow.CpuStacks.cs",
+      "sha256": "f7c88c0ec5c44c0b1e44e7b9a24fa6625a4433ff2644aa38ae7b6c9c215eed58"
+    },
+    {
+      "path": "src/Woi.Desktop/MainWindow.Export.cs",
+      "sha256": "2f7762efe7f04cb5128a600755a897bbe48baa2ca15e7ce0c31ee7a518f6afab"
+    },
+    {
+      "path": "src/Woi.Desktop/MainWindow.Timeline.cs",
+      "sha256": "92c0e125e2c0dd42e16f62a8e36f170a0fb7766541ad7d1d4de9f0f460ea75e7"
+    },
+    {
+      "path": "src/Woi.Desktop/MainWindow.xaml",
+      "sha256": "bfae9c44fc4ba1cf6eb65cf1fce77c7dd56ad6f68d19ed9b351bd3a97e399c36"
+    },
+    {
+      "path": "src/Woi.Desktop/MainWindow.xaml.cs",
+      "sha256": "418481cc4e84d6865ec220da11fe446a596293d7648570c55bbb4b733de308ee"
+    },
+    {
+      "path": "src/Woi.Trace/EtlReader.CpuStacks.cs",
+      "sha256": "6880f460fdbf58ee33d71f23188ccc8ec9a564336cf8f647b0f10ff0c90ec933"
+    },
+    {
+      "path": "src/Woi.Worker/InvestigationRpc.cs",
+      "sha256": "c4e7b775edf297aad77779ecb2efad51f9193afced3cec5ab5a10847f152b05f"
+    },
+    {
+      "path": "src/Woi.Worker/Program.cs",
+      "sha256": "de76eafd686dc568e93d7a5d5d8d6c7bdaac3d2b6c6b2b08ac2d64b35db66146"
+    },
+    {
+      "path": "tests/Woi.Tests/CoreTests.cs",
+      "sha256": "0bf2760f2c7ff7b950191d19ea2691ab75346366971f759d300183a6b33308ca"
+    },
+    {
+      "path": "tests/Woi.Tests/CpuStackTests.cs",
+      "sha256": "9d4fa9c3be071f46ca6c2a5b4a15de0552fdadf0773615073b7061c0172bfbff"
+    },
+    {
+      "path": "tests/Woi.Tests/DesktopClientTests.cs",
+      "sha256": "3338ff83f1355a7b6d168c73531f808a792bdade4e86e64b3f997cfc4fc1506d"
+    },
+    {
+      "path": "tests/Woi.Tests/ProtocolTests.cs",
+      "sha256": "869631053db50cd830024ce21d7614a4bd403a9f388d8d61a68a01c872041315"
+    },
+    {
+      "path": "tests/Woi.Tests/ReportExportTests.cs",
+      "sha256": "5cc350eb3fc14b1f4772a215634b274d34f7ae91c79b594dfe662349a5687a9a"
+    }
+  ],
+  "packagedBinaries": [
+    {
+      "file": "WindowsOpenIntelligence.dll",
+      "sha256": "349ae99e6603dc6d5196f1e16efae7874245237fa10ba61995cf39ee18110cea"
+    },
+    {
+      "file": "Woi.Worker.dll",
+      "sha256": "54cb4f417962c01246b6753f9a1e084cdd5847030b93053b69ec5ef3d0a1fd4a"
+    },
+    {
+      "file": "Woi.Core.dll",
+      "sha256": "d6aeb723b4e17883a27fed32b08731878735f6af1f08c558a0446f93a90a0bde"
+    },
+    {
+      "file": "Woi.Trace.dll",
+      "sha256": "a4cc7a12cf6d06314897769aec1951caaf7411023e03e127203fbdc7cd032e7a"
+    }
+  ]
+}

@@ -79,9 +79,11 @@ public sealed class CoreTests
         Assert.Null(contributor.DiskBytes);Assert.Null(contributor.FileBytes);Assert.Null(contributor.NetworkBytes);
         Assert.Null(contributor.CpuPercent);Assert.Null(contributor.BaselineCpuPercent);
         Assert.All(fixture.Engine.Metrics(new(0,3000)),x=>{Assert.Null(x.CpuPercent);Assert.Null(x.DiskBytes);});
-        var path=Path.Combine(fixture.Directory,"report.md");
-        fixture.Engine.Export(path,"markdown",new(0,3000),default);
-        Assert.Contains("unavailable",File.ReadAllText(path));
+        var path=Path.Combine(Path.GetTempPath(),"woi-report-"+Guid.NewGuid().ToString("N")+".md");
+        try {
+            fixture.Engine.Export(path,"markdown",new(0,3000),default);
+            Assert.Contains("unavailable",File.ReadAllText(path));
+        } finally { if (File.Exists(path)) File.Delete(path); }
         var report=fixture.Engine.Report(new(0,3000),default);
         Assert.Equal(Provenance.ResourceAttribution,report.Provenance);
         Assert.Contains("Physical disk transfer coverage is unavailable", report.Explanation);

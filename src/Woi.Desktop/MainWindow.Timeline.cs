@@ -52,11 +52,9 @@ public partial class MainWindow
         await model.IntervalEvidence(baseline);
         if (model.Error.Length == 0 && model.Status == "Captured event loaded.") Views.SelectedIndex = 2;
     }
-    private async void ExportIntervalComparisonClicked(object sender, RoutedEventArgs e)
+    private void ExportIntervalComparisonClicked(object sender, RoutedEventArgs e)
     {
-        if (model == null || model.Busy) return;
-        var dialog = new SaveFileDialog { Filter = "Comparison JSON|*.json", FileName = "interval-comparison.json" };
-        if (dialog.ShowDialog() == true) await model.ExportIntervalComparison(dialog.FileName);
+        if (model?.Busy == false && model.IntervalComparison is { } report) ReviewAndExport(report, "interval-comparison", jsonOnly: true);
     }
     private async Task VerifyTimelineComparison(string snapshot)
     {
@@ -123,6 +121,7 @@ public partial class MainWindow
         await vm.ExportIntervalComparison(export);
         var saved = JsonSerializer.Deserialize<IntervalComparisonPage>(File.ReadAllText(export), Wire.Json)!;
         Check(saved.SourceHash == original.SourceHash && saved.Query == original.Query, "Comparison export lost source/range identity.");
+        await VerifyExportReview(vm.IntervalComparison, snapshot, "interval-comparison");
         Views.SelectedItem = IntervalComparisonTab; await Task.Delay(150);
         Capture(Path.ChangeExtension(snapshot, "interval-comparison.png"));
         var width = Width; var height = Height; Width = MinWidth; Height = MinHeight;
