@@ -9,7 +9,7 @@ using Woi.Core;
 
 namespace Woi.Trace;
 
-public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics, IEventQueryDiagnostics
+public sealed partial class EtlReader : ITraceReader, IContributorQueryDiagnostics, IEventQueryDiagnostics
 {
     private readonly TraceLog log;
     private readonly ImportMetadata metadata;
@@ -174,6 +174,7 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics, IEve
         if(query.ProcessId!=null && !Entities.Any(x=>x.Kind=="Process" && x.Id==query.ProcessId))
             throw new WoiException("EntityMissing","The requested process lifetime is unavailable.");
         query=query with {EndMs=Math.Min(query.EndMs,Session.DurationMs)};
+        var filters = new EventFilterMatcher(query.Rules);
         var key=query with {Cursor=null};
         var started=Stopwatch.GetTimestamp();
         var allocatedBefore=GC.GetAllocatedBytesForCurrentThread();
@@ -181,13 +182,13 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics, IEve
         var normalizationTicks=0L;
         var normalized=0;
         var returned=0;
-        var continued=pageIterator!=null && activePageQuery==key && query.Cursor==expectedCursor;
+        var continued=pageIterator!=null && EventFilterMatcher.SameQuery(activePageQuery,key) && query.Cursor==expectedCursor;
         var reusedLookahead=continued && pageLookahead!=null;
         var completed=false;
         EventPage Complete(EventPage value) { returned=value.Events.Count;completed=true;return value; }
         try {
             token.ThrowIfCancellationRequested();
-            if(pageIterator==null || activePageQuery!=key || query.Cursor!=expectedCursor) {
+            if(!continued) {
                 ResetPaging();
                 double start=query.StartMs;
                 if(query.Cursor is {} cursor) start=Math.Max(start,log.GetEvent((EventIndex)cursor).TimeStampRelativeMSec);
@@ -196,7 +197,7 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics, IEve
             }
             List<Observation> result=[];
             if(pageLookahead!=null){result.Add(pageLookahead);pageLookahead=null;}
-            while(pageIterator.MoveNext()) {
+            while(pageIterator!.MoveNext()) {
                 token.ThrowIfCancellationRequested();PagingRecordsVisited++;
                 var data=pageIterator.Current;
                 if((long)data.EventIndex<=(query.Cursor??-1) || data.TimeStampRelativeMSec<query.StartMs || data.TimeStampRelativeMSec>=query.EndMs)continue;
@@ -209,7 +210,8 @@ public sealed class EtlReader : ITraceReader, IContributorQueryDiagnostics, IEve
                 if(value==null || (query.ProcessId!=null && value.ProcessId!=query.ProcessId) ||
                     (!string.IsNullOrWhiteSpace(query.Category) && value.Category!=query.Category) ||
                     (!string.IsNullOrWhiteSpace(query.Operation) && !value.Operation.Contains(query.Operation,StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrWhiteSpace(query.Target) && !value.Target.Contains(query.Target,StringComparison.OrdinalIgnoreCase)))continue;
+                    (!string.IsNullOrWhiteSpace(query.Target) && !value.Target.Contains(query.Target,StringComparison.OrdinalIgnoreCase)) ||
+                    !filters.Matches(value))continue;
                 if(result.Count==query.Limit) {
                     pageLookahead=value;expectedCursor=result[^1].Index;
                     return Complete(new(result,expectedCursor,true));

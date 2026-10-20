@@ -102,6 +102,43 @@ public sealed class DesktopClientTests
         Assert.Equal(first.Session.SourceHash,reopened.Session.SourceHash);
         Assert.Equal(first.Session.CacheDirectory,reopened.Session.CacheDirectory);
     }
+    [FixtureFact]
+    public async Task HistoricalFamiliesPageThroughTheWorkerAndReconcileWithTraceContributors()
+    {
+        using var directory = new TemporaryDirectory();
+        using var client = new WorkerClient(Start(monitor: false, directory.Root));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        var fixture = Path.Combine(Environment.GetEnvironmentVariable("WOI_FIXTURES")!, "allocator", "SimpleAllocator-dotnet6.etl");
+        var summary = await client.Send<Summary>("import", new { path = fixture }, timeout.Token);
+        var query = new ProcessHistoryQuery(0, summary.Session.DurationMs, Limit: 7);
+        List<ProcessHistoryRow> rows = [];
+        ProcessHistoryPage page;
+        do {
+            page = await client.Send<ProcessHistoryPage>("processHistory", query with { Offset = rows.Count }, timeout.Token);
+            Assert.Equal(summary.Session.SourceHash, page.TraceHash);
+            Assert.InRange(page.Rows.Count, 0, 7); rows.AddRange(page.Rows);
+        } while (page.More);
+        Assert.Equal(summary.Processes.Count, rows.Count);
+        Assert.Equal(rows.Count, rows.Select(x => x.Entity.Id).Distinct().Count());
+        var contributors = await client.Send<List<Contributor>>("contributors", new IntervalQuery(0, summary.Session.DurationMs), timeout.Token);
+        var capturedIds = summary.Processes.Select(x => x.Id).ToHashSet();
+        Assert.All(contributors.Where(x => x.ProcessId != null), x => Assert.Contains(x.ProcessId!, capturedIds));
+        Assert.Equal(contributors.Where(x => x.ProcessId != null).Sum(x => x.CpuSamples), page.Totals.CpuSamples);
+        Assert.Equal(contributors.Sum(x => x.CpuSamples), (page.Totals.CpuSamples ?? 0) + (page.UnattributedTotals.CpuSamples ?? 0));
+        var selected = rows.First(x => x.Activity?.CpuSamples > 0);
+        var family = await client.Send<ProcessHistoryPage>("processHistory", query with { FocusId = selected.Entity.Id }, timeout.Token);
+        Assert.Equal(selected.Entity.Id, family.Focus!.Id); Assert.Equal(selected.Entity.Id, family.Rows[0].Entity.Id);
+        Assert.Equal(0, family.Rows[0].Depth);
+        var detail = await client.Send<EntityDetail>("entity", new { id = family.Focus.Id }, timeout.Token);
+        Assert.Equal(selected.Entity, detail.Entity);
+        var badPage = await Assert.ThrowsAsync<WoiException>(() => client.Send<ProcessHistoryPage>("processHistory", query with { Limit = 501 }, timeout.Token));
+        Assert.Equal("InvalidPage", badPage.Code);
+        var reopened = await client.Send<Summary>("import", new { path = fixture }, timeout.Token);
+        var again = await client.Send<ProcessHistoryPage>("processHistory", query, timeout.Token);
+        Assert.Equal(reopened.Session.SourceHash, again.TraceHash);
+        Assert.Equal(rows.Take(7).Select(x => x.Entity.Id), again.Rows.Select(x => x.Entity.Id));
+    }
+
     [Fact]
     public async Task Utf8RepliesKeepLineFramingUnicodeAndSerializationFailureAtomic()
     {

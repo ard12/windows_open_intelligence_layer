@@ -5,13 +5,22 @@ using System.Text.Json;
 
 namespace Woi.Core;
 
-public sealed class QueryEngine(ITraceReader reader, CacheStore store)
+public sealed partial class QueryEngine(ITraceReader reader, CacheStore store)
 {
     private readonly IReadOnlyList<EntityLifetime> entities = store.Entities();
     private readonly Dictionary<string,EntityLifetime> entitiesById = store.Entities().ToDictionary(x=>x.Id);
     public ContributorQueryProfile? LastContributorProfile { get; private set; }
     public TraceSession Session => reader.Session;
     public DetectionSettings Settings { get; private set; } = new();
+    private ProcessHistoryIndex? processHistory;
+    public ProcessHistoryPage History(ProcessHistoryQuery query, CancellationToken token)
+    {
+        var interval = Clamp(new(query.StartMs, query.EndMs));
+        processHistory ??= new(entities, token);
+        processHistory.Validate(query);
+        var contributors = Contributors(interval, token);
+        return processHistory.Page(Session.SourceHash, query with { EndMs = interval.EndMs }, contributors, token);
+    }
     public Summary Summary() => new(Session, entities.Where(x => x.Kind == "Process").OrderBy(x => x.Name).ToArray(),
         IncidentDetector.Detect(store.Rows(0, Session.DurationMs + 1, ""), Session.ProcessorCount, Session.DurationMs, Settings), Settings);
     public void Configure(DetectionSettings value) { IncidentDetector.Validate(value); Settings = value; }

@@ -18,7 +18,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
     private WorkerClient CreateAnalysisClient()
     {
-        var created=new WorkerClient();
+        var created=new WorkerClient(cacheRoot: analysisCacheRoot);
         created.Progress += value => System.Windows.Application.Current.Dispatcher.BeginInvoke(() => Status=value.Message);
         return created;
     }
@@ -30,8 +30,6 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
     }
     private CancellationTokenSource? operation;
-    private long? nextCursor;
-    private bool more;
     public ObservableCollection<Observation> Events { get; } = [];
     public ObservableCollection<Contributor> Contributors { get; } = [];
     public ObservableCollection<MetricPoint> Metrics { get; } = [];
@@ -57,6 +55,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public event Action? ChartsChanged;
     internal int WorkerProcessId => client?.ProcessId ?? throw new InvalidOperationException("The analysis worker has not started.");
     internal int? AnalysisWorkerProcessId => client?.ProcessId;
+    internal long? EvidenceEventIndex { get; private set; }
     public IntervalQuery Interval()
     {
         if(!double.TryParse(StartSeconds, NumberStyles.Float, CultureInfo.InvariantCulture,out var start) ||
@@ -69,14 +68,29 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         if(Busy) return;
         Busy = true; Error = ""; operation = new();
-        try { await action(operation.Token); }
+        bool succeeded = false;
+        try { await action(operation.Token); succeeded = true; }
         catch(OperationCanceledException) { Status = "Operation cancelled. The original recording was preserved."; }
         catch(Exception ex) { Error = ex.Message; Status = "The operation could not be completed."; }
-        finally { operation.Dispose(); operation = null; Busy = false; }
+        finally {
+            operation.Dispose(); operation = null; Busy = false;
+            if (!succeeded) { historyLoadPending = false; stackLoadPending = false; }
+            if (succeeded && ProcessHistoryVisible && historyLoadPending && Summary != null) {
+                historyLoadPending = false;
+                await LoadProcessHistory(true);
+            }
+            if (succeeded && CpuStacksVisible && stackLoadPending && Summary != null) {
+                stackLoadPending = false; await LoadCpuStacks(true);
+            }
+        }
     }
     public Task Open(string path) => Run(async token => {
         RecoverAnalysisClient();
-        Summary = null; SelectedProcess = null; Category = "All categories"; OperationFilter = ""; TargetFilter = ""; EvidenceText = "Select an event to inspect the captured record."; Events.Clear(); Contributors.Clear(); Metrics.Clear(); Bookmarks.Clear(); nextCursor = null;
+        ClearProcessHistory();
+        ClearCpuStacks();
+        ResetTimeline();
+        EvidenceEventIndex = null;
+        Summary = null; SelectedProcess = null; Category = "All categories"; OperationFilter = ""; TargetFilter = ""; FilterRules.Clear(); ResetEventNavigation(); EvidenceText = "Select an event to inspect the captured record."; Events.Clear(); Contributors.Clear(); Metrics.Clear(); Bookmarks.Clear();
         Summary = await AnalysisClient.Send<Summary>("import",new { path },token);
         Category = Summary.Session.Capabilities.Any(x=>x.Category=="CPU" && x.Status==Availability.Available) ? "CPU" : Summary.Session.Capabilities.Any(x=>x.Category=="Disk" && x.Status==Availability.Available) ? "Disk" : "All categories";
         StartSeconds = "0"; EndSeconds = (Summary.Session.DurationMs/1000).ToString("0.######",CultureInfo.InvariantCulture);
@@ -89,53 +103,60 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private async Task RefreshCore(CancellationToken token)
     {
         if(Summary == null) return;
-        var interval = Interval();
+        var interval = BoundedInterval();
+        var eventQuery = DraftEventQuery() with { StartMs = interval.StartMs, EndMs = interval.EndMs };
         var metrics = await AnalysisClient.Send<List<MetricPoint>>("metrics",interval,token);
         var contributors = await AnalysisClient.Send<List<Contributor>>("contributors",interval,token);
+        var events = await AnalysisClient.Send<EventPage>("events", eventQuery, token);
+        var history = ProcessHistory == null ? null : await AnalysisClient.Send<ProcessHistoryPage>("processHistory",
+            new ProcessHistoryQuery(interval.StartMs, interval.EndMs, ProcessHistory.Focus?.Id), token);
+        var stacks = CpuStacks == null ? null : await AnalysisClient.Send<CpuStackPage>("cpuStacks",
+            new CpuStackQuery(interval.StartMs, interval.EndMs, interval.ProcessId, Grouping: StackGrouping), token);
+        token.ThrowIfCancellationRequested();
+        // Publish one coherent scope only after every requested analysis succeeds.
         Metrics.Clear(); foreach(var x in metrics) Metrics.Add(x);
         Contributors.Clear(); foreach(var x in contributors) Contributors.Add(x);
         Explanation = EvidenceLanguage.Explain(interval,contributors,Summary.Session.Capabilities,Summary.Session.Warnings);
-        nextCursor = null; Events.Clear(); await LoadPage(token);
+        PublishFirstEventPage(eventQuery, events);
+        if (history != null) PublishProcessHistory(history);
+        if (stacks != null) PublishCpuStacks(stacks, []);
+        CommitTimeline(interval);
         ChartsChanged?.Invoke();
         Status = $"{Events.Count:n0} events on this page · interval {interval.StartMs/1000:n3}–{interval.EndMs/1000:n3}s · {(SelectedProcess?.Name ?? "all processes")}";
     }
-    private async Task LoadPage(CancellationToken token)
-    {
-        var interval = Interval();
-        var page = await AnalysisClient.Send<EventPage>("events",new EventQuery(interval.StartMs,interval.EndMs,interval.ProcessId,
-            string.IsNullOrWhiteSpace(Category) || Category=="All categories" ? null : Category, OperationFilter,TargetFilter,nextCursor),token);
-        Events.Clear(); foreach(var x in page.Events) Events.Add(x);
-        nextCursor = page.NextCursor; more = page.More;
-        Status = more ? "Showing 500 events. Use Next page for more." : $"Showing {page.Events.Count:n0} events; end of selection.";
-    }
-    public Task NextPage() => Run(async token=> { if(more) await LoadPage(token); });
-    public Task FirstPage() => Run(async token=> { nextCursor=null; await LoadPage(token); });
-    public Task ShowEvidence(Observation? observation,string? symbolDirectory = null) => Run(async token=>{
-        if(observation == null) return;
-        var detail = await AnalysisClient.Send<EvidenceDetail>("evidence",new { index=observation.Index, symbolDirectory },token);
+    public Task ShowEvidence(Observation? observation,string? symbolDirectory = null) => observation == null ? Task.CompletedTask : ShowEvidenceAt(observation.Index, symbolDirectory);
+    public Task LoadEvidenceSymbols(string directory) => EvidenceEventIndex is { } index ? ShowEvidenceAt(index, directory) : Task.CompletedTask;
+    private Task ShowEvidenceAt(long index, string? symbolDirectory = null) => Run(async token=>{
+        // Symbol loading can change address keys even when cancelled after partially resolving modules.
+        if (symbolDirectory != null) ClearCpuStacks();
+        var detail = await AnalysisClient.Send<EvidenceDetail>("evidence",new { index, symbolDirectory },token);
+        EvidenceEventIndex = detail.Observation.Index;
         EvidenceText = $"Provenance: {detail.Provenance}\n{detail.Observation.Operation}\n{detail.Observation.ProcessName} · PID {detail.Observation.Pid} · TID {detail.Observation.Tid}\n\n{detail.Coordinates}\n\n{detail.Interpretation}\n\n" +
             string.Join("\n",detail.Payload.Select(x=>$"{x.Key}: {x.Value}")) + "\n\nCaptured stack\n" +
             (detail.Stack.Count == 0 ? "No captured stack is attached to this record." : string.Join("\n",detail.Stack));
+        Status = "Captured event loaded.";
     });
     public Task ShowEntity(EntityLifetime? entity) => Run(async token=>{
         if(entity == null) return;
         var detail = await AnalysisClient.Send<EntityDetail>("entity",new { id=entity.Id },token);
+        EvidenceEventIndex = null;
         EvidenceText = $"Provenance: observed captured lifetime\n{entity.Name} · PID {entity.OsId}\nLifetime ID: {entity.Id}\n\nImage: {entity.ImagePath}\nCommand line: {entity.CommandLine}\n" +
             $"Start: {entity.StartMs/1000:n6}s ({(entity.StartKnown ? "observed start" : "start boundary unknown / rundown")})\n" +
             $"End: {entity.EndMs/1000:n6}s ({(entity.EndKnown ? "observed exit" : "end boundary unknown")})\n" +
             $"OS-reported parent lifetime: {entity.ParentId ?? "unresolved"}\n\nCaptured threads\n" +
             string.Join("\n",detail.Threads.Select(x=>$"{x.OsId} · {x.StartMs/1000:n3}–{x.EndMs/1000:n3}s · {x.Id}")) +
             "\n\nCaptured modules\n" + string.Join("\n",detail.Modules);
+        Status = "Captured process loaded.";
     });
     public async Task SelectContributor(Contributor? contributor)
     {
-        if(contributor?.ProcessId == null || Summary == null) return;
+        if(Busy || contributor?.ProcessId == null || Summary == null) return;
         SelectedProcess = Summary.Processes.FirstOrDefault(x=>x.Id==contributor.ProcessId);
         await Refresh();
     }
     public async Task SelectIncident(Incident? incident)
     {
-        if(incident == null) return;
+        if(Busy || incident == null) return;
         SelectedProcess = null; StartSeconds=(incident.StartMs/1000).ToString("0.######",CultureInfo.InvariantCulture);
         EndSeconds=(incident.EndMs/1000).ToString("0.######",CultureInfo.InvariantCulture); await Refresh();
     }
@@ -146,7 +167,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     });
     public async Task SelectBookmark(Bookmark? bookmark)
     {
-        if(bookmark==null)return;
+        if(Busy || bookmark==null)return;
         StartSeconds=(bookmark.StartMs/1000).ToString("0.######",CultureInfo.InvariantCulture);
         EndSeconds=(bookmark.EndMs/1000).ToString("0.######",CultureInfo.InvariantCulture); await Refresh();
     }

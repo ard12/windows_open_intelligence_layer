@@ -17,34 +17,33 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        SizeChanged += (_,_) => {
+            EventFilterScroll.MaxHeight = Math.Clamp(ActualHeight - 600, 140, 360);
+            CpuStackHeaderScroll.MaxHeight = Math.Clamp(ActualHeight - 660, 60, 160);
+            IntervalHeaderScroll.MaxHeight = Math.Clamp(ActualHeight - 660, 60, 130);
+        };
         try {
-            model = new MainViewModel(); DataContext = model;
+            var startupArgs = Environment.GetCommandLineArgs();
+            var smokeOutput = startupArgs.Length > 3 && startupArgs[1] == "--smoke-test" ? Path.GetFullPath(startupArgs[3]) : null;
+            model = new MainViewModel(smokeOutput == null ? null : Path.ChangeExtension(smokeOutput, "presets.json"),
+                smokeOutput == null ? null : Path.Combine(Path.GetDirectoryName(smokeOutput)!, "cache")); DataContext = model;
             model.ChartsChanged += RenderCharts;
             model.MonitorChartsChanged += RenderMonitorCharts;
         } catch(Exception ex) { MessageBox.Show(ex.Message,"Cannot start analysis worker"); Close(); return; }
-        CpuPlot.ToolTip = "Hold Shift and drag across the chart to select a recorded interval.";
-        CpuPlot.PreviewMouseLeftButtonDown += (_,e)=> {
-            if((Keyboard.Modifiers & ModifierKeys.Shift)==0)return;
-            var point=e.GetPosition(CpuPlot);
-            dragStart=CpuPlot.Plot.GetCoordinates(new ScottPlot.Pixel(point.X,point.Y)).X;
-            e.Handled=true; CpuPlot.CaptureMouse();
-        };
-        CpuPlot.PreviewMouseLeftButtonUp += async (_,e)=> {
-            if(dragStart == null || model?.Summary == null)return;
-            var point=e.GetPosition(CpuPlot);
-            var end=CpuPlot.Plot.GetCoordinates(new ScottPlot.Pixel(point.X,point.Y)).X;
-            var start=Math.Clamp(Math.Min(dragStart.Value,end),0,model.Summary.Session.DurationMs/1000);
-            end=Math.Clamp(Math.Max(dragStart.Value,end),0,model.Summary.Session.DurationMs/1000);
-            dragStart=null; CpuPlot.ReleaseMouseCapture(); e.Handled=true;
-            if(end <= start)return;
-            model.StartSeconds=start.ToString("0.######",CultureInfo.InvariantCulture);
-            model.EndSeconds=end.ToString("0.######",CultureInfo.InvariantCulture);
-            await model.Refresh();
-        };
+        ConfigureTimelinePlot(CpuPlot);
+        ConfigureTimelinePlot(DiskPlot);
         Closed += (_,_)=>model?.Dispose();
         Loaded += LoadedWindow;
-        Views.SelectionChanged += (_,e) => {
-            if(e.Source == Views) Dispatcher.BeginInvoke(RenderCharts, DispatcherPriority.Render);
+        Views.SelectionChanged += async (_,e) => {
+            if(e.Source == Views) {
+                _ = Dispatcher.BeginInvoke(RenderCharts, DispatcherPriority.Render);
+                if (model != null) {
+                    model.ProcessHistoryVisible = Views.SelectedItem == ProcessHistoryTab;
+                    model.CpuStacksVisible = Views.SelectedItem == CpuStacksTab;
+                    if (model.ProcessHistoryVisible && model.ProcessHistory == null) await model.LoadProcessHistory(true);
+                    if (model.CpuStacksVisible && model.CpuStacks == null) await model.LoadCpuStacks(true);
+                }
+            }
         };
         RenderCharts();
     }
@@ -64,8 +63,11 @@ public partial class MainWindow : Window
                     await model.StartObservation();
                     if(model.AnalysisWorkerProcessId!=null)throw new InvalidOperationException("Observation unexpectedly launched the analysis worker.");
                 }
-                await model!.Open(args[2]);
+                var opening = model!.Open(args[2]);
+                Views.SelectedItem = ProcessHistoryTab;
+                await opening;
                 if(!string.IsNullOrEmpty(model.Error))throw new InvalidOperationException(model.Error);
+                if(model.ProcessHistory == null) throw new InvalidOperationException("History selected during import did not load.");
                 bool recovered=false;
                 if(args.Contains("--verify-recovery")){
                     int previous=model.WorkerProcessId;
@@ -75,6 +77,8 @@ public partial class MainWindow : Window
                         throw new InvalidOperationException("Worker crash recovery failed: "+model.Error);
                     recovered=true;
                 }
+                if(model.ProcessHistory == null) throw new InvalidOperationException("Reopening with history selected did not load.");
+                Views.SelectedIndex = 0;
                 if(args.Contains("--verify-monitor")){
                     await Task.Delay(2500);
                     await model.RefreshMonitor();
@@ -136,9 +140,45 @@ public partial class MainWindow : Window
                 var observation=model.Events.FirstOrDefault(x=>x.Category!="Unsupported") ?? model.Events.FirstOrDefault();
                 await model.ShowEvidence(observation); Views.SelectedIndex=2; await Task.Delay(200);
                 Capture(Path.ChangeExtension(snapshot,"evidence.png"));
+                await VerifyEventFilters(snapshot);
+                await VerifyCpuStacks(snapshot);
+                await VerifyTimelineComparison(snapshot);
+                await model.LoadProcessHistory();
+                if (model.ProcessHistory is not { } history || history.TotalLifetimes != model.Summary!.Processes.Count || !string.IsNullOrEmpty(model.Error))
+                    throw new InvalidOperationException("Process history failed: " + model.Error);
+                var expectedHistory = model.Contributors.Any(x => x.CpuSamples != null) ? (long?)model.Contributors.Sum(x => x.CpuSamples ?? 0) : null;
+                if ((history.Totals.CpuSamples ?? 0) + (history.UnattributedTotals.CpuSamples ?? 0) != (expectedHistory ?? 0))
+                    throw new InvalidOperationException("Process history attributed/unattributed totals disagree with contributors.");
+                Views.SelectedItem = ProcessHistoryTab;
+                var failedLookup = model.ShowEntity(model.Summary.Processes[0] with { Id = "missing-history-smoke-id" });
+                await model.LoadProcessHistory(); await failedLookup;
+                if (string.IsNullOrEmpty(model.Error)) throw new InvalidOperationException("Deferred history erased an operation error.");
+                await model.LoadProcessHistory();
+                var cancelledHistory = model.LoadProcessHistory();
+                await model.LoadProcessHistory(); model.Cancel(); await cancelledHistory;
+                if (!model.Status.StartsWith("Operation cancelled", StringComparison.Ordinal))
+                    throw new InvalidOperationException("Deferred history restarted work after cancellation.");
+                await model.LoadProcessHistory();
+                await model.FocusHistoryFamily();
+                if (model.ProcessHistory?.Focus == null || model.HistoryRows.Count == 0) throw new InvalidOperationException("Family focus failed.");
+                bool recordedFamilyVerified = false;
+                var linkedChild = model.Summary.Processes.FirstOrDefault(x => x.ParentId != null);
+                if (linkedChild != null) {
+                    await model.OpenProcessFamily(linkedChild.ParentId);
+                    if (!model.HistoryRows.Any(x => x.Row.Entity.Id == linkedChild.Id && x.Row.Depth > 0))
+                        throw new InvalidOperationException("Captured child is absent from its historical parent family.");
+                    Views.SelectedItem = ProcessHistoryTab; await Task.Delay(200);
+                    Capture(Path.ChangeExtension(snapshot, "history.family.png"));
+                    recordedFamilyVerified = true;
+                }
+                await model.AllHistoryFamilies();
+                Views.SelectedItem = ProcessHistoryTab; await Task.Delay(200);
+                Capture(Path.ChangeExtension(snapshot,"history.png"));
                 File.WriteAllText(Path.ChangeExtension(snapshot,"json"),JsonSerializer.Serialize(new {
-                    success=true, lazyAnalysisStartupVerified=true, savedOnlyStartupVerified, workerRecoveryVerified=recovered, monitorVerified, investigationVerified, savedComparisonVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
+                    success=true, timelineComparisonVerified=true, cpuStacksVerified=true, eventFiltersVerified=true, eventNavigationVerified=true, processHistoryVerified=true, historyCancellationVerified=true, historyErrorPreserved=true, recordedFamilyVerified, lazyAnalysisStartupVerified=true, savedOnlyStartupVerified, workerRecoveryVerified=recovered, monitorVerified, investigationVerified, savedComparisonVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
                     indexedEvents=model.Summary?.Session.IndexedEvents,
+                    cpuStackCoverage = model.CpuStacks == null ? null : new { model.CpuStacks.Selected, model.CpuStacks.WithStacks, model.CpuStacks.WithoutStacks,
+                        model.CpuStacks.UnresolvedSamples, model.CpuStacks.TruncatedSamples, model.CpuStacks.TotalRows },
                     lifetimes=model.Summary?.Processes.OrderByDescending(x=>x.EndMs-x.StartMs).Take(5),
                     capabilities=model.Summary?.Session.Capabilities
                 },new JsonSerializerOptions(Wire.Json){WriteIndented=true}));
@@ -179,7 +219,17 @@ public partial class MainWindow : Window
         Draw(DiskPlot,data.Select(x=>x.TimeMs/1000).ToArray(),data.Select(x=>measure(x) ?? double.NaN).ToArray(),
             data.Length==0?choice+" · no captured measurements":units,"#516CA6");
         if(model.Summary!=null) {
-            try {var interval=model.Interval();CpuPlot.Plot.Axes.SetLimitsX(interval.StartMs/1000,interval.EndMs/1000);DiskPlot.Plot.Axes.SetLimitsX(interval.StartMs/1000,interval.EndMs/1000);CpuPlot.Refresh();DiskPlot.Refresh();} catch(WoiException){}
+            var interval = model.AppliedInterval;
+            if (interval != null) foreach (var plot in new[] { CpuPlot, DiskPlot }) {
+                plot.Plot.Axes.SetLimitsX(interval.StartMs / 1000, interval.EndMs / 1000);
+                try {
+                    var selection = model.Interval();
+                    var start = Math.Max(selection.StartMs, interval.StartMs);
+                    var end = Math.Min(selection.EndMs, interval.EndMs);
+                    if (end > start) plot.Plot.Add.HorizontalSpan(start / 1000, end / 1000).FillColor = ScottPlot.Color.FromHex("#168A88").WithAlpha(.12);
+                } catch (WoiException) { }
+                plot.Refresh();
+            }
         }
         LifetimePlot.Plot.Clear();
         var lifetimes=model.SelectedProcess==null ? model.Contributors.Where(x=>x.ProcessId!=null).Take(5)
@@ -194,7 +244,7 @@ public partial class MainWindow : Window
         if(model.Summary!=null) {
             try {
                 var interval=model.Interval();
-                var span=LifetimePlot.Plot.Add.VerticalSpan(interval.StartMs/1000,interval.EndMs/1000);
+                var span=LifetimePlot.Plot.Add.HorizontalSpan(interval.StartMs/1000,interval.EndMs/1000);
                 span.FillColor=ScottPlot.Color.FromHex("#168A88").WithAlpha(.12);
             } catch(WoiException) {}
         }
@@ -311,7 +361,7 @@ public partial class MainWindow : Window
         if(dialog.ShowDialog(this)==true)await model.Open(dialog.FileName);
     }
     private async void ApplyClicked(object sender,RoutedEventArgs e) { if(model!=null)await model.Refresh(); }
-    private async void AllClicked(object sender,RoutedEventArgs e) { if(model!=null){model.SelectedProcess=null;await model.Refresh();} }
+    private async void AllClicked(object sender,RoutedEventArgs e) { if(model?.Busy==false){model.SelectedProcess=null;await model.Refresh();} }
     private void CancelClicked(object sender,RoutedEventArgs e)=>model?.Cancel();
     private async void FirstClicked(object sender,RoutedEventArgs e) { if(model!=null)await model.FirstPage(); }
     private async void NextClicked(object sender,RoutedEventArgs e) { if(model!=null)await model.NextPage(); }
@@ -320,11 +370,13 @@ public partial class MainWindow : Window
     private async void SettingsClicked(object sender,RoutedEventArgs e) { if(model!=null)await model.Configure(); }
     private async void EventClicked(object sender,RoutedEventArgs e)
     {
-        if(model==null)return; await model.ShowEvidence(EventGrid.SelectedItem as Observation); Views.SelectedIndex=2;
+        if(model == null || model.Busy || EventGrid.SelectedItem is not Observation row)return;
+        await model.ShowEvidence(row); if (model.Error.Length == 0 && model.Status == "Captured event loaded.") Views.SelectedIndex=2;
     }
     private async void EntityClicked(object sender,RoutedEventArgs e)
     {
-        if(model==null)return; await model.ShowEntity(model.SelectedProcess); Views.SelectedIndex=2;
+        if(model == null || model.Busy || model.SelectedProcess is not { } process)return;
+        await model.ShowEntity(process); if (model.Error.Length == 0 && model.Status == "Captured process loaded.") Views.SelectedIndex=2;
     }
     private async void ContributorClicked(object sender,MouseButtonEventArgs e)
     {
@@ -336,9 +388,9 @@ public partial class MainWindow : Window
     }
     private async void SymbolsClicked(object sender,RoutedEventArgs e)
     {
-        if(model==null || EventGrid.SelectedItem is not Observation observation)return;
+        if(model == null || model.Busy || model.EvidenceEventIndex == null)return;
         var folder=new OpenFolderDialog{Title="Choose a local folder of matching PDB files"};
-        if(folder.ShowDialog(this)==true)await model.ShowEvidence(observation,folder.FolderName);
+        if(folder.ShowDialog(this)==true)await model.LoadEvidenceSymbols(folder.FolderName);
     }
     private async void ExportClicked(object sender,RoutedEventArgs e)
     {
