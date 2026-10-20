@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-20",
+  "status": "DRAFT_NOT_RELEASE_ACCEPTED",
+  "source": {
+    "preservedFeatureCommit": "193e1ef4c59d72b404e414c61a03905087dac2a3",
+    "wpfMitigationCommit": "98dbca9",
+    "wprMitigationCommit": "cc6c7f1",
+    "originalInputsVerified": 284,
+    "originalInputMismatches": 0
+  },
+  "local": {
+    "sdk": "10.0.402",
+    "runtime": "10.0.13",
+    "tests": {
+      "passed": 171,
+      "failed": 0,
+      "skipped": 0
+    },
+    "selfContainedPublication": true,
+    "dependencyCheck": {
+      "success": true,
+      "lockFiles": 12,
+      "packageVersionPairs": 80,
+      "assetDeclarations": 435,
+      "knownAdvisoryMatches": 0,
+      "publisherSignaturesIndependentlyVerified": false
+    },
+    "privacyCases": 34,
+    "dependencyTamperControlsPassed": true,
+    "productionDesktopWithExternalUiaPassed": true
+  },
+  "wpf": {
+    "classification": "compatibility mitigation",
+    "originalApplicationRaceReproduced": false,
+    "cyclesPerArm": 20,
+    "sampledPeakUiMonitorMiB": {
+      "ordinaryBaseline": 239.3203125,
+      "ordinaryCandidate": 237.875,
+      "heldProvidersCandidate": 237.18359375
+    },
+    "unchangedMemoryThresholdMiB": 300,
+    "windowAndViewModelCollectedAfterClose": false,
+    "longRunAcceptance": "OPEN",
+    "memoryGuardNegativeControlsPassed": true
+  },
+  "wpr": {
+    "classification": "save-time mitigation; native validation pending",
+    "commandTimeoutSeconds": 60,
+    "skipDynamicPdbGeneration": true,
+    "providersAndStorageGuardsChanged": false,
+    "diagnosticOnlyNativeResources": {
+      "result": "FAILED_TIMEOUT",
+      "stdout": "empty",
+      "stderr": "empty",
+      "partialBytes": 23068672,
+      "publishedAsSaved": false
+    },
+    "skipPdbNativeRetry": {
+      "result": "ELEVATION_CANCELLED",
+      "recordingStarted": false,
+      "nativeSaveAccepted": false
+    }
+  },
+  "pending": [
+    "Windows 11",
+    "original WPF application race and long-run retention",
+    "Windows 10 native Resources/FileActivity save",
+    "controlled observer cost and continuity",
+    "sleep/resume and service-side temporary writes",
+    "independent physical accessibility and usefulness",
+    "isolated privileged trust/storage attack testing",
+    "protected installation and signing"
+  ],
+  "ci": {
+    "earlierFeatureCommit": "193e1ef4c59d72b404e414c61a03905087dac2a3",
+    "earlierFeatureRuns": [
+      {
+        "id": 39437579510,
+        "result": "SUCCESS",
+        "downloadedTrxPassed": 166
+      },
+      {
+        "id": 39437560787,
+        "result": "SUCCESS",
+        "downloadedTrxPassed": 166
+      }
+    ],
+    "currentHeadResult": "See PR checks; do not substitute earlier runs"
+  }
+}
