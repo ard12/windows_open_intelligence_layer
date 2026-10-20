@@ -48,10 +48,36 @@ Windows 11 x64 is the release baseline. Local build and desktop tests ran on Win
 ### Investigate an existing recording
 
 1. Choose **Open recording** and a local ETL.
-2. Inspect resource charts; hold **Shift** and drag on the CPU chart, or enter seconds and apply the interval.
+2. Inspect resource charts; hold **Shift** and drag on either resource chart, or enter seconds, then choose **Zoom / apply**.
 3. Compare contributors ranked by CPU, completed disk bytes, or summed recorded latency. Double-click a contributor to inspect its lifetime.
 4. Filter the paged **Explorer**, then double-click an event to see captured **Evidence**.
 5. Review **Capture quality**, adjust heuristic thresholds, bookmark intervals, and export Markdown or JSON.
+
+### Navigate timelines and compare ETL intervals
+
+**Shift-drag** selects and highlights a range across both resource charts without changing the applied analysis. **Zoom / apply** updates the charts, contributors, events and already-loaded stack/history views together. **Back** restores a previous applied range; **Full trace** restores the recording's duration while retaining process scope. Arrow buttons move the range by half its width. Chart totals are one-second display buckets; exact interval measurements replay boundary events.
+
+Select a range and choose **Pin A**, then select another and choose **Pin B**. In **Interval comparison**, choose a contributor metric and **Compare A/B**. Totals and rates per selected second are shown separately, with differences calculated as **B minus A**. **Swap A/B** reverses the sides; **Open A/B** applies either stored range. Contributor rows match exact captured process lifetimes, including activity present on only one side. **Inspect A/B sample** opens representative evidence; **Export page JSON** saves complete interval totals and the displayed contributor page with source hash, ranges and limitations.
+
+Both sides must use the same recording and process scope. Missing categories and unknown CPU weights remain unavailable; no observations in an available category means recorded zero, not proof of complete capture. Relative change from zero is unavailable. Unequal-duration rates do not establish equivalent work or causality. Event filters and the existing automatic preceding-30-second CPU baseline are separate. Opening a tab automatically uses the applied range; explicit **Use interval** and event-filter actions can apply the edited selection to their own view. See the [WPA study](docs/research/wpa-timeline-study-2026-10-20.md) and [verification](docs/verification/wpa-intervals-2026-10-20.md).
+
+### Aggregate captured CPU stacks
+
+Open **CPU stacks** after importing a stack-bearing ETL. **Use interval** applies the selected interval/process and Function or Module grouping. The default function summary ranks self samples; inclusive counts credit each distinct frame once per sample, including recursive functions. **Call tree** preserves call-path context; **Open path** and **Up** navigate it. Select a function and choose **Callers** or **Callees** to focus its occurrence closest to the sampled leaf. **Inspect sample** opens representative captured evidence. Local-symbol loading applies to that inspected event and resets obsolete stack navigation.
+
+Coverage shows selected samples, captured/missing stacks, unresolved frames and depth truncation. `[No captured stack]` is an accounting bucket, not a reconstructed call path. Self totals including that bucket reconcile to all selected samples. Milliseconds are unavailable when a row includes samples without known CPU weights; the coverage summary reports the known subtotal separately. Sample percentages use all selected samples, and inclusive rows must not be summed as total CPU. Event filters and resource report exports are separate. No new capture providers or automatic symbol downloads are enabled. See the [PerfView source study](docs/research/perfview-cpu-stack-study-2026-10-20.md).
+
+### Save filters and navigate recorded events
+
+In **Explorer**, expand **Saved filters and include / exclude rules**. Add rules for process name, category, operation or target using literal, case-insensitive Equals, Contains, StartsWith or EndsWith. Includes use OR within one field and AND across fields; any matching exclusion wins. The quick category/operation/target filters also apply. **Apply / first page** applies edits and resets paging; **Previous page** and **Next page** retain the displayed query even if you edit the controls. Right-click an event to include/exclude an attribute, inspect its captured evidence, or open its recorded process family.
+
+Name and save a filter set to reuse it after restarting. Saving the same name replaces it; **Load** applies it in the current interval/process scope and **Delete** removes the saved set. Presets contain event filters only, never the selected interval or trace-local process lifetime. They live in `%LOCALAPPDATA%\WindowsOpenIntelligence\event-filters.json`; they may include sensitive captured paths or process names. Clearing filters keeps the interval and selected process. Event display filters do not alter resource rankings, reports or the source recording. See the [Process Monitor study](docs/research/process-monitor-study-2026-10-19.md) and [executed verification](docs/verification/event-filters-2026-10-19.md).
+
+### Explore historical process families
+
+Open **Process history** after importing an ETL. It retains captured parent/child lifetimes, including exited processes, with start/exit boundaries and resource measurements for the applied interval. Select a row and choose **Focus family**, **Parent family**, or **All families**; the Explorer's **Process family** button opens the selected lifetime directly. Pages contain at most 250 rows, while totals cover the whole family. **Explore process** opens that lifetime's recorded events; **Inspect lifetime** opens captured details.
+
+Parentage does not establish a blocking dependency. Missing or ambiguous parents stay unresolved, unknown boundaries remain explicit, and unattributed activity is excluded from family totals. This view uses the imported ETL, not today's processes or the live snapshot history. See the [source study and staged feature plan](docs/research/system-informer-study-and-feature-plan-2026-10-19.md).
 
 ### Observe a slowdown without elevation
 
@@ -99,7 +125,7 @@ The original ETL is read-only and SHA-256 fingerprinted. Reopening verifies fing
 
 ## Build and verify
 
-Use x64 Windows and .NET SDK **10.0.401**, pinned in global.json. NuGet versions are locked. You can install the SDK normally or use the local setup script:
+Use x64 Windows and .NET SDK **10.0.402**, pinned in global.json. NuGet versions are locked. You can install the SDK normally or use the local setup script:
 
 ~~~powershell
 .\scripts\setup-sdk.ps1

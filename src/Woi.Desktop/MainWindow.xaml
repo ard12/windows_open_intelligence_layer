@@ -37,6 +37,7 @@
    </DockPanel>
    <Border Grid.Row="1" Style="{StaticResource Card}" Padding="12" Margin="0,0,0,12">
     <WrapPanel VerticalAlignment="Center">
+     <WrapPanel.Style><Style TargetType="WrapPanel"><Style.Triggers><DataTrigger Binding="{Binding Busy}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
      <TextBlock Text="ETL INTERVAL" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,10,0"/>
      <TextBox Text="{Binding StartSeconds, UpdateSourceTrigger=PropertyChanged}" Width="82" ToolTip="Start seconds from trace beginning"/>
      <TextBlock Text="to" VerticalAlignment="Center"/>
@@ -44,7 +45,13 @@
      <TextBlock Text="seconds" VerticalAlignment="Center" Foreground="#61768D" Margin="4,0,15,0"/>
      <ComboBox x:Name="ProcessPicker" ItemsSource="{Binding Summary.Processes}" SelectedItem="{Binding SelectedProcess}" DisplayMemberPath="DisplayLabel" Width="185" Margin="4" Padding="6" ToolTip="Choose a captured process lifetime"/>
      <Button Content="All processes" Click="AllClicked"/>
-     <Button Content="Apply interval" Click="ApplyClicked"/>
+     <Button Content="Zoom / apply" Click="ApplyClicked" ToolTip="Apply the selected interval to charts and analysis tables"/>
+     <Button Content="Back" Click="TimelineBackClicked"/>
+     <Button Content="Full trace" Click="TimelineFullClicked"/>
+     <Button Content="←" Click="TimelineLeftClicked" ToolTip="Move the applied interval left by half its width"/>
+     <Button Content="→" Click="TimelineRightClicked" ToolTip="Move the applied interval right by half its width"/>
+     <Button Content="Pin A" Click="PinBaselineClicked"/>
+     <Button Content="Pin B" Click="PinComparisonClicked"/>
      <TextBox Text="{Binding BookmarkLabel}" Width="115" ToolTip="Bookmark label"/>
      <Button Content="Bookmark" Click="BookmarkClicked"/>
     </WrapPanel>
@@ -57,7 +64,7 @@
     <TabItem Header="Summary">
      <Grid Margin="0,14,0,0">
       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="270"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="WHAT THE EVIDENCE SHOWS · resource attribution" Style="{StaticResource Label}"/><TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" FontSize="15" LineHeight="23"/></StackPanel></Border>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="WHAT THE EVIDENCE SHOWS · resource attribution" Style="{StaticResource Label}"/><TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" FontSize="15" LineHeight="23"/><TextBlock Text="{Binding TimelineCaption}" FontSize="11" Foreground="#61768D" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Border>
       <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
        <Border Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="CPU · sampled estimate (% of whole machine)" Style="{StaticResource Label}"/><plot:WpfPlot x:Name="CpuPlot" Grid.Row="1"/></Grid></Border>
        <Border Grid.Column="1" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><ComboBox x:Name="SecondaryPlotSelector" SelectedIndex="0" SelectionChanged="ChartSelectionChanged" Padding="3" Margin="0,0,0,4"><ComboBoxItem Content="Physical disk"/><ComboBoxItem Content="Logical file"/><ComboBoxItem Content="Network"/><ComboBoxItem Content="Working set"/><ComboBoxItem Content="Disk latency"/></ComboBox><plot:WpfPlot x:Name="DiskPlot" Grid.Row="1"/></Grid></Border>
@@ -83,17 +90,47 @@
      </Grid>
     </TabItem>
     <TabItem Header="Explorer">
-     <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="280"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-      <WrapPanel Margin="0,0,0,10">
+     <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <ScrollViewer x:Name="EventFilterScroll" MaxHeight="340" VerticalScrollBarVisibility="Auto"><StackPanel><TextBlock Text="EVENT FILTERS · edits apply with Apply / first page; paging keeps the displayed filter set" Foreground="#61768D"/>
+      <WrapPanel Margin="0,0,0,4">
        <ComboBox Width="135" ToolTip="Recorded activity category" SelectedValuePath="Content" SelectedValue="{Binding Category}" Padding="7" Margin="4"><ComboBoxItem Content="All categories"/><ComboBoxItem Content="CPU"/><ComboBoxItem Content="Disk"/><ComboBoxItem Content="File"/><ComboBoxItem Content="Network"/><ComboBoxItem Content="Process"/><ComboBoxItem Content="Thread"/><ComboBoxItem Content="Module"/><ComboBoxItem Content="Memory"/><ComboBoxItem Content="HardFault"/><ComboBoxItem Content="Unsupported"/></ComboBox>
        <TextBox Text="{Binding OperationFilter}" Width="165" ToolTip="Operation contains"/><TextBox Text="{Binding TargetFilter}" Width="275" ToolTip="Target path or endpoint contains"/>
-       <Button Content="Filter activity" Click="FirstClicked"/><Button Content="Inspect process" Click="EntityClicked"/>
+       <Button Content="Apply / first page" Click="FirstClicked"/><Button Content="Clear filters" Click="ClearFiltersClicked"/>
       </WrapPanel>
-      <Border Grid.Row="1" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="SELECTED PROCESS LIFETIME · seconds from trace start" Style="{StaticResource Label}"/><plot:WpfPlot x:Name="LifetimePlot" Grid.Row="1"/></Grid></Border>
-      <DataGrid Grid.Row="2" x:Name="EventGrid" ItemsSource="{Binding Events}" MouseDoubleClick="EventClicked">
+      <Expander x:Name="EventFiltersEditor" Header="Saved filters and include / exclude rules" Expanded="EventFiltersExpanded" Margin="4,0,0,8"><StackPanel>
+       <WrapPanel><ComboBox ItemsSource="{Binding FilterPresets}" SelectedItem="{Binding SelectedFilterPreset}" DisplayMemberPath="Name" Width="180" Margin="4" ToolTip="Saved filter set"/>
+        <Button Content="Load" Click="LoadFilterClicked"/><Button Content="Delete" Click="DeleteFilterClicked"/>
+        <TextBox Text="{Binding FilterPresetName, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="Preset name; saving an existing name replaces it"/>
+        <Button Content="Save named filters" Click="SaveFilterClicked"/>
+       </WrapPanel>
+       <TextBlock Text="{Binding FilterStoreStatus}" TextWrapping="Wrap" Foreground="#61768D" FontSize="11"/>
+       <WrapPanel><ComboBox ItemsSource="{Binding FilterFields}" SelectedItem="{Binding FilterField}" Width="135" Margin="4"/>
+        <ComboBox ItemsSource="{Binding FilterOperators}" SelectedItem="{Binding FilterOperator}" Width="120" Margin="4"/>
+        <TextBox Text="{Binding FilterValue, UpdateSourceTrigger=PropertyChanged}" Width="230" ToolTip="Case-insensitive literal value"/>
+        <ComboBox ItemsSource="{Binding FilterActions}" SelectedItem="{Binding FilterAction}" Width="95" Margin="4"/>
+        <Button Content="Add rule" Click="AddFilterClicked"/><Button Content="Remove selected" Click="RemoveFilterClicked"/>
+       </WrapPanel>
+       <DataGrid ItemsSource="{Binding FilterRules}" SelectedItem="{Binding SelectedFilterRule}" Height="100"><DataGrid.Columns>
+        <DataGridTextColumn Header="Field" Binding="{Binding Field}" Width="130"/><DataGridTextColumn Header="Match" Binding="{Binding Operator}" Width="120"/>
+        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/><DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="95"/>
+       </DataGrid.Columns></DataGrid>
+       <TextBlock Text="Includes: OR within a field, AND across fields. Any exclusion wins. Quick filters above also apply. Event filters do not change rankings or exported resource reports." TextWrapping="Wrap" Foreground="#61768D" FontSize="11"/>
+      </StackPanel></Expander></StackPanel></ScrollViewer>
+      <Expander Grid.Row="1" x:Name="LifetimePanel" Header="Selected process lifetime · seconds from trace start" IsExpanded="True" Margin="4,0,12,10"><Border Style="{StaticResource Card}"><plot:WpfPlot x:Name="LifetimePlot" Height="240"/></Border></Expander>
+      <DataGrid Grid.Row="2" x:Name="EventGrid" ItemsSource="{Binding Events}" MouseDoubleClick="EventClicked" PreviewMouseRightButtonDown="EventRightClicked">
+       <DataGrid.ContextMenu><ContextMenu>
+        <MenuItem Header="Include process name" Tag="ProcessName:Include" Click="EventFilterClicked"/><MenuItem Header="Exclude process name" Tag="ProcessName:Exclude" Click="EventFilterClicked"/>
+        <MenuItem Header="Include category" Tag="Category:Include" Click="EventFilterClicked"/><MenuItem Header="Exclude category" Tag="Category:Exclude" Click="EventFilterClicked"/>
+        <MenuItem Header="Include operation" Tag="Operation:Include" Click="EventFilterClicked"/><MenuItem Header="Exclude operation" Tag="Operation:Exclude" Click="EventFilterClicked"/>
+        <MenuItem Header="Include target" Tag="Target:Include" Click="EventFilterClicked"/><MenuItem Header="Exclude target" Tag="Target:Exclude" Click="EventFilterClicked"/>
+        <Separator/><MenuItem Header="Inspect captured event" Click="EventClicked"/><MenuItem Header="Open recorded process family" Click="EventFamilyClicked"/>
+       </ContextMenu></DataGrid.ContextMenu>
        <DataGrid.Columns><DataGridTextColumn Header="Time (ms)" Binding="{Binding TimeMs, StringFormat=F3}" Width="95"/><DataGridTextColumn Header="Process" Binding="{Binding ProcessName}" Width="145"/><DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="95"/><DataGridTextColumn Header="Operation" Binding="{Binding Operation}" Width="165"/><DataGridTextColumn Header="Target" Binding="{Binding Target}" Width="*"/><DataGridTextColumn Header="Bytes" Binding="{Binding Bytes, StringFormat=N0}" Width="90"/><DataGridTextColumn Header="Latency ms" Binding="{Binding DurationMs, StringFormat=F3}" Width="90"/></DataGrid.Columns>
       </DataGrid>
-      <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="First page" Click="FirstClicked"/><Button Content="Next page" Click="NextClicked"/><Button Content="Inspect selected event" Click="EventClicked"/></StackPanel>
+      <StackPanel Grid.Row="3"><TextBlock Text="{Binding EventPageLabel}" ToolTip="{Binding EventPageLabel}" TextTrimming="CharacterEllipsis" Foreground="#61768D" Margin="4,6"/>
+       <WrapPanel HorizontalAlignment="Right"><Button Content="Inspect process" Click="EntityClicked"/><Button Content="Process family" Click="ProcessFamilyClicked"/>
+        <Button Content="Previous page" Click="PreviousEventClicked" IsEnabled="{Binding HasPreviousEventPage}"/><Button Content="Next page" Click="NextClicked" IsEnabled="{Binding HasNextEventPage}"/><Button Content="Inspect selected event" Click="EventClicked"/>
+       </WrapPanel></StackPanel>
      </Grid>
     </TabItem>
     <TabItem Header="Evidence">
@@ -258,6 +295,126 @@
        <ItemsControl ItemsSource="{Binding AttemptComparison.Limitations}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="#61768D" Margin="0,4"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
       </StackPanel></Border>
      </StackPanel></ScrollViewer>
+    </TabItem>
+    <TabItem Header="Process history" x:Name="ProcessHistoryTab">
+     <Grid Margin="0,14,0,0">
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <Border Style="{StaticResource Card}" Margin="0,0,0,10" Padding="14"><StackPanel>
+       <TextBlock Text="CAPTURED PROCESS FAMILIES" Style="{StaticResource Label}"/>
+       <TextBlock Text="{Binding HistoryCaption}" TextWrapping="Wrap" FontWeight="SemiBold" FontSize="14"/>
+       <TextBlock Text="Parent/child relationships from this recording, including exited processes. These links do not show which process blocked another. Family scope is independent of the process picker above." TextWrapping="Wrap" Foreground="#61768D" Margin="0,8,0,0"/>
+       <TextBlock Text="{Binding HistoryTotalsText}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+      </StackPanel></Border>
+      <WrapPanel Grid.Row="1" Margin="0,0,0,8">
+       <Button Content="Use interval" Click="HistoryRefreshClicked"/>
+       <Button Content="Focus family" Click="HistoryFocusClicked" ToolTip="Show the selected lifetime and its recorded descendants"/>
+       <Button Content="Parent family" Click="HistoryParentClicked"/>
+       <Button Content="All families" Click="HistoryAllClicked"/>
+       <Button Content="Explore process" Click="HistoryExploreClicked"/>
+       <Button Content="Inspect lifetime" Click="HistoryEvidenceClicked"/>
+      </WrapPanel>
+      <DataGrid Grid.Row="2" x:Name="HistoryGrid" ItemsSource="{Binding HistoryRows}" SelectedItem="{Binding SelectedHistoryRow}" MouseDoubleClick="HistoryExploreClicked" CanUserSortColumns="False" AutomationProperties.Name="Historical process families">
+       <DataGrid.Columns>
+        <DataGridTemplateColumn Header="Process · parentage" Width="220"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+         <TextBlock Text="{Binding Name}" Margin="{Binding Indent}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Row.Entity.DisplayLabel}"/>
+        </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+        <DataGridTextColumn Header="PID" Binding="{Binding Row.Entity.OsId}" Width="70"/>
+        <DataGridTextColumn Header="CPU samples" Binding="{Binding Row.Activity.CpuSamples, StringFormat=N0, TargetNullValue=—}" Width="100"/>
+        <DataGridTextColumn Header="Sampled CPU ms" Binding="{Binding Row.Activity.CpuMs, StringFormat=N2, TargetNullValue=—}" Width="125"/>
+        <DataGridTextColumn Header="Disk bytes" Binding="{Binding Row.Activity.DiskBytes, StringFormat=N0, TargetNullValue=—}" Width="110"/>
+        <DataGridTextColumn Header="Start (s)" Binding="{Binding Start}" Width="140"/>
+        <DataGridTextColumn Header="Exit (s)" Binding="{Binding End}" Width="140"/>
+        <DataGridTextColumn Header="Interval state" Binding="{Binding Row.State}" Width="200"/>
+        <DataGridTextColumn Header="Recorded parent" Binding="{Binding Row.Parent}" Width="240"/>
+        <DataGridTextColumn Header="File bytes" Binding="{Binding Row.Activity.FileBytes, StringFormat=N0, TargetNullValue=—}" Width="115"/>
+        <DataGridTextColumn Header="Network bytes" Binding="{Binding Row.Activity.NetworkBytes, StringFormat=N0, TargetNullValue=—}" Width="125"/>
+        <DataGridTextColumn Header="Depth" Binding="{Binding Row.Depth}" Width="65"/>
+       </DataGrid.Columns>
+      </DataGrid>
+      <DockPanel Grid.Row="3" Margin="0,8,0,0">
+       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="Previous page" Click="HistoryPreviousClicked"/><Button Content="Next page" Click="HistoryNextClicked"/></StackPanel>
+       <TextBlock Text="All captured lifetimes remain visible, including those outside the interval. — means no attributed measurement or unavailable data. Totals include every page; shared working sets are not summed." TextWrapping="Wrap" Foreground="#61768D" FontSize="11" VerticalAlignment="Center"/>
+      </DockPanel>
+     </Grid>
+    </TabItem>
+    <TabItem Header="CPU stacks" x:Name="CpuStacksTab">
+     <Grid Margin="0,12,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <ScrollViewer x:Name="CpuStackHeaderScroll" MaxHeight="160" VerticalScrollBarVisibility="Auto"><StackPanel><TextBlock Text="{Binding StackCaption}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+       <TextBlock Text="{Binding StackCoverage}" TextWrapping="Wrap" Foreground="#61768D" Margin="0,6"/>
+       <TextBlock Text="Inclusive: sample contains frame; self: sampled leaf. Recursive functions count once per sample; call paths keep recursion. Callers/callees focus the occurrence closest to the leaf." TextWrapping="Wrap" Foreground="#61768D" FontSize="11"/>
+      </StackPanel></ScrollViewer>
+      <StackPanel Grid.Row="1"><WrapPanel Margin="0,6"><ComboBox ItemsSource="{Binding StackGroupings}" SelectedItem="{Binding StackGrouping}" Width="115" Margin="4" ToolTip="Grouping applies with Use interval"/>
+       <Button Content="Use interval" Click="StackLoadClicked"/><Button Content="Functions" Click="StackFunctionsClicked"/><Button Content="Call tree" Click="StackTreeClicked"/>
+       <Button Content="Callers" Click="StackCallersClicked"/><Button Content="Callees" Click="StackCalleesClicked"/><Button Content="Open path" Click="StackDescendClicked"/><Button Content="Up" Click="StackUpClicked"/>
+      </WrapPanel><TextBlock Text="{Binding StackPath}" ToolTip="{Binding StackPath}" TextTrimming="CharacterEllipsis" Margin="4,0,0,6"/></StackPanel>
+      <DataGrid Grid.Row="2" x:Name="CpuStackGrid" ItemsSource="{Binding CpuStackRows}" SelectedItem="{Binding SelectedStackRow}" MouseDoubleClick="StackDescendClicked" CanUserSortColumns="False" AutomationProperties.Name="Captured CPU stack aggregates">
+       <DataGrid.Columns><DataGridTemplateColumn Header="Function / module / call path" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"><TextBlock.ToolTip><StackPanel><TextBlock Text="{Binding Name}"/><TextBlock Text="{Binding Key}"/></StackPanel></TextBlock.ToolTip></TextBlock>
+       </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+        <DataGridTextColumn Header="Inclusive samples" Binding="{Binding Inclusive.Samples, StringFormat=N0}" Width="120"/>
+        <DataGridTextColumn Header="Self samples" Binding="{Binding Exclusive.Samples, StringFormat=N0}" Width="100"/>
+        <DataGridTextColumn Header="Inclusive ms" Binding="{Binding Inclusive.CpuMs, StringFormat=N3, TargetNullValue=—}" Width="110"/>
+        <DataGridTextColumn Header="Self ms" Binding="{Binding Exclusive.CpuMs, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+        <DataGridTextColumn Header="Sample %" Binding="{Binding SamplePercent, StringFormat=N2}" Width="85"/>
+       </DataGrid.Columns>
+      </DataGrid>
+      <StackPanel Grid.Row="3"><TextBlock Text="{Binding StackContext}" TextWrapping="Wrap" Foreground="#61768D" Margin="4,6"/>
+       <WrapPanel HorizontalAlignment="Right"><Button Content="Previous page" Click="StackPreviousClicked"/><Button Content="Next page" Click="StackNextClicked"/><Button Content="Inspect sample" Click="StackEvidenceClicked"/></WrapPanel>
+       <TextBlock Text="Captured chains may be incomplete. Missing stacks remain visible; names use captured metadata or explicitly loaded local symbols. No automatic symbol downloads. Resource reports remain separate." TextWrapping="Wrap" Foreground="#61768D" FontSize="11"/>
+      </StackPanel>
+     </Grid>
+    </TabItem>
+    <TabItem Header="Interval comparison" x:Name="IntervalComparisonTab">
+     <Grid Margin="0,10,0,0">
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="1.5*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <ScrollViewer x:Name="IntervalHeaderScroll" MaxHeight="130" VerticalScrollBarVisibility="Auto">
+       <StackPanel>
+        <TextBlock Text="{Binding BaselineCaption}" TextWrapping="Wrap"/>
+        <TextBlock Text="{Binding ComparisonCaption}" TextWrapping="Wrap"/>
+        <WrapPanel>
+         <WrapPanel.Style><Style TargetType="WrapPanel"><Style.Triggers><DataTrigger Binding="{Binding Busy}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
+         <ComboBox ItemsSource="{Binding IntervalMetrics}" SelectedItem="{Binding ComparisonMetric}" Width="145" Padding="5" ToolTip="Contributor metric; choose Compare A/B to apply"/>
+         <Button Content="Compare A/B" Click="CompareIntervalsClicked"/>
+         <Button Content="Swap A/B" Click="SwapIntervalsClicked"/>
+         <Button Content="Open A" Click="OpenBaselineClicked"/>
+         <Button Content="Open B" Click="OpenComparisonClicked"/>
+         <Button Content="Export page JSON" Click="ExportIntervalComparisonClicked"/>
+        </WrapPanel>
+        <TextBlock Text="Totals cover each complete range. Rates are units per selected second, not work-normalized throughput. Δ = B − A; — means unavailable." TextWrapping="Wrap" FontSize="11" Foreground="#61768D"/>
+       </StackPanel>
+      </ScrollViewer>
+      <DataGrid Grid.Row="1" ItemsSource="{Binding IntervalTotals}" Margin="0,6,0,6" RowHeight="25" ColumnHeaderHeight="28"><DataGrid.Columns>
+       <DataGridTextColumn Header="Recorded metric" Binding="{Binding Name}" Width="210"/>
+       <DataGridTextColumn Header="Units" Binding="{Binding Unit}" Width="75"/>
+       <DataGridTextColumn Header="A total" Binding="{Binding Baseline, StringFormat=N3, TargetNullValue=—}" Width="105"/>
+       <DataGridTextColumn Header="B total" Binding="{Binding Comparison, StringFormat=N3, TargetNullValue=—}" Width="105"/>
+       <DataGridTextColumn Header="Δ total" Binding="{Binding Difference, StringFormat=N3, TargetNullValue=—}" Width="105"/>
+       <DataGridTextColumn Header="Δ %" Binding="{Binding PercentChange, StringFormat=N2, TargetNullValue=—}" Width="80"/>
+       <DataGridTextColumn Header="A / s" Binding="{Binding BaselineRate, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+       <DataGridTextColumn Header="B / s" Binding="{Binding ComparisonRate, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+       <DataGridTextColumn Header="Δ / s" Binding="{Binding RateDifference, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+      </DataGrid.Columns></DataGrid>
+      <TextBlock Grid.Row="2" Text="{Binding IntervalComparisonCaption}" TextWrapping="Wrap" FontSize="11" Margin="0,2,0,5"/>
+      <DataGrid Grid.Row="3" x:Name="IntervalComparisonGrid" ItemsSource="{Binding IntervalRows}" SelectedItem="{Binding SelectedIntervalRow}" RowHeight="28"><DataGrid.Columns>
+       <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="160"/>
+       <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
+       <DataGridTextColumn Header="A total" Binding="{Binding Value.Baseline, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+       <DataGridTextColumn Header="B total" Binding="{Binding Value.Comparison, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+       <DataGridTextColumn Header="Δ total" Binding="{Binding Value.Difference, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+       <DataGridTextColumn Header="Δ %" Binding="{Binding Value.PercentChange, StringFormat=N2, TargetNullValue=—}" Width="80"/>
+       <DataGridTextColumn Header="A / s" Binding="{Binding Value.BaselineRate, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+       <DataGridTextColumn Header="B / s" Binding="{Binding Value.ComparisonRate, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+       <DataGridTextColumn Header="Δ / s" Binding="{Binding Value.RateDifference, StringFormat=N3, TargetNullValue=—}" Width="100"/>
+       <DataGridTextColumn Header="Captured lifetime ID" Binding="{Binding ProcessId}" Width="210"/>
+      </DataGrid.Columns></DataGrid>
+      <StackPanel Grid.Row="4">
+       <WrapPanel>
+        <Button Content="Previous" Click="IntervalPreviousClicked"/><Button Content="Next" Click="IntervalNextClicked"/>
+        <Button Content="Inspect A sample" Click="IntervalBaselineEvidenceClicked"/><Button Content="Inspect B sample" Click="IntervalComparisonEvidenceClicked"/>
+       </WrapPanel>
+       <TextBlock Text="{Binding IntervalComparisonCoverage}" ToolTip="{Binding IntervalComparisonLimits}" TextWrapping="Wrap" Foreground="#61768D" FontSize="11"/>
+      </StackPanel>
+     </Grid>
     </TabItem>
    </TabControl>
    <DockPanel Grid.Row="4" Margin="0,10,0,0"><TextBlock Text="LOCAL ONLY" DockPanel.Dock="Right" Foreground="#167C80" FontSize="10" FontWeight="Bold"/><TextBlock Text="{Binding Status}" Foreground="#61768D" TextTrimming="CharacterEllipsis" FontSize="12"/></DockPanel>

@@ -1,6 +1,12 @@
 # Architecture and evidence boundaries
 
-The implemented views expose resource measurements, recorded lifetimes, findings, and evidence. Execution/dependency graphs and application-level causal diagnosis are planned; coincident activity and recorded parent IDs do not establish those relationships.
+WPA-inspired timeline navigation separates draft selection, applied interval and pinned A/B comparison ranges. Explicit zoom/pan/back/full commands keep the resource plots and analysis scope synchronized; native plot pan/zoom gestures are disabled to avoid silent scope divergence. `RefreshCore` stages metrics, contributors, events and any loaded history/stack pages before publishing a successful interval. Lazy tabs use the applied range. `QueryEngine.CompareIntervals` reuses exact full-bucket/edge-replay aggregation, joining contributors by trace-local lifetime and retaining unattributed rows. Total and per-second deltas are distinct; unavailable capabilities/weights remain null. It does not reuse the monitoring-attempt `ComparisonEngine` or relabel the existing automatic preceding CPU baseline.
+
+CPU stacks reuse the existing TraceEvent reader and CPU-weight index. `EtlReader.CpuStacks` enumerates only selected CPU observations and captured call stacks; `CpuStackAggregation` computes bounded function/module rows and contextual paths with explicit coverage and recursion handling. Native missing stacks stay missing even though PerfView's stack-source adapter can synthesize instruction/thread nodes. Desktop stack navigation retains its applied interval/lifetime and source coordinates. Queries are streamed again rather than retaining a second unbounded trace model. No new dependencies, acquisition profiles or symbol downloads are introduced.
+
+Event filtering is a display-query layer: `Woi.Core/EventFilters.cs` validates and matches grouped include/exclude rules; `EtlReader.QueryEvents` applies them during bounded event paging. Structural rule equality preserves consecutive-page iterator reuse after JSON transport. `MainViewModel.Filters` holds applied queries separately from editor values and commits successful pages with their cursor history. Portable named presets use bounded versioned local JSON, not the ETL cache, and omit interval/PID/lifetime identity. Resource calculations and exports retain their existing interval/process scope.
+
+The implemented views expose resource measurements, recorded lifetimes and parent/child families, findings, and evidence. Scheduling/wait dependency graphs and application-level causal diagnosis are planned; coincident activity and recorded parent IDs do not establish those relationships.
 
 ```text
 Canonical read-only ETL

@@ -43,7 +43,8 @@ public record DetectionSettings(double CpuThreshold = 80, double DiskLatencyThre
     int ConsecutiveSeconds = 3, int MinimumDiskOperations = 10);
 public record IntervalQuery(double StartMs = 0, double EndMs = double.MaxValue, string? ProcessId = null, string Ranking = "CPU");
 public record EventQuery(double StartMs = 0, double EndMs = double.MaxValue, string? ProcessId = null,
-    string? Category = null, string? Operation = null, string? Target = null, long? Cursor = null, int Limit = 500);
+    string? Category = null, string? Operation = null, string? Target = null, long? Cursor = null, int Limit = 500,
+    IReadOnlyList<EventFilterRule>? Rules = null);
 public record EventPage(IReadOnlyList<Observation> Events, long? NextCursor, bool More);
 public record EvidenceDetail(Observation Observation, IReadOnlyDictionary<string, string> Payload,
     IReadOnlyList<string> Stack, string Coordinates, string Interpretation, Provenance Provenance = Provenance.Observed);
@@ -74,6 +75,7 @@ public interface ITraceReader : IDisposable
     IEnumerable<Observation> ReadContributorObservations(IntervalQuery query,CancellationToken token) =>
         ReadObservations(query,token).Where(x=>x.Category is "CPU" or "Disk" or "File" or "Network");
     EventPage QueryEvents(EventQuery query, CancellationToken token);
+    CpuStackPage QueryCpuStacks(CpuStackQuery query, CancellationToken token) => throw new WoiException("Unsupported", "CPU stack aggregation is unavailable for this source.");
     EvidenceDetail GetEvidence(long index, string? localSymbolDirectory, CancellationToken token);
     EntityDetail GetEntity(string id, CancellationToken token);
 }

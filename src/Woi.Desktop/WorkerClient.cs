@@ -20,7 +20,7 @@ public sealed class WorkerClient : IDisposable
     public bool IsAlive => !disconnected && !process.HasExited;
     public event Action<ImportProgress>? Progress;
 
-    public WorkerClient(bool monitor = false) : this(CreateStartInfo(monitor)) { }
+    public WorkerClient(bool monitor = false, string? cacheRoot = null) : this(CreateStartInfo(monitor, cacheRoot)) { }
     internal WorkerClient(ProcessStartInfo start)
     {
         process = new Process { StartInfo = start };
@@ -28,7 +28,7 @@ public sealed class WorkerClient : IDisposable
         _ = Task.Run(ReadResponses); // Decode away from the WPF synchronization context.
         _ = process.StandardError.ReadToEndAsync();
     }
-    private static ProcessStartInfo CreateStartInfo(bool monitor)
+    private static ProcessStartInfo CreateStartInfo(bool monitor, string? cacheRoot)
     {
         var executable = Path.Combine(AppContext.BaseDirectory, "Woi.Worker.exe");
         if (!File.Exists(executable)) {
@@ -49,6 +49,7 @@ public sealed class WorkerClient : IDisposable
             using var parent = Process.GetCurrentProcess();
             start.ArgumentList.Add(parent.StartTime.ToUniversalTime().Ticks.ToString());
         }
+        if (!monitor && cacheRoot != null) { start.ArgumentList.Add("--cache-root"); start.ArgumentList.Add(Path.GetFullPath(cacheRoot)); }
         return start;
     }
     private interface IPending
