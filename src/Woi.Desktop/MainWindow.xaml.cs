@@ -58,6 +58,8 @@ public partial class MainWindow : Window
         if(args.Length > 2 && args[1]=="--smoke-test") {
             var snapshot=args.Length>3?Path.GetFullPath(args[3]):Path.Combine(AppContext.BaseDirectory,"desktop.png");
             try {
+                if (!AppContext.TryGetSwitch("Switch.System.Windows.Automation.Peers.ItemAutomationPeerKeepsItsItemAlive", out var configured) || !configured)
+                    throw new InvalidOperationException("The startup WPF item-peer lifetime mitigation is not configured.");
                 bool monitorVerified=false, investigationVerified=false, savedComparisonVerified=false, savedOnlyStartupVerified=false; int observedLifetimes=0;
                 if(model!.AnalysisWorkerProcessId!=null)throw new InvalidOperationException("Startup unexpectedly launched the analysis worker.");
                 if(args.Contains("--verify-monitor")) {

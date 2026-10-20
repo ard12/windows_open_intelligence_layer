@@ -44,6 +44,7 @@ public partial class MainWindow
 
     private async Task VerifyAccessibility(string snapshot)
     {
+        bool itemPeerLifetimeMitigationConfigured = AppContext.TryGetSwitch("Switch.System.Windows.Automation.Peers.ItemAutomationPeerKeepsItsItemAlive", out var configured) && configured;
         static IEnumerable<DependencyObject> Descendants(DependencyObject parent)
         {
             foreach (var child in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>()) {
@@ -87,7 +88,7 @@ public partial class MainWindow
             await Enter(InvestigationContributors, () => FocusManager.GetFocusedElement(this) == InvestigationEvidenceDetails && vm.InvestigationStatus == "Recorded snapshot evidence loaded." && JsonSerializer.Deserialize<SnapshotDetail>(vm.InvestigationEvidenceText, Wire.Json)?.Reference == contributor.Evidence, "investigation contributor to snapshot evidence and focus");
         }
         File.WriteAllText(Path.ChangeExtension(snapshot, "accessibility.json"), JsonSerializer.Serialize(new {
-            success = true, names, checkedActions,
+            success = true, itemPeerLifetimeMitigationConfigured, names, checkedActions,
             limitation = "In-process WPF automation peers and routed Enter events; physical keyboard, mouse and independent assistive technology sessions remain unverified."
         }, new JsonSerializerOptions(Wire.Json) { WriteIndented = true }));
     }
