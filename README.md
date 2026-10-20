@@ -125,7 +125,7 @@ The original ETL is read-only and SHA-256 fingerprinted. Reopening verifies fing
 
 ## Build and verify
 
-Use x64 Windows and .NET SDK **10.0.401**, pinned in global.json. NuGet versions are locked. You can install the SDK normally or use the local setup script:
+Use x64 Windows and .NET SDK **10.0.402**, pinned in global.json. NuGet versions are locked. You can install the SDK normally or use the local setup script:
 
 ~~~powershell
 .\scripts\setup-sdk.ps1
