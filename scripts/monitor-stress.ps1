@@ -106,7 +106,7 @@ try {
             'Sampling diagnostics summarize retained history, while cumulative counters survive eviction.',
             'A short warmed window does not establish two-hour, sleep/resume, physical-write or observer-effect acceptance.')
     }
-    $enoughTicks = $Seconds -gt 120 -or $result.measuredSnapshots -ge [math]::Floor($Seconds * .8)
+    $enoughTicks = $result.measuredSnapshots -ge [math]::Floor($Seconds * .8)
     $result.success = $enoughTicks
     $result | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $destination -Encoding utf8
     $result | ConvertTo-Json -Depth 6

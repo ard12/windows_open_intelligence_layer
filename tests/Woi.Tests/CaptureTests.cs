@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO.Pipes;
 using System.Security.Principal;
 using System.Security.AccessControl;
 using System.Text.Json;
@@ -109,6 +110,18 @@ public sealed class CaptureTests
         var controller=Controller(runner,temp);await controller.Start(new(),default);await controller.DisposeAsync();
         Assert.Single(runner.Calls,x=>x[0]=="-cancel");
         Assert.Empty(Directory.GetFiles(temp.Root,"recording.etl",SearchOption.AllDirectories));
+    }
+    [Fact] public async Task PipeIdentityAcceptsItsProcessAndRejectsUnexpectedPeers() {
+        var name="woi.capture.test."+Guid.NewGuid().ToString("N");
+        using var server=new NamedPipeServerStream(name,PipeDirection.InOut,1,PipeTransmissionMode.Byte,PipeOptions.Asynchronous);
+        using var client=new NamedPipeClientStream(".",name,PipeDirection.InOut,PipeOptions.Asynchronous);
+        using var deadline=new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var connected=server.WaitForConnectionAsync(deadline.Token);
+        await client.ConnectAsync(deadline.Token);await connected;
+        PipeIdentity.RequirePeer(server,Environment.ProcessId,true);
+        PipeIdentity.RequirePeer(client,Environment.ProcessId,false);
+        Assert.Equal("CapturePeerMismatch",Assert.Throws<WoiException>(()=>PipeIdentity.RequirePeer(server,int.MaxValue,true)).Code);
+        Assert.Equal("CapturePeerMismatch",Assert.Throws<WoiException>(()=>PipeIdentity.RequirePeer(client,int.MaxValue,false)).Code);
     }
     [Fact] public async Task ProtocolRejectsVersionsAndUnknownCommandsWithoutStartingWpr() {
         using var temp=new Temp();var runner=new FakeRunner();await using var controller=Controller(runner,temp);

@@ -69,7 +69,9 @@ jobs:
           }
       - name: Unprivileged monitor continuity and overhead smoke
         shell: pwsh
-        run: ./scripts/monitor-stress.ps1 -Seconds 30 -Output .artifacts/validation/ci-monitor-stress.json
+        run: |
+          ./scripts/test-monitor-coverage.ps1
+          ./scripts/monitor-stress.ps1 -Seconds 30 -Output .artifacts/validation/ci-monitor-stress.json
       - name: Warmed headless monitor measurement
         shell: pwsh
         run: ./scripts/monitor-stress.ps1 -WarmupSeconds 30 -Seconds 120 -Output .artifacts/validation/ci-monitor-warm.json

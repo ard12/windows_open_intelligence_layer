@@ -12,12 +12,16 @@ if(!$packageRoot) {
     $localPackages=Join-Path $projectRoot '.tools\nuget'
     $packageRoot=if(Test-Path -LiteralPath $localPackages){$localPackages}else{Join-Path $env:USERPROFILE '.nuget\packages'}
 }
-$sdkVersion=(Get-Content -LiteralPath (Join-Path $projectRoot 'global.json') -Raw | ConvertFrom-Json).sdk.version
-$versioning=Join-Path $projectRoot ".tools\dotnet\sdk\$sdkVersion\NuGet.Versioning.dll"
-if(!(Test-Path -LiteralPath $versioning)) {
-    $dotnet=(Get-Command dotnet -ErrorAction Stop).Source
-    $versioning=Join-Path (Split-Path $dotnet -Parent) "sdk\$sdkVersion\NuGet.Versioning.dll"
-}
+$declaredSdkVersion=(Get-Content -LiteralPath (Join-Path $projectRoot 'global.json') -Raw | ConvertFrom-Json).sdk.version
+$dotnet=Join-Path $projectRoot '.tools\dotnet\dotnet.exe'
+if(!(Test-Path -LiteralPath $dotnet)){$dotnet=(Get-Command dotnet -ErrorAction Stop).Source}
+Push-Location $projectRoot
+try {
+    $sdkVersion=(& $dotnet --version | Select-Object -Last 1)
+    if($LASTEXITCODE -ne 0 -or !$sdkVersion){throw 'Could not identify the selected .NET SDK.'}
+    $sdkVersion=$sdkVersion.Trim()
+} finally {Pop-Location}
+$versioning=Join-Path (Split-Path $dotnet -Parent) "sdk\$sdkVersion\NuGet.Versioning.dll"
 foreach($assembly in @('NuGet.Common','NuGet.Versioning','NuGet.Frameworks','NuGet.Packaging')) {
     Add-Type -Path (Join-Path (Split-Path $versioning -Parent) ($assembly+'.dll'))
 }
@@ -211,7 +215,7 @@ $result=[ordered]@{
     schemaVersion=1; verifiedAtUtc=[DateTime]::UtcNow.ToString('O'); success=($errors.Count -eq 0 -and $findings.Count -eq 0)
     scope='All non-project lock entries, including tests/tools and published self-contained runtime packs; published runtime/native/resource and TraceEvent content assets matched against package archive bytes; unaccounted DLL/EXE files rejected.'
     limitations='A current known-advisory check, not proof of future safety. Locked package content hashes and archive-entry bytes establish identity; runtime packs are hashed but their publisher signatures are not independently validated. Does not execute or fuzz native libraries.'
-    dotnetChannel=@{url=$runtimeFeedUri; sha256=$runtimeFeed.sha256; latestRuntime=$runtimeFeed.data['latest-runtime']; latestSdk=$runtimeFeed.data['latest-sdk']; sdk=$sdkVersion}
+    dotnetChannel=@{url=$runtimeFeedUri; sha256=$runtimeFeed.sha256; latestRuntime=$runtimeFeed.data['latest-runtime']; latestSdk=$runtimeFeed.data['latest-sdk']; sdk=$sdkVersion; declaredSdk=$declaredSdkVersion}
     vulnerabilityIndex=@{url=$indexUri; sha256=$index.sha256}; feeds=@($feedRecords); lockFiles=@($lockFiles | ForEach-Object {@{path=$_.FullName.Substring($projectRoot.Length+1); sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}})
     packages=@($packages.Values | Sort-Object id,version); assets=@($assets | Sort-Object path,package); vulnerabilities=@($findings); errors=@($errors)
 }

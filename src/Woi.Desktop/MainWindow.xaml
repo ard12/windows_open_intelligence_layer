@@ -21,7 +21,7 @@
     <TextBlock Text="START HERE" Foreground="#90A9BD" FontSize="10" FontWeight="Bold" Margin="0,30,0,12"/>
     <TextBlock Text="1  Record or open activity&#10;2  Select a time interval&#10;3  Compare contributors&#10;4  Inspect the evidence" Foreground="#BECCDB" LineHeight="27"/>
     <TextBlock Text="BOOKMARKS" Foreground="#90A9BD" FontSize="10" Margin="0,28,0,8"/>
-    <ListBox x:Name="BookmarkList" ItemsSource="{Binding Bookmarks}" DisplayMemberPath="Label" SelectionChanged="BookmarkSelected" Background="Transparent" Foreground="#D3E0EC" BorderThickness="0" MaxHeight="130"/>
+    <ListBox AutomationProperties.Name="Saved interval bookmarks" x:Name="BookmarkList" ItemsSource="{Binding Bookmarks}" DisplayMemberPath="Label" SelectionChanged="BookmarkSelected" Background="Transparent" Foreground="#D3E0EC" BorderThickness="0" MaxHeight="130"/>
    </StackPanel>
   </Border>
   <Grid Grid.Column="1" Margin="24,20,16,14">
@@ -39,20 +39,20 @@
     <WrapPanel VerticalAlignment="Center">
      <WrapPanel.Style><Style TargetType="WrapPanel"><Style.Triggers><DataTrigger Binding="{Binding Busy}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
      <TextBlock Text="ETL INTERVAL" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-     <TextBox Text="{Binding StartSeconds, UpdateSourceTrigger=PropertyChanged}" Width="82" ToolTip="Start seconds from trace beginning"/>
+     <TextBox AutomationProperties.Name="Interval start seconds" Text="{Binding StartSeconds, UpdateSourceTrigger=PropertyChanged}" Width="82" ToolTip="Start seconds from trace beginning"/>
      <TextBlock Text="to" VerticalAlignment="Center"/>
-     <TextBox Text="{Binding EndSeconds, UpdateSourceTrigger=PropertyChanged}" Width="82" ToolTip="End seconds from trace beginning"/>
+     <TextBox AutomationProperties.Name="Interval end seconds" Text="{Binding EndSeconds, UpdateSourceTrigger=PropertyChanged}" Width="82" ToolTip="End seconds from trace beginning"/>
      <TextBlock Text="seconds" VerticalAlignment="Center" Foreground="#61768D" Margin="4,0,15,0"/>
-     <ComboBox x:Name="ProcessPicker" ItemsSource="{Binding Summary.Processes}" SelectedItem="{Binding SelectedProcess}" DisplayMemberPath="DisplayLabel" Width="185" Margin="4" Padding="6" ToolTip="Choose a captured process lifetime"/>
+     <ComboBox AutomationProperties.Name="Captured process lifetime" x:Name="ProcessPicker" ItemsSource="{Binding Summary.Processes}" SelectedItem="{Binding SelectedProcess}" DisplayMemberPath="DisplayLabel" Width="185" Margin="4" Padding="6" ToolTip="Choose a captured process lifetime"/>
      <Button Content="All processes" Click="AllClicked"/>
      <Button Content="Zoom / apply" Click="ApplyClicked" ToolTip="Apply the selected interval to charts and analysis tables"/>
      <Button Content="Back" Click="TimelineBackClicked"/>
      <Button Content="Full trace" Click="TimelineFullClicked"/>
-     <Button Content="←" Click="TimelineLeftClicked" ToolTip="Move the applied interval left by half its width"/>
-     <Button Content="→" Click="TimelineRightClicked" ToolTip="Move the applied interval right by half its width"/>
+     <Button AutomationProperties.Name="Move interval earlier" Content="←" Click="TimelineLeftClicked" ToolTip="Move the applied interval left by half its width"/>
+     <Button AutomationProperties.Name="Move interval later" Content="→" Click="TimelineRightClicked" ToolTip="Move the applied interval right by half its width"/>
      <Button Content="Pin A" Click="PinBaselineClicked"/>
      <Button Content="Pin B" Click="PinComparisonClicked"/>
-     <TextBox Text="{Binding BookmarkLabel}" Width="115" ToolTip="Bookmark label"/>
+     <TextBox AutomationProperties.Name="Bookmark label" Text="{Binding BookmarkLabel}" Width="115" ToolTip="Bookmark label"/>
      <Button Content="Bookmark" Click="BookmarkClicked"/>
     </WrapPanel>
    </Border>
@@ -67,11 +67,11 @@
       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="WHAT THE EVIDENCE SHOWS · resource attribution" Style="{StaticResource Label}"/><TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" FontSize="15" LineHeight="23"/><TextBlock Text="{Binding TimelineCaption}" FontSize="11" Foreground="#61768D" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel></Border>
       <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
        <Border Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="CPU · sampled estimate (% of whole machine)" Style="{StaticResource Label}"/><plot:WpfPlot x:Name="CpuPlot" Grid.Row="1"/></Grid></Border>
-       <Border Grid.Column="1" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><ComboBox x:Name="SecondaryPlotSelector" SelectedIndex="0" SelectionChanged="ChartSelectionChanged" Padding="3" Margin="0,0,0,4"><ComboBoxItem Content="Physical disk"/><ComboBoxItem Content="Logical file"/><ComboBoxItem Content="Network"/><ComboBoxItem Content="Working set"/><ComboBoxItem Content="Disk latency"/></ComboBox><plot:WpfPlot x:Name="DiskPlot" Grid.Row="1"/></Grid></Border>
+       <Border Grid.Column="1" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><ComboBox AutomationProperties.Name="Secondary timeline metric" x:Name="SecondaryPlotSelector" SelectedIndex="0" SelectionChanged="ChartSelectionChanged" Padding="3" Margin="0,0,0,4"><ComboBoxItem Content="Physical disk"/><ComboBoxItem Content="Logical file"/><ComboBoxItem Content="Network"/><ComboBoxItem Content="Working set"/><ComboBoxItem Content="Disk latency"/></ComboBox><plot:WpfPlot x:Name="DiskPlot" Grid.Row="1"/></Grid></Border>
       </Grid>
       <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="1.45*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-       <Border Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><DockPanel Margin="0,0,0,6"><ComboBox DockPanel.Dock="Right" Width="140" SelectedValuePath="Content" SelectedValue="{Binding Ranking}" ToolTip="Choose ranking, then Apply interval"><ComboBoxItem Content="CPU"/><ComboBoxItem Content="Disk"/><ComboBoxItem Content="Latency"/></ComboBox><TextBlock Text="CONTRIBUTORS · double-click to explore" Style="{StaticResource Label}"/></DockPanel>
-        <DataGrid Grid.Row="1" x:Name="ContributorGrid" ItemsSource="{Binding Contributors}" MouseDoubleClick="ContributorClicked"><DataGrid.Columns>
+       <Border Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><DockPanel Margin="0,0,0,6"><ComboBox AutomationProperties.Name="Contributor ranking" DockPanel.Dock="Right" Width="140" SelectedValuePath="Content" SelectedValue="{Binding Ranking}" ToolTip="Choose ranking, then Apply interval"><ComboBoxItem Content="CPU"/><ComboBoxItem Content="Disk"/><ComboBoxItem Content="Latency"/></ComboBox><TextBlock Text="CONTRIBUTORS · Enter or double-click to explore" Style="{StaticResource Label}"/></DockPanel>
+        <DataGrid AutomationProperties.Name="Interval contributors" Grid.Row="1" x:Name="ContributorGrid" PreviewKeyDown="SelectionKeyDown" ItemsSource="{Binding Contributors}" MouseDoubleClick="ContributorClicked"><DataGrid.Columns>
          <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="150" MinWidth="150"/><DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
          <DataGridTextColumn Header="CPU samples" Binding="{Binding CpuSamples, StringFormat=N0, TargetNullValue=—}" Width="110"/><DataGridTextColumn Header="Sampled CPU ms" Binding="{Binding CpuMs, StringFormat=N2, TargetNullValue=—}" Width="125"/><DataGridTextColumn Header="Est. CPU %" Binding="{Binding CpuPercent, StringFormat=N1, TargetNullValue=—}" Width="85"/>
          <DataGridTextColumn Header="Disk bytes" Binding="{Binding DiskBytes, StringFormat=N0, TargetNullValue=—}" Width="115"/>
@@ -83,7 +83,7 @@
        </Grid></Border>
        <Border Grid.Column="1" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <TextBlock Text="INCIDENT CANDIDATES · heuristic conditions" Style="{StaticResource Label}"/>
-        <ListBox Grid.Row="1" x:Name="IncidentList" ItemsSource="{Binding Summary.Incidents}" MouseDoubleClick="IncidentClicked" BorderThickness="0"><ListBox.ItemTemplate><DataTemplate><StackPanel Margin="0,6"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" Foreground="#61768D" FontSize="11" Margin="0,5,0,8"/></StackPanel></DataTemplate></ListBox.ItemTemplate></ListBox>
+        <ListBox AutomationProperties.Name="Recorded incident candidates" Grid.Row="1" x:Name="IncidentList" PreviewKeyDown="SelectionKeyDown" ItemsSource="{Binding Summary.Incidents}" MouseDoubleClick="IncidentClicked" BorderThickness="0"><ListBox.ItemTemplate><DataTemplate><StackPanel Margin="0,6"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" Foreground="#61768D" FontSize="11" Margin="0,5,0,8"/></StackPanel></DataTemplate></ListBox.ItemTemplate></ListBox>
         <TextBlock Grid.Row="2" Text="An empty list means no detected condition, not proof of a healthy system." FontSize="11" Foreground="#61768D" TextWrapping="Wrap"/>
        </Grid></Border>
       </Grid>
@@ -93,31 +93,31 @@
      <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
       <ScrollViewer x:Name="EventFilterScroll" MaxHeight="340" VerticalScrollBarVisibility="Auto"><StackPanel><TextBlock Text="EVENT FILTERS · edits apply with Apply / first page; paging keeps the displayed filter set" Foreground="#61768D"/>
       <WrapPanel Margin="0,0,0,4">
-       <ComboBox Width="135" ToolTip="Recorded activity category" SelectedValuePath="Content" SelectedValue="{Binding Category}" Padding="7" Margin="4"><ComboBoxItem Content="All categories"/><ComboBoxItem Content="CPU"/><ComboBoxItem Content="Disk"/><ComboBoxItem Content="File"/><ComboBoxItem Content="Network"/><ComboBoxItem Content="Process"/><ComboBoxItem Content="Thread"/><ComboBoxItem Content="Module"/><ComboBoxItem Content="Memory"/><ComboBoxItem Content="HardFault"/><ComboBoxItem Content="Unsupported"/></ComboBox>
-       <TextBox Text="{Binding OperationFilter}" Width="165" ToolTip="Operation contains"/><TextBox Text="{Binding TargetFilter}" Width="275" ToolTip="Target path or endpoint contains"/>
+       <ComboBox AutomationProperties.Name="Recorded event category" Width="135" ToolTip="Recorded activity category" SelectedValuePath="Content" SelectedValue="{Binding Category}" Padding="7" Margin="4"><ComboBoxItem Content="All categories"/><ComboBoxItem Content="CPU"/><ComboBoxItem Content="Disk"/><ComboBoxItem Content="File"/><ComboBoxItem Content="Network"/><ComboBoxItem Content="Process"/><ComboBoxItem Content="Thread"/><ComboBoxItem Content="Module"/><ComboBoxItem Content="Memory"/><ComboBoxItem Content="HardFault"/><ComboBoxItem Content="Unsupported"/></ComboBox>
+       <TextBox AutomationProperties.Name="Operation contains" Text="{Binding OperationFilter}" Width="165" ToolTip="Operation contains"/><TextBox AutomationProperties.Name="Target path or endpoint contains" Text="{Binding TargetFilter}" Width="275" ToolTip="Target path or endpoint contains"/>
        <Button Content="Apply / first page" Click="FirstClicked"/><Button Content="Clear filters" Click="ClearFiltersClicked"/>
       </WrapPanel>
       <Expander x:Name="EventFiltersEditor" Header="Saved filters and include / exclude rules" Expanded="EventFiltersExpanded" Margin="4,0,0,8"><StackPanel>
-       <WrapPanel><ComboBox ItemsSource="{Binding FilterPresets}" SelectedItem="{Binding SelectedFilterPreset}" DisplayMemberPath="Name" Width="180" Margin="4" ToolTip="Saved filter set"/>
+       <WrapPanel><ComboBox AutomationProperties.Name="Saved event filter set" ItemsSource="{Binding FilterPresets}" SelectedItem="{Binding SelectedFilterPreset}" DisplayMemberPath="Name" Width="180" Margin="4" ToolTip="Saved filter set"/>
         <Button Content="Load" Click="LoadFilterClicked"/><Button Content="Delete" Click="DeleteFilterClicked"/>
-        <TextBox Text="{Binding FilterPresetName, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="Preset name; saving an existing name replaces it"/>
+        <TextBox AutomationProperties.Name="Event filter preset name" Text="{Binding FilterPresetName, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="Preset name; saving an existing name replaces it"/>
         <Button Content="Save named filters" Click="SaveFilterClicked"/>
        </WrapPanel>
        <TextBlock Text="{Binding FilterStoreStatus}" TextWrapping="Wrap" Foreground="#61768D" FontSize="11"/>
-       <WrapPanel><ComboBox ItemsSource="{Binding FilterFields}" SelectedItem="{Binding FilterField}" Width="135" Margin="4"/>
-        <ComboBox ItemsSource="{Binding FilterOperators}" SelectedItem="{Binding FilterOperator}" Width="120" Margin="4"/>
-        <TextBox Text="{Binding FilterValue, UpdateSourceTrigger=PropertyChanged}" Width="230" ToolTip="Case-insensitive literal value"/>
-        <ComboBox ItemsSource="{Binding FilterActions}" SelectedItem="{Binding FilterAction}" Width="95" Margin="4"/>
+       <WrapPanel><ComboBox AutomationProperties.Name="Filter field" ItemsSource="{Binding FilterFields}" SelectedItem="{Binding FilterField}" Width="135" Margin="4"/>
+        <ComboBox AutomationProperties.Name="Filter match operator" ItemsSource="{Binding FilterOperators}" SelectedItem="{Binding FilterOperator}" Width="120" Margin="4"/>
+        <TextBox AutomationProperties.Name="Filter literal value" Text="{Binding FilterValue, UpdateSourceTrigger=PropertyChanged}" Width="230" ToolTip="Case-insensitive literal value"/>
+        <ComboBox AutomationProperties.Name="Include or exclude rule" ItemsSource="{Binding FilterActions}" SelectedItem="{Binding FilterAction}" Width="95" Margin="4"/>
         <Button Content="Add rule" Click="AddFilterClicked"/><Button Content="Remove selected" Click="RemoveFilterClicked"/>
        </WrapPanel>
-       <DataGrid ItemsSource="{Binding FilterRules}" SelectedItem="{Binding SelectedFilterRule}" Height="100"><DataGrid.Columns>
+       <DataGrid AutomationProperties.Name="Event filter rules" ItemsSource="{Binding FilterRules}" SelectedItem="{Binding SelectedFilterRule}" Height="100"><DataGrid.Columns>
         <DataGridTextColumn Header="Field" Binding="{Binding Field}" Width="130"/><DataGridTextColumn Header="Match" Binding="{Binding Operator}" Width="120"/>
         <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/><DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="95"/>
        </DataGrid.Columns></DataGrid>
        <TextBlock Text="Includes: OR within a field, AND across fields. Any exclusion wins. Quick filters above also apply. Event filters do not change rankings or exported resource reports." TextWrapping="Wrap" Foreground="#61768D" FontSize="11"/>
       </StackPanel></Expander></StackPanel></ScrollViewer>
       <Expander Grid.Row="1" x:Name="LifetimePanel" Header="Selected process lifetime · seconds from trace start" IsExpanded="True" Margin="4,0,12,10"><Border Style="{StaticResource Card}"><plot:WpfPlot x:Name="LifetimePlot" Height="240"/></Border></Expander>
-      <DataGrid Grid.Row="2" x:Name="EventGrid" ItemsSource="{Binding Events}" MouseDoubleClick="EventClicked" PreviewMouseRightButtonDown="EventRightClicked">
+      <DataGrid AutomationProperties.Name="Captured events" Grid.Row="2" x:Name="EventGrid" PreviewKeyDown="SelectionKeyDown" ItemsSource="{Binding Events}" MouseDoubleClick="EventClicked" PreviewMouseRightButtonDown="EventRightClicked">
        <DataGrid.ContextMenu><ContextMenu>
         <MenuItem Header="Include process name" Tag="ProcessName:Include" Click="EventFilterClicked"/><MenuItem Header="Exclude process name" Tag="ProcessName:Exclude" Click="EventFilterClicked"/>
         <MenuItem Header="Include category" Tag="Category:Include" Click="EventFilterClicked"/><MenuItem Header="Exclude category" Tag="Category:Exclude" Click="EventFilterClicked"/>
@@ -136,14 +136,14 @@
     <TabItem Header="Evidence">
      <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
       <DockPanel Margin="0,0,0,12"><Button Content="Load local symbols" DockPanel.Dock="Right" Click="SymbolsClicked"/><TextBlock Text="CAPTURED RECORD · source coordinates and provenance" Style="{StaticResource Label}" VerticalAlignment="Center"/></DockPanel>
-      <TextBox Grid.Row="1" Text="{Binding EvidenceText, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="13" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Background="White"/>
+      <TextBox x:Name="EvidenceDetails" AutomationProperties.Name="Captured event and process evidence" Grid.Row="1" Text="{Binding EvidenceText, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="13" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Background="White"/>
      </Grid>
     </TabItem>
     <TabItem Header="Capture quality">
      <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16,0,0">
       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="RECORDED COVERAGE" Style="{StaticResource Label}"/><ItemsControl ItemsSource="{Binding Summary.Session.Capabilities}"><ItemsControl.ItemTemplate><DataTemplate><Grid Margin="0,7"><Grid.ColumnDefinitions><ColumnDefinition Width="95"/><ColumnDefinition Width="100"/><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{Binding Category}" FontWeight="SemiBold"/><TextBlock Grid.Column="1" Text="{Binding Status}"/><TextBlock Grid.Column="2" Text="{Binding Events, StringFormat=N0}"/><TextBlock Grid.Column="3" Text="{Binding Detail}" TextWrapping="Wrap" Foreground="#61768D"/></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="LIMITATIONS" Style="{StaticResource Label}"/><ItemsControl ItemsSource="{Binding Summary.Session.Warnings}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,6" Foreground="#8A6024"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="CONFIGURABLE INCIDENT HEURISTICS" Style="{StaticResource Label}"/><WrapPanel><TextBlock Text="CPU %" VerticalAlignment="Center"/><TextBox Text="{Binding CpuThreshold}" Width="65"/><TextBlock Text="Disk p95 ms" VerticalAlignment="Center"/><TextBox Text="{Binding LatencyThreshold}" Width="65"/><TextBlock Text="Seconds" VerticalAlignment="Center"/><TextBox Text="{Binding ConsecutiveSeconds}" Width="65"/><TextBlock Text="Disk operations / second" VerticalAlignment="Center"/><TextBox Text="{Binding MinimumDiskOperations}" Width="65"/><Button Content="Update heuristics" Click="SettingsClicked"/></WrapPanel><TextBlock Text="These rules identify recorded resource conditions. They do not establish a freeze or its cause." TextWrapping="Wrap" Foreground="#61768D" Margin="0,10"/></StackPanel></Border>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="CONFIGURABLE INCIDENT HEURISTICS" Style="{StaticResource Label}"/><WrapPanel><TextBlock Text="CPU %" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="CPU heuristic percent" Text="{Binding CpuThreshold}" Width="65"/><TextBlock Text="Disk p95 ms" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="Disk latency heuristic milliseconds" Text="{Binding LatencyThreshold}" Width="65"/><TextBlock Text="Seconds" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="Heuristic consecutive seconds" Text="{Binding ConsecutiveSeconds}" Width="65"/><TextBlock Text="Disk operations / second" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="Minimum disk operations per second" Text="{Binding MinimumDiskOperations}" Width="65"/><Button Content="Update heuristics" Click="SettingsClicked"/></WrapPanel><TextBlock Text="These rules identify recorded resource conditions. They do not establish a freeze or its cause." TextWrapping="Wrap" Foreground="#61768D" Margin="0,10"/></StackPanel></Border>
       <TextBlock Text="{Binding Summary.Session.SourceHash, StringFormat='SHA-256: {0}'}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap"/>
      </StackPanel></ScrollViewer>
     </TabItem>
@@ -154,7 +154,7 @@
        <TextBlock Text="Observe while you work, then mark the time a slowdown is noticeable." FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap"/>
        <TextBlock Text="Collection starts only when you choose Start. It runs without elevation and keeps a bounded in-memory history; stopping or closing the app discards it." TextWrapping="Wrap" Foreground="#61768D" Margin="0,10,0,12"/>
        <WrapPanel><Button Content="Start observing" Click="StartObservationClicked" Background="#167C80" Foreground="White"/>
-        <TextBox Text="{Binding MonitorMarkLabel}" Width="190" ToolTip="Mark label"/><Button Content="Mark slowdown" Click="MarkSlowdownClicked"/>
+        <TextBox AutomationProperties.Name="Observation mark label" Text="{Binding MonitorMarkLabel}" Width="190" ToolTip="Mark label"/><Button Content="Mark slowdown" Click="MarkSlowdownClicked"/>
         <Button Content="Stop observing" Click="StopObservationClicked"/><Button Content="Investigate history" Click="GoToInvestigationClicked"/></WrapPanel>
        <TextBlock Text="{Binding MonitorStatus}" TextWrapping="Wrap" Margin="4,12,0,0"/>
        <TextBlock Text="The first sample sets counter baselines. CPU is the sum of readable process CPU-time deltas, divided by elapsed time and logical processors; it is not a machine utilization counter. Process I/O bytes are accounting counters, not physical disk transfers." TextWrapping="Wrap" Foreground="#61768D" Margin="4,8,0,0"/>
@@ -165,7 +165,7 @@
        <Border Grid.Column="2" Style="{StaticResource Card}"><Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="ACCOUNTED PROCESS I/O · MiB/s" Style="{StaticResource Label}"/><plot:WpfPlot x:Name="MonitorIoPlot" Grid.Row="1"/></Grid></Border>
       </Grid>
       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="LATEST READABLE PROCESSES · trace-local lifetime identity" Style="{StaticResource Label}"/>
-       <DataGrid ItemsSource="{Binding MonitorTop}" Height="260"><DataGrid.Columns>
+       <DataGrid AutomationProperties.Name="Current observed processes" ItemsSource="{Binding MonitorTop}" Height="260"><DataGrid.Columns>
         <DataGridTextColumn Header="Process" Binding="{Binding Process.Name}" Width="160"/><DataGridTextColumn Header="PID" Binding="{Binding Process.Pid}" Width="65"/>
         <DataGridTextColumn Header="Session" Binding="{Binding Process.SessionId}" Width="65"/><DataGridTextColumn Header="CPU %" Binding="{Binding Process.CpuPercent, StringFormat=N2, TargetNullValue=—}" Width="75"/>
         <DataGridTextColumn Header="Read B/s" Binding="{Binding Process.ReadBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="100"/>
@@ -176,7 +176,7 @@
        </DataGrid.Columns></DataGrid></StackPanel></Border>
       <Border Style="{StaticResource Card}"><StackPanel>
        <DockPanel><Button DockPanel.Dock="Right" Content="Refresh lifetimes" Click="MonitorLifetimesClicked"/><TextBlock Text="OBSERVED PROCESS LIFETIMES · first/last seen in retained snapshots" Style="{StaticResource Label}" VerticalAlignment="Center"/></DockPanel>
-       <DataGrid ItemsSource="{Binding MonitorLifetimes}" Height="220"><DataGrid.Columns>
+       <DataGrid AutomationProperties.Name="Observed process lifetimes" ItemsSource="{Binding MonitorLifetimes}" Height="220"><DataGrid.Columns>
         <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="160"/><DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
         <DataGridTextColumn Header="Session" Binding="{Binding SessionId}" Width="65"/>
         <DataGridTextColumn Header="First seen UTC" Binding="{Binding FirstObservedUtc, StringFormat=HH:mm:ss}" Width="120"/>
@@ -189,13 +189,13 @@
       </StackPanel></Border>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
        <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="MARKS WITHIN RETAINED HISTORY" Style="{StaticResource Label}"/>
-        <DataGrid ItemsSource="{Binding MonitorMarks}" Height="150"><DataGrid.Columns><DataGridTextColumn Header="Time UTC" Binding="{Binding Utc, StringFormat=HH:mm:ss}" Width="90"/><DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="*"/></DataGrid.Columns></DataGrid></StackPanel></Border>
+        <DataGrid AutomationProperties.Name="Observation time marks" ItemsSource="{Binding MonitorMarks}" Height="150"><DataGrid.Columns><DataGridTextColumn Header="Time UTC" Binding="{Binding Utc, StringFormat=HH:mm:ss}" Width="90"/><DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="*"/></DataGrid.Columns></DataGrid></StackPanel></Border>
        <Border Grid.Column="1" Style="{StaticResource Card}"><StackPanel><TextBlock Text="RECENT COLLECTION GAPS" Style="{StaticResource Label}"/>
         <ItemsControl ItemsSource="{Binding Monitor.RecentGaps}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding Detail}" TextWrapping="Wrap" Margin="0,4" Foreground="#8A6024"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
       </Grid>
       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="RESOURCE HISTORY · CHART SAMPLES" Style="{StaticResource Label}"/>
        <TextBlock Text="Charts break across collection pauses. In long histories, a chart block with missing measurements leaves that metric blank; the original one-second evidence remains available in investigations." TextWrapping="Wrap" Foreground="#61768D" Margin="0,4,0,8"/>
-       <DataGrid ItemsSource="{Binding MonitorHistory}" Height="220"><DataGrid.Columns>
+       <DataGrid AutomationProperties.Name="Retained observation history" ItemsSource="{Binding MonitorHistory}" Height="220"><DataGrid.Columns>
         <DataGridTextColumn Header="Time UTC" Binding="{Binding Utc, StringFormat=HH:mm:ss}" Width="105"/>
         <DataGridTextColumn Header="Rate interval s" Binding="{Binding IntervalSeconds, StringFormat=N2, TargetNullValue=—}" Width="110"/><DataGridTextColumn Header="Accounted CPU %" Binding="{Binding CpuPercent, StringFormat=N2, TargetNullValue=—}" Width="145"/>
         <DataGridTextColumn Header="Read B/s" Binding="{Binding ReadBytesPerSecond, StringFormat=N0, TargetNullValue=—}" Width="115"/>
@@ -214,8 +214,8 @@
        <TextBlock Text="Start recording, reproduce the slowdown, then stop and inspect the saved evidence." FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,14"/>
        <TextBlock Text="Only the temporary recording helper requests administrator elevation. Recording stops automatically after the selected duration." TextWrapping="Wrap" Foreground="#61768D" Margin="0,0,0,14"/>
        <WrapPanel><TextBlock Text="Profile" VerticalAlignment="Center"/>
-        <ComboBox ItemsSource="{Binding RecordingProfiles}" SelectedItem="{Binding SelectedCaptureProfile}" DisplayMemberPath="Name" Width="270" Padding="8" Margin="8"/>
-        <TextBlock Text="Duration" VerticalAlignment="Center"/><TextBox Text="{Binding RecordingSeconds}" Width="70"/><TextBlock Text="seconds (5–120)" VerticalAlignment="Center" Foreground="#61768D"/>
+        <ComboBox AutomationProperties.Name="Recording profile" ItemsSource="{Binding RecordingProfiles}" SelectedItem="{Binding SelectedCaptureProfile}" DisplayMemberPath="Name" Width="270" Padding="8" Margin="8"/>
+        <TextBlock Text="Duration" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="Recording duration seconds" Text="{Binding RecordingSeconds}" Width="70"/><TextBlock Text="seconds (5–120)" VerticalAlignment="Center" Foreground="#61768D"/>
        </WrapPanel>
        <TextBlock Text="{Binding SelectedCaptureProfile.Description}" TextWrapping="Wrap" Foreground="#61768D" Margin="0,10,0,14"/>
        <WrapPanel><Button Content="Start recording" Click="StartRecordingClicked" IsEnabled="{Binding CanRecord}" Background="#167C80" Foreground="White"/>
@@ -238,23 +238,23 @@
       <Border Style="{StaticResource Card}"><Expander Header="Select history, symptom, and affected application" IsExpanded="{Binding InvestigationEditorOpen}"><StackPanel>
        <TextBlock Text="UNDERSTAND A SELECTED INTERVAL" Style="{StaticResource Label}"/>
        <TextBlock Text="Describe the symptom, select recorded history, and inspect what the measurements support." FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap"/>
-       <WrapPanel Margin="0,12,0,0"><TextBlock Text="Symptom" VerticalAlignment="Center"/><TextBox Text="{Binding InvestigationSymptom}" Width="320"/>
-        <TextBlock Text="Start / end seconds" VerticalAlignment="Center"/><TextBox Text="{Binding InvestigationStart}" Width="80"/><TextBox Text="{Binding InvestigationEnd}" Width="80"/>
+       <WrapPanel Margin="0,12,0,0"><TextBlock Text="Symptom" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="Investigation symptom" Text="{Binding InvestigationSymptom}" Width="320"/>
+        <TextBlock Text="Start / end seconds" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="Investigation start seconds" Text="{Binding InvestigationStart}" Width="80"/><TextBox AutomationProperties.Name="Investigation end seconds" Text="{Binding InvestigationEnd}" Width="80"/>
         <Button Content="Recent 30 seconds" Click="RecentInvestigationClicked"/></WrapPanel>
-       <WrapPanel><TextBlock Text="Affected application" VerticalAlignment="Center"/><ComboBox ItemsSource="{Binding MonitorLifetimes}" SelectedItem="{Binding InvestigationProcess}" DisplayMemberPath="DisplayLabel" Width="300" Margin="8"/>
+       <WrapPanel><TextBlock Text="Affected application" VerticalAlignment="Center"/><ComboBox AutomationProperties.Name="Affected observed application" ItemsSource="{Binding MonitorLifetimes}" SelectedItem="{Binding InvestigationProcess}" DisplayMemberPath="DisplayLabel" Width="300" Margin="8"/>
         <Button Content="Whole PC" Click="WholePcClicked"/><Button Content="Refresh lifetimes" Click="MonitorLifetimesClicked"/>
-        <ComboBox ItemsSource="{Binding MonitorMarks}" SelectedItem="{Binding InvestigationMark}" DisplayMemberPath="Label" Width="180" Margin="8"/><Button Content="Use marked time" Click="MarkedInvestigationClicked"/></WrapPanel>
-       <WrapPanel><TextBlock Text="CPU heuristic % / seconds" VerticalAlignment="Center"/><TextBox Text="{Binding InvestigationCpuThreshold}" Width="65"/><TextBox Text="{Binding InvestigationSustainedSeconds}" Width="65"/>
+        <ComboBox AutomationProperties.Name="Investigation time mark" ItemsSource="{Binding MonitorMarks}" SelectedItem="{Binding InvestigationMark}" DisplayMemberPath="Label" Width="180" Margin="8"/><Button Content="Use marked time" Click="MarkedInvestigationClicked"/></WrapPanel>
+       <WrapPanel><TextBlock Text="CPU heuristic % / seconds" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="Investigation CPU heuristic percent" Text="{Binding InvestigationCpuThreshold}" Width="65"/><TextBox AutomationProperties.Name="Investigation heuristic sustained seconds" Text="{Binding InvestigationSustainedSeconds}" Width="65"/>
         <Button Content="Understand interval" Click="CreateInvestigationClicked" Background="#167C80" Foreground="White"/><Button Content="Open saved investigation" Click="OpenInvestigationClicked"/></WrapPanel>
-       <TextBox Text="{Binding InvestigationNotes}" ToolTip="Optional notes; these are included when saving and exporting." MinHeight="45" TextWrapping="Wrap"/>
+       <TextBox AutomationProperties.Name="Investigation notes included in saved evidence and reports" Text="{Binding InvestigationNotes}" ToolTip="Optional notes; these are included when saving and exporting." MinHeight="45" TextWrapping="Wrap"/>
        <TextBlock Text="{Binding InvestigationStatus}" TextWrapping="Wrap" Margin="4,10,0,0" Foreground="#61768D"/>
       </StackPanel></Expander></Border>
       <Border Style="{StaticResource Card}"><StackPanel>
-       <DockPanel><ComboBox ItemsSource="{Binding Investigations}" SelectedItem="{Binding SelectedInvestigation}" DisplayMemberPath="DisplayLabel" MinWidth="360" Margin="0,0,12,8"/>
+       <DockPanel><ComboBox AutomationProperties.Name="Selected investigation" ItemsSource="{Binding Investigations}" SelectedItem="{Binding SelectedInvestigation}" DisplayMemberPath="DisplayLabel" MinWidth="360" Margin="0,0,12,8"/>
         <WrapPanel><Button Content="Save evidence" Click="SaveInvestigationClicked"/><Button Content="Export report" Click="ExportInvestigationClicked"/><Button Content="Attach selected ETL" Click="AttachInvestigationTraceClicked"/><Button Content="Close" Click="CloseInvestigationClicked"/></WrapPanel></DockPanel>
        <TextBlock Text="{Binding SelectedInvestigation.Investigation.Scope}" FontWeight="SemiBold" FontSize="16"/>
        <TextBlock Text="{Binding SelectedInvestigation.Investigation.Window.DurationSeconds, StringFormat='User-selected duration: {0:F2} seconds'}" Margin="0,5"/>
-       <ListBox ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" ItemsSource="{Binding SelectedInvestigation.Investigation.Findings}" SelectedItem="{Binding SelectedFinding}" BorderThickness="0" Background="Transparent"><ListBox.ItemTemplate><DataTemplate><StackPanel Margin="0,8">
+       <ListBox AutomationProperties.Name="Investigation findings" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" ItemsSource="{Binding SelectedInvestigation.Investigation.Findings}" SelectedItem="{Binding SelectedFinding}" BorderThickness="0" Background="Transparent"><ListBox.ItemTemplate><DataTemplate><StackPanel Margin="0,8">
         <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="16"/><TextBlock Text="{Binding Statement}" TextWrapping="Wrap" Margin="0,5"/>
         <TextBlock Text="{Binding Provenance, StringFormat='Provenance: {0}'}" Foreground="#61768D"/>
         <Expander Header="Evidence limits and prerequisites"><StackPanel><ItemsControl ItemsSource="{Binding Prerequisites}"/><ItemsControl ItemsSource="{Binding Limitations}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="#61768D" TextWrapping="Wrap" FontSize="12" Margin="0,3"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Expander>
@@ -266,27 +266,27 @@
        <TextBlock Text="{Binding SelectedInvestigation.AttachedTrace.Session.SourceHash, StringFormat='Separately attached ETL SHA-256: {0}'}" FontFamily="Consolas" TextWrapping="Wrap" Margin="0,8"/>
        <TextBlock Text="Reports include process names, machine metadata, notes, and source coordinates. Raw ETL files and full snapshot records are excluded from reports; saved .woi files preserve snapshot evidence. Review the exported report before sharing." TextWrapping="Wrap" Foreground="#61768D" FontSize="12" Margin="0,10"/>
       </StackPanel></Border>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="CONTRIBUTORS · double-click for snapshot evidence" Style="{StaticResource Label}"/>
-       <DataGrid x:Name="InvestigationContributors" ItemsSource="{Binding SelectedInvestigation.Investigation.Contributors}" Height="200" MouseDoubleClick="InvestigationContributorClicked"><DataGrid.Columns>
+      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="CONTRIBUTORS · Enter or double-click for snapshot evidence" Style="{StaticResource Label}"/>
+       <DataGrid AutomationProperties.Name="Investigation contributors" x:Name="InvestigationContributors" PreviewKeyDown="SelectionKeyDown" ItemsSource="{Binding SelectedInvestigation.Investigation.Contributors}" Height="200" MouseDoubleClick="InvestigationContributorClicked"><DataGrid.Columns>
         <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="160"/><DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
         <DataGridTextColumn Header="CPU-seconds" Binding="{Binding CpuSeconds, StringFormat=N3, TargetNullValue=—}" Width="115"/><DataGridTextColumn Header="Accounted reads B" Binding="{Binding ReadBytes, StringFormat=N0, TargetNullValue=—}" Width="150"/>
         <DataGridTextColumn Header="Accounted writes B" Binding="{Binding WriteBytes, StringFormat=N0, TargetNullValue=—}" Width="150"/><DataGridTextColumn Header="Peak private B" Binding="{Binding PeakPrivateBytes, StringFormat=N0, TargetNullValue=—}" Width="130"/>
         <DataGridTextColumn Header="Lifetime" Binding="{Binding LifetimeId}" Width="220"/>
        </DataGrid.Columns></DataGrid>
-       <TextBox Text="{Binding InvestigationEvidenceText, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="12" Height="220" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+       <TextBox x:Name="InvestigationEvidenceDetails" AutomationProperties.Name="Investigation snapshot evidence" Text="{Binding InvestigationEvidenceText, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="12" Height="220" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
       </StackPanel></Border>
       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="COMPARE TWO ATTEMPTS" Style="{StaticResource Label}"/>
        <TextBlock Text="Select two marked attempts. For separate sessions, save and reopen both investigations first." TextWrapping="Wrap" Foreground="#61768D" Margin="0,8"/>
-       <WrapPanel><TextBlock Text="First" VerticalAlignment="Center"/><ComboBox ItemsSource="{Binding Investigations}" SelectedItem="{Binding FirstAttempt}" DisplayMemberPath="DisplayLabel" Width="430" Margin="8"/>
-        <TextBlock Text="Second" VerticalAlignment="Center"/><ComboBox ItemsSource="{Binding Investigations}" SelectedItem="{Binding SecondAttempt}" DisplayMemberPath="DisplayLabel" Width="430" Margin="8"/></WrapPanel>
-       <WrapPanel><TextBlock Text="Same task" VerticalAlignment="Center"/><TextBox Text="{Binding ComparisonTask}" Width="350"/>
-        <TextBlock Text="Change made" VerticalAlignment="Center"/><TextBox Text="{Binding ComparisonChange}" Width="350"/></WrapPanel>
+       <WrapPanel><TextBlock Text="First" VerticalAlignment="Center"/><ComboBox AutomationProperties.Name="First comparison attempt" ItemsSource="{Binding Investigations}" SelectedItem="{Binding FirstAttempt}" DisplayMemberPath="DisplayLabel" Width="430" Margin="8"/>
+        <TextBlock Text="Second" VerticalAlignment="Center"/><ComboBox AutomationProperties.Name="Second comparison attempt" ItemsSource="{Binding Investigations}" SelectedItem="{Binding SecondAttempt}" DisplayMemberPath="DisplayLabel" Width="430" Margin="8"/></WrapPanel>
+       <WrapPanel><TextBlock Text="Same task" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="Task being compared" Text="{Binding ComparisonTask}" Width="350"/>
+        <TextBlock Text="Change made" VerticalAlignment="Center"/><TextBox AutomationProperties.Name="Change between attempts" Text="{Binding ComparisonChange}" Width="350"/></WrapPanel>
        <CheckBox Content="I confirm both intervals contain equivalent work for the same task." IsChecked="{Binding SameTaskConfirmed}" Margin="4,8"/>
-       <TextBox Text="{Binding ApplicationContext}" ToolTip="For different application lifetimes or sessions, record the application path/version context you checked."/>
+       <TextBox AutomationProperties.Name="Application path and version context" Text="{Binding ApplicationContext}" ToolTip="For different application lifetimes or sessions, record the application path/version context you checked."/>
        <CheckBox Content="For different application lifetimes, I checked and confirm matching path/version context." IsChecked="{Binding ApplicationContextConfirmed}" Margin="4,8"/>
        <WrapPanel><Button Content="Compare attempts" Click="CompareAttemptsClicked"/><Button Content="Export comparison" Click="ExportComparisonClicked"/></WrapPanel>
        <TextBlock Text="{Binding AttemptComparison.Statement}" TextWrapping="Wrap" FontSize="15" Margin="0,10"/>
-       <DataGrid ItemsSource="{Binding AttemptComparison.Metrics}" Height="200"><DataGrid.Columns>
+       <DataGrid AutomationProperties.Name="Attempt comparison measurements" ItemsSource="{Binding AttemptComparison.Metrics}" Height="200"><DataGrid.Columns>
         <DataGridTextColumn Header="Measurement" Binding="{Binding Name}" Width="270"/><DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="100"/>
         <DataGridTextColumn Header="First" Binding="{Binding First, StringFormat=N3, TargetNullValue=—}" Width="120"/><DataGridTextColumn Header="Second" Binding="{Binding Second, StringFormat=N3, TargetNullValue=—}" Width="120"/>
         <DataGridTextColumn Header="Difference %" Binding="{Binding ChangePercent, StringFormat=N2, TargetNullValue=—}" Width="110"/><DataGridCheckBoxColumn Header="Comparable" Binding="{Binding Comparable}" Width="90"/>
@@ -313,7 +313,7 @@
        <Button Content="Explore process" Click="HistoryExploreClicked"/>
        <Button Content="Inspect lifetime" Click="HistoryEvidenceClicked"/>
       </WrapPanel>
-      <DataGrid Grid.Row="2" x:Name="HistoryGrid" ItemsSource="{Binding HistoryRows}" SelectedItem="{Binding SelectedHistoryRow}" MouseDoubleClick="HistoryExploreClicked" CanUserSortColumns="False" AutomationProperties.Name="Historical process families">
+      <DataGrid Grid.Row="2" x:Name="HistoryGrid" PreviewKeyDown="SelectionKeyDown" ItemsSource="{Binding HistoryRows}" SelectedItem="{Binding SelectedHistoryRow}" MouseDoubleClick="HistoryExploreClicked" CanUserSortColumns="False" AutomationProperties.Name="Historical process families">
        <DataGrid.Columns>
         <DataGridTemplateColumn Header="Process · parentage" Width="220"><DataGridTemplateColumn.CellTemplate><DataTemplate>
          <TextBlock Text="{Binding Name}" Margin="{Binding Indent}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Row.Entity.DisplayLabel}"/>
@@ -343,11 +343,11 @@
        <TextBlock Text="{Binding StackCoverage}" TextWrapping="Wrap" Foreground="#61768D" Margin="0,6"/>
        <TextBlock Text="Inclusive: sample contains frame; self: sampled leaf. Recursive functions count once per sample; call paths keep recursion. Callers/callees focus the occurrence closest to the leaf." TextWrapping="Wrap" Foreground="#61768D" FontSize="11"/>
       </StackPanel></ScrollViewer>
-      <StackPanel Grid.Row="1"><WrapPanel Margin="0,6"><ComboBox ItemsSource="{Binding StackGroupings}" SelectedItem="{Binding StackGrouping}" Width="115" Margin="4" ToolTip="Grouping applies with Use interval"/>
+      <StackPanel Grid.Row="1"><WrapPanel Margin="0,6"><ComboBox AutomationProperties.Name="CPU stack grouping" ItemsSource="{Binding StackGroupings}" SelectedItem="{Binding StackGrouping}" Width="115" Margin="4" ToolTip="Grouping applies with Use interval"/>
        <Button Content="Use interval" Click="StackLoadClicked"/><Button Content="Functions" Click="StackFunctionsClicked"/><Button Content="Call tree" Click="StackTreeClicked"/>
        <Button Content="Callers" Click="StackCallersClicked"/><Button Content="Callees" Click="StackCalleesClicked"/><Button Content="Open path" Click="StackDescendClicked"/><Button Content="Up" Click="StackUpClicked"/>
       </WrapPanel><TextBlock Text="{Binding StackPath}" ToolTip="{Binding StackPath}" TextTrimming="CharacterEllipsis" Margin="4,0,0,6"/></StackPanel>
-      <DataGrid Grid.Row="2" x:Name="CpuStackGrid" ItemsSource="{Binding CpuStackRows}" SelectedItem="{Binding SelectedStackRow}" MouseDoubleClick="StackDescendClicked" CanUserSortColumns="False" AutomationProperties.Name="Captured CPU stack aggregates">
+      <DataGrid Grid.Row="2" x:Name="CpuStackGrid" PreviewKeyDown="SelectionKeyDown" ItemsSource="{Binding CpuStackRows}" SelectedItem="{Binding SelectedStackRow}" MouseDoubleClick="StackDescendClicked" CanUserSortColumns="False" AutomationProperties.Name="Captured CPU stack aggregates">
        <DataGrid.Columns><DataGridTemplateColumn Header="Function / module / call path" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate>
         <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"><TextBlock.ToolTip><StackPanel><TextBlock Text="{Binding Name}"/><TextBlock Text="{Binding Key}"/></StackPanel></TextBlock.ToolTip></TextBlock>
        </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
@@ -373,7 +373,7 @@
         <TextBlock Text="{Binding ComparisonCaption}" TextWrapping="Wrap"/>
         <WrapPanel>
          <WrapPanel.Style><Style TargetType="WrapPanel"><Style.Triggers><DataTrigger Binding="{Binding Busy}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
-         <ComboBox ItemsSource="{Binding IntervalMetrics}" SelectedItem="{Binding ComparisonMetric}" Width="145" Padding="5" ToolTip="Contributor metric; choose Compare A/B to apply"/>
+         <ComboBox AutomationProperties.Name="Interval comparison contributor metric" ItemsSource="{Binding IntervalMetrics}" SelectedItem="{Binding ComparisonMetric}" Width="145" Padding="5" ToolTip="Contributor metric; choose Compare A/B to apply"/>
          <Button Content="Compare A/B" Click="CompareIntervalsClicked"/>
          <Button Content="Swap A/B" Click="SwapIntervalsClicked"/>
          <Button Content="Open A" Click="OpenBaselineClicked"/>
@@ -383,7 +383,7 @@
         <TextBlock Text="Totals cover each complete range. Rates are units per selected second, not work-normalized throughput. Δ = B − A; — means unavailable." TextWrapping="Wrap" FontSize="11" Foreground="#61768D"/>
        </StackPanel>
       </ScrollViewer>
-      <DataGrid Grid.Row="1" ItemsSource="{Binding IntervalTotals}" Margin="0,6,0,6" RowHeight="25" ColumnHeaderHeight="28"><DataGrid.Columns>
+      <DataGrid AutomationProperties.Name="Interval comparison totals" Grid.Row="1" ItemsSource="{Binding IntervalTotals}" Margin="0,6,0,6" RowHeight="25" ColumnHeaderHeight="28"><DataGrid.Columns>
        <DataGridTextColumn Header="Recorded metric" Binding="{Binding Name}" Width="210"/>
        <DataGridTextColumn Header="Units" Binding="{Binding Unit}" Width="75"/>
        <DataGridTextColumn Header="A total" Binding="{Binding Baseline, StringFormat=N3, TargetNullValue=—}" Width="105"/>
@@ -395,7 +395,7 @@
        <DataGridTextColumn Header="Δ / s" Binding="{Binding RateDifference, StringFormat=N3, TargetNullValue=—}" Width="100"/>
       </DataGrid.Columns></DataGrid>
       <TextBlock Grid.Row="2" Text="{Binding IntervalComparisonCaption}" TextWrapping="Wrap" FontSize="11" Margin="0,2,0,5"/>
-      <DataGrid Grid.Row="3" x:Name="IntervalComparisonGrid" ItemsSource="{Binding IntervalRows}" SelectedItem="{Binding SelectedIntervalRow}" RowHeight="28"><DataGrid.Columns>
+      <DataGrid AutomationProperties.Name="Interval comparison contributors" Grid.Row="3" x:Name="IntervalComparisonGrid" ItemsSource="{Binding IntervalRows}" SelectedItem="{Binding SelectedIntervalRow}" RowHeight="28"><DataGrid.Columns>
        <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="160"/>
        <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/>
        <DataGridTextColumn Header="A total" Binding="{Binding Value.Baseline, StringFormat=N3, TargetNullValue=—}" Width="100"/>

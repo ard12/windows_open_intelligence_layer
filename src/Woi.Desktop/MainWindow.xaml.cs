@@ -115,8 +115,7 @@ public partial class MainWindow : Window
                         model.ComparisonTask = "Equivalent smoke-test intervals"; model.SameTaskConfirmed = true;
                         await model.CompareAttempts();
                         if(model.AttemptComparison == null) throw new InvalidOperationException("Within-session comparison failed: " + model.InvestigationStatus);
-                        await model.ShowSnapshotEvidence();
-                        if(!model.InvestigationEvidenceText.Contains("monotonicTick")) throw new InvalidOperationException("Snapshot evidence failed: " + model.InvestigationStatus);
+                        if(!await model.ShowSnapshotEvidence() || !model.InvestigationEvidenceText.Contains("monotonicTick")) throw new InvalidOperationException("Snapshot evidence failed: " + model.InvestigationStatus);
                         investigationVerified = true;
                         model.StopObservation();
                         if(model.Investigations.Count != 0) throw new InvalidOperationException("Unsaved pinned investigations remained after stop.");
@@ -174,8 +173,9 @@ public partial class MainWindow : Window
                 await model.AllHistoryFamilies();
                 Views.SelectedItem = ProcessHistoryTab; await Task.Delay(200);
                 Capture(Path.ChangeExtension(snapshot,"history.png"));
+                await VerifyAccessibility(snapshot);
                 File.WriteAllText(Path.ChangeExtension(snapshot,"json"),JsonSerializer.Serialize(new {
-                    success=true, timelineComparisonVerified=true, cpuStacksVerified=true, eventFiltersVerified=true, eventNavigationVerified=true, processHistoryVerified=true, historyCancellationVerified=true, historyErrorPreserved=true, recordedFamilyVerified, lazyAnalysisStartupVerified=true, savedOnlyStartupVerified, workerRecoveryVerified=recovered, monitorVerified, investigationVerified, savedComparisonVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
+                    success=true, accessibleControlNamesVerified=true, keyboardNavigationVerified=true, timelineComparisonVerified=true, cpuStacksVerified=true, eventFiltersVerified=true, eventNavigationVerified=true, processHistoryVerified=true, historyCancellationVerified=true, historyErrorPreserved=true, recordedFamilyVerified, lazyAnalysisStartupVerified=true, savedOnlyStartupVerified, workerRecoveryVerified=recovered, monitorVerified, investigationVerified, savedComparisonVerified, observedLifetimes, events=model.Events.Count, contributors=model.Contributors.Count,
                     indexedEvents=model.Summary?.Session.IndexedEvents,
                     cpuStackCoverage = model.CpuStacks == null ? null : new { model.CpuStacks.Selected, model.CpuStacks.WithStacks, model.CpuStacks.WithoutStacks,
                         model.CpuStacks.UnresolvedSamples, model.CpuStacks.TruncatedSamples, model.CpuStacks.TotalRows },
@@ -313,7 +313,7 @@ public partial class MainWindow : Window
     private async void CloseInvestigationClicked(object sender, RoutedEventArgs e) { if (model != null) await model.CloseInvestigation(); }
     private async void AttachInvestigationTraceClicked(object sender, RoutedEventArgs e) { if (model != null) await model.AttachTraceToInvestigation(); }
     private async void InvestigationEvidenceClicked(object sender, RoutedEventArgs e) { if (model != null) await model.ShowSnapshotEvidence(); }
-    private async void InvestigationContributorClicked(object sender, MouseButtonEventArgs e) { if (model != null && InvestigationContributors.SelectedItem is InvestigationContributor row) await model.ShowSnapshotEvidence(row.Evidence); }
+    private async void InvestigationContributorClicked(object sender, RoutedEventArgs e) => await ActivateSelection(InvestigationContributors);
     private async void CompareAttemptsClicked(object sender, RoutedEventArgs e) { if (model != null) await model.CompareAttempts(); }
     private async void ExportComparisonClicked(object sender, RoutedEventArgs e)
     {
@@ -368,24 +368,14 @@ public partial class MainWindow : Window
     private async void BookmarkClicked(object sender,RoutedEventArgs e) { if(model!=null)await model.SaveBookmark(); }
     private async void BookmarkSelected(object sender,System.Windows.Controls.SelectionChangedEventArgs e) { if(model?.Busy==false)await model.SelectBookmark(BookmarkList.SelectedItem as Bookmark); }
     private async void SettingsClicked(object sender,RoutedEventArgs e) { if(model!=null)await model.Configure(); }
-    private async void EventClicked(object sender,RoutedEventArgs e)
-    {
-        if(model == null || model.Busy || EventGrid.SelectedItem is not Observation row)return;
-        await model.ShowEvidence(row); if (model.Error.Length == 0 && model.Status == "Captured event loaded.") Views.SelectedIndex=2;
-    }
+    private async void EventClicked(object sender, RoutedEventArgs e) => await ActivateSelection(EventGrid);
     private async void EntityClicked(object sender,RoutedEventArgs e)
     {
         if(model == null || model.Busy || model.SelectedProcess is not { } process)return;
         await model.ShowEntity(process); if (model.Error.Length == 0 && model.Status == "Captured process loaded.") Views.SelectedIndex=2;
     }
-    private async void ContributorClicked(object sender,MouseButtonEventArgs e)
-    {
-        if(model==null)return; await model.SelectContributor(ContributorGrid.SelectedItem as Contributor); Views.SelectedIndex=1;
-    }
-    private async void IncidentClicked(object sender,MouseButtonEventArgs e)
-    {
-        if(model!=null)await model.SelectIncident(IncidentList.SelectedItem as Incident);
-    }
+    private async void ContributorClicked(object sender, RoutedEventArgs e) => await ActivateSelection(ContributorGrid);
+    private async void IncidentClicked(object sender, RoutedEventArgs e) => await ActivateSelection(IncidentList);
     private async void SymbolsClicked(object sender,RoutedEventArgs e)
     {
         if(model == null || model.Busy || model.EvidenceEventIndex == null)return;

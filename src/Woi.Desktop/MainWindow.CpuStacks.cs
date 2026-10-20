@@ -11,7 +11,7 @@ public partial class MainWindow
     private async void StackTreeClicked(object sender, RoutedEventArgs e) => await model!.StackView(CpuStackView.CallTree);
     private async void StackCallersClicked(object sender, RoutedEventArgs e) => await model!.StackView(CpuStackView.Callers);
     private async void StackCalleesClicked(object sender, RoutedEventArgs e) => await model!.StackView(CpuStackView.Callees);
-    private async void StackDescendClicked(object sender, RoutedEventArgs e) => await model!.DescendStack();
+    private async void StackDescendClicked(object sender, RoutedEventArgs e) => await ActivateSelection(CpuStackGrid);
     private async void StackUpClicked(object sender, RoutedEventArgs e) => await model!.StackParent();
     private async void StackPreviousClicked(object sender, RoutedEventArgs e) => await model!.StackPage(false);
     private async void StackNextClicked(object sender, RoutedEventArgs e) => await model!.StackPage(true);

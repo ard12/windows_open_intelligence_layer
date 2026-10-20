@@ -114,7 +114,7 @@ public partial class MainViewModel
             AddInvestigation(updated, owner); InvestigationStatus = "Attached the selected ETL evidence as a separate source. Clock alignment and causality are not inferred.";
         } catch (Exception ex) { InvestigationStatus = ex.Message; }
     }
-    public async Task ShowSnapshotEvidence(SnapshotReference? reference = null)
+    public async Task<bool> ShowSnapshotEvidence(SnapshotReference? reference = null)
     {
         try {
             var view = SelectedInvestigation!;
@@ -122,7 +122,9 @@ public partial class MainViewModel
             if (reference == null) throw new WoiException("MissingEvidence", "Select a finding with a snapshot reference.");
             var detail = await Owner(view).Send<SnapshotDetail>("investigation.evidence", new { id = view.Investigation.Id, reference });
             InvestigationEvidenceText = JsonSerializer.Serialize(detail, new JsonSerializerOptions(Wire.Json) { WriteIndented = true });
-        } catch (Exception ex) { InvestigationStatus = ex.Message; }
+            InvestigationStatus = "Recorded snapshot evidence loaded.";
+            return true;
+        } catch (Exception ex) { InvestigationStatus = ex.Message; return false; }
     }
     public async Task CompareAttempts()
     {
