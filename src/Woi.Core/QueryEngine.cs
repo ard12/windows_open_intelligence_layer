@@ -148,29 +148,6 @@ public sealed partial class QueryEngine(ITraceReader reader, CacheStore store)
         return new(Session, interval, explanation, contributors,
             Summary().Incidents.Where(x => x.EndMs > interval.StartMs && x.StartMs < interval.EndMs).ToArray(), Session.Warnings, Findings:findings);
     }
-    public void Export(string path, string format, IntervalQuery interval, CancellationToken token)
-    {
-        if(format is not ("json" or "markdown"))throw new WoiException("InvalidFormat","Choose json or markdown export.");
-        var report = Report(interval, token);
-        if (format.Equals("json", StringComparison.OrdinalIgnoreCase)) {
-            File.WriteAllText(path, JsonSerializer.Serialize(report, new JsonSerializerOptions(Wire.Json) { WriteIndented = true }));
-            return;
-        }
-        static string MiB(long? value) => value is {} bytes ? (bytes/1048576d).ToString("F2",CultureInfo.InvariantCulture) : "unavailable";
-        var text = new StringBuilder("# Windows Open Intelligence incident report\n\n");
-        text.AppendLine(report.Explanation).AppendLine().AppendLine("Provenance: resource attribution.").AppendLine();
-        text.AppendLine($"Source SHA-256: {Session.SourceHash}").AppendLine($"Parser: {Session.ParserVersion} / analysis: {Wire.AnalysisVersion}");
-        text.AppendLine(FormattableString.Invariant($"Interval: {interval.StartMs/1000:F3}–{interval.EndMs/1000:F3} seconds from trace start.")).AppendLine();
-        text.AppendLine("| Process | PID | CPU samples | Estimated sampled CPU ms | Physical disk MiB | Logical file MiB | Network event MiB |").AppendLine("|---|---:|---:|---:|---:|---:|---:|");
-        foreach (var x in report.Contributors)
-            text.AppendLine(FormattableString.Invariant($"| {x.Name.Replace("|", "\\|").Replace("\n", " ")} | {x.Pid} | {x.CpuSamples} | {(x.CpuMs is { } ms ? ms.ToString("F2", CultureInfo.InvariantCulture) : "unavailable")} | {MiB(x.DiskBytes)} | {MiB(x.FileBytes)} | {MiB(x.NetworkBytes)} |"));
-        text.AppendLine().AppendLine("## Classified findings").AppendLine();
-        foreach(var finding in report.Findings ?? []) text.AppendLine($"- {finding.Provenance}: {finding.Text}");
-        text.AppendLine().AppendLine("## Evidence coordinates").AppendLine();
-        foreach (var evidence in report.Contributors.SelectMany(x => x.Evidence).DistinctBy(x => x.EtlxEventIndex).Take(30))
-            text.AppendLine(FormattableString.Invariant($"- ETLX index {evidence.EtlxEventIndex}; {evidence.TimeMs/1000:F6}s; {evidence.Provider}/{evidence.EventName}; PID {evidence.Pid}, TID {evidence.Tid}."));
-        text.AppendLine().AppendLine("ETLX is derived data; its indices are not raw ETL offsets. Open the original trace in WPA and use the time/provider coordinates.").AppendLine();
-        foreach (var warning in report.Limitations) text.AppendLine("- " + warning);
-        File.WriteAllText(path, text.ToString());
-    }
+    public void Export(string path, string format, IntervalQuery interval, CancellationToken token, ExportPrivacyOptions? privacy = null) =>
+        ReportExport.Write(path, format, Report(interval, token), privacy, token);
 }

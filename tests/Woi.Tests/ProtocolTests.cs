@@ -76,6 +76,35 @@ public sealed class ProtocolTests
         await worker.Send("export","export",new{path=report,format="markdown",interval=new IntervalQuery(0,end)});
         Assert.Equal("result",(await worker.Result("export")).GetProperty("kind").GetString());
         Assert.Contains("not raw ETL offsets",File.ReadAllText(report));
+        await worker.Send("cpu-events", "events", new EventQuery(0, end, Category: "CPU"));
+        var events = (await worker.Result("cpu-events")).GetProperty("result").Deserialize<EventPage>(Wire.Json)!;
+        var sample = events.Events.First(x => x.ProcessId != null && x.ThreadId != null);
+        await worker.Send("threads", "entity", new { id = sample.ProcessId });
+        var entity = (await worker.Result("threads")).GetProperty("result").Deserialize<EntityDetail>(Wire.Json)!;
+        Assert.Contains(entity.Threads, x => x.Id == sample.ThreadId && x.OwnerId == sample.ProcessId);
+        var query = new CpuStackQuery(0, end, sample.ProcessId, ThreadId: sample.ThreadId);
+        await worker.Send("thread-stacks", "cpuStacks", query);
+        var stacks = (await worker.Result("thread-stacks")).GetProperty("result").Deserialize<CpuStackPage>(Wire.Json)!;
+        Assert.True(stacks.Selected.Samples > 0); Assert.Equal(sample.ThreadId, stacks.Query.ThreadId);
+        await worker.Send("hot", "cpuStacks", query with { View = CpuStackView.CallTree, HottestPath = true });
+        var hot = (await worker.Result("hot")).GetProperty("result").Deserialize<CpuStackPage>(Wire.Json)!;
+        Assert.Equal(stacks.Selected, hot.Selected); Assert.NotEmpty(hot.HotPath!.Keys);
+        await worker.Send("hot-evidence", "evidence", new { index = hot.HotPath.Evidence!.EtlxEventIndex });
+        var evidence = (await worker.Result("hot-evidence")).GetProperty("result").Deserialize<EvidenceDetail>(Wire.Json)!;
+        Assert.Equal(sample.ThreadId, evidence.Observation.ThreadId); Assert.Equal(sample.ProcessId, evidence.Observation.ProcessId);
+        await worker.Send("bad-thread", "cpuStacks", query with { ThreadId = "missing" });
+        Assert.Equal("EntityMissing", (await worker.Result("bad-thread")).GetProperty("code").GetString());
+        await worker.Send("review", "exportReport", new IntervalQuery(0, end));
+        var prepared = (await worker.Result("review")).GetProperty("result").Deserialize<Report>(Wire.Json)!;
+        var reviewed = Path.Combine(worker.Cache, "reviewed.json");
+        await worker.Send("safe-export", "export", new { path = reviewed, format = "json", interval = new IntervalQuery(0, end) });
+        Assert.Equal("result", (await worker.Result("safe-export")).GetProperty("kind").GetString());
+        Assert.Equal(ReportExport.Render(prepared, "json"), File.ReadAllText(reviewed));
+        Assert.DoesNotContain(Fixture, File.ReadAllText(reviewed));
+        var privacy = new ExportPrivacyOptions(true, true, true, true, true, true);
+        await worker.Send("full-export", "export", new { path = reviewed, format = "json", interval = new IntervalQuery(0, end), privacy });
+        Assert.Equal("result", (await worker.Result("full-export")).GetProperty("kind").GetString());
+        Assert.Equal(ReportExport.Render(prepared, "json", privacy), File.ReadAllText(reviewed));
     }
     [Fact]
     public async Task MalformedMonitorMethodDoesNotCrashAndStopExitsCleanly()
@@ -101,8 +130,8 @@ public sealed class ProtocolTests
         public string Cache{get;}=Path.Combine(Path.GetTempPath(),"woi-rpc-"+Guid.NewGuid().ToString("N"));
         public Harness(bool monitor = false) {
             Directory.CreateDirectory(Cache);
-            var sdk=new[]{Path.Combine(Root,".tools","dotnet","dotnet.exe"),
-                Environment.GetEnvironmentVariable("DOTNET_HOST_PATH"),
+            var sdk=new[]{Environment.GetEnvironmentVariable("DOTNET_HOST_PATH"),
+                Path.Combine(Root,".tools","dotnet","dotnet.exe"),
                 Path.Combine(Environment.GetEnvironmentVariable("DOTNET_ROOT")??"", "dotnet.exe")}
                 .FirstOrDefault(path=>!string.IsNullOrEmpty(path) && File.Exists(path))??"dotnet";
             var configuration=AppContext.BaseDirectory.Contains(Path.DirectorySeparatorChar+"Release"+Path.DirectorySeparatorChar)?"Release":"Debug";

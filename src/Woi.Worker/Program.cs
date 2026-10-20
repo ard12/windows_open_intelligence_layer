@@ -60,6 +60,7 @@ async Task Handle(Request request, CancellationTokenSource cancellation)
             result = request.Method switch {
                 "summary" => engine.Summary(),
                 "report" => InvestigationWorkspace.CompactReport(engine.Report(Parse<IntervalQuery>(request.Parameters), token)),
+                "exportReport" => engine.Report(Parse<IntervalQuery>(request.Parameters), token),
                 "diagnostics" => new {pid=Environment.ProcessId,
                     peakWorkingSetBytes=System.Diagnostics.Process.GetCurrentProcess().PeakWorkingSet64,
                     workingSetBytes=System.Diagnostics.Process.GetCurrentProcess().WorkingSet64, contributorQuery=engine.LastContributorProfile,
@@ -128,7 +129,8 @@ static object Bookmark(CacheStore store,QueryEngine engine,Bookmark bookmark) {
 }
 static object Export(QueryEngine engine,JsonElement parameters,CancellationToken token) {
     engine.Export(LocalPaths.RequireLocal(parameters.GetProperty("path").GetString()!),
-        parameters.GetProperty("format").GetString()!, parameters.GetProperty("interval").Deserialize<IntervalQuery>(Wire.Json)!,token);
+        parameters.GetProperty("format").GetString()!, parameters.GetProperty("interval").Deserialize<IntervalQuery>(Wire.Json)!,token,
+        parameters.TryGetProperty("privacy", out var privacy) ? privacy.Deserialize<ExportPrivacyOptions>(Wire.Json) : null);
     return new { exported = true };
 }
 sealed class InlineProgress(Action<ImportProgress> action) : IProgress<ImportProgress>

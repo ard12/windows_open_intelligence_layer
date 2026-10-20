@@ -343,10 +343,14 @@
        <TextBlock Text="{Binding StackCoverage}" TextWrapping="Wrap" Foreground="#61768D" Margin="0,6"/>
        <TextBlock Text="Inclusive: sample contains frame; self: sampled leaf. Recursive functions count once per sample; call paths keep recursion. Callers/callees focus the occurrence closest to the leaf." TextWrapping="Wrap" Foreground="#61768D" FontSize="11"/>
       </StackPanel></ScrollViewer>
-      <StackPanel Grid.Row="1"><WrapPanel Margin="0,6"><ComboBox AutomationProperties.Name="CPU stack grouping" ItemsSource="{Binding StackGroupings}" SelectedItem="{Binding StackGrouping}" Width="115" Margin="4" ToolTip="Grouping applies with Use interval"/>
+      <ScrollViewer Grid.Row="1" x:Name="CpuStackControlsScroll" MaxHeight="180" VerticalScrollBarVisibility="Auto"><StackPanel><WrapPanel Margin="0,6"><ComboBox AutomationProperties.Name="CPU stack grouping" ItemsSource="{Binding StackGroupings}" SelectedItem="{Binding StackGrouping}" Width="115" Margin="4" ToolTip="Grouping applies with Use interval"/>
        <Button Content="Use interval" Click="StackLoadClicked"/><Button Content="Functions" Click="StackFunctionsClicked"/><Button Content="Call tree" Click="StackTreeClicked"/>
        <Button Content="Callers" Click="StackCallersClicked"/><Button Content="Callees" Click="StackCalleesClicked"/><Button Content="Open path" Click="StackDescendClicked"/><Button Content="Up" Click="StackUpClicked"/>
-      </WrapPanel><TextBlock Text="{Binding StackPath}" ToolTip="{Binding StackPath}" TextTrimming="CharacterEllipsis" Margin="4,0,0,6"/></StackPanel>
+       <Button Content="Hottest sampled path" Click="StackHotPathClicked"/>
+       <Button Content="Export stacks JSON" Click="ExportCpuStacksClicked"/>
+      </WrapPanel><WrapPanel><ComboBox ItemsSource="{Binding StackThreads}" SelectedItem="{Binding SelectedStackThread}" DisplayMemberPath="DisplayLabel" Width="290" Margin="4" AutomationProperties.Name="Recorded thread lifetime" ToolTip="Choose a process and Use interval to load its recorded threads; choose a thread and Use interval again to apply it."/>
+       <Button Content="All threads" Click="StackAllThreadsClicked"/><TextBlock Text="Choose a process, then Use interval to load threads." VerticalAlignment="Center" Foreground="#61768D" Margin="4"/>
+      </WrapPanel><TextBlock Text="{Binding StackPath}" ToolTip="{Binding StackPath}" TextTrimming="CharacterEllipsis" Margin="4,0,0,6"/></StackPanel></ScrollViewer>
       <DataGrid Grid.Row="2" x:Name="CpuStackGrid" PreviewKeyDown="SelectionKeyDown" ItemsSource="{Binding CpuStackRows}" SelectedItem="{Binding SelectedStackRow}" MouseDoubleClick="StackDescendClicked" CanUserSortColumns="False" AutomationProperties.Name="Captured CPU stack aggregates">
        <DataGrid.Columns><DataGridTemplateColumn Header="Function / module / call path" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate>
         <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"><TextBlock.ToolTip><StackPanel><TextBlock Text="{Binding Name}"/><TextBlock Text="{Binding Key}"/></StackPanel></TextBlock.ToolTip></TextBlock>

@@ -11,6 +11,61 @@ public sealed class CpuStackTests
     private static CpuStackFrame Frame(string name) => new(name, name, "module", "module", name != "unknown");
     private static CpuStackSample Sample(long id, double? weight, params string[] frames) => new(CoreTests.Obs(id, id, weight: weight), frames.Select(Frame).ToArray());
     private static CpuStackSample[] RecursiveSamples() => [Sample(1, 2, "A", "B", "A", "R"), Sample(2, null, "B", "A", "R"), Sample(3, 3)];
+    [Fact] public void ThreadScopeUsesLifetimeIdentityAndAccountsForUnattributedSamples()
+    {
+        var oldThread = Sample(1, 1, "A") with { Event = CoreTests.Obs(1, 1, weight: 1) with { ThreadId = "old-thread", Tid = 42 } };
+        var reusedTid = Sample(2, 2, "B") with { Event = CoreTests.Obs(2, 2, weight: 2) with { ThreadId = "new-thread", Tid = 42 } };
+        var unknown = Sample(3, 3) with { Event = CoreTests.Obs(3, 3, weight: 3) with { ThreadId = null } };
+        var samples = new[] { oldThread, reusedTid, unknown };
+        var scoped = CpuStackAggregation.Build("hash", new(0, 10, ThreadId: "old-thread"), samples, default);
+        Assert.Equal(1, scoped.Selected.Samples); Assert.Equal(1, scoped.Selected.CpuMs);
+        Assert.Equal(oldThread.Event.Evidence, Assert.Single(scoped.Rows).Evidence);
+        var all = CpuStackAggregation.Build("hash", new(0, 10), samples, default);
+        Assert.Equal(all.Selected.Samples, all.Threads!.Sum(x => x.Metric.Samples));
+        Assert.Equal(1, all.Threads!.Single(x => x.ThreadId == null).Metric.Samples);
+        Assert.Equal(3, all.Threads!.Single(x => x.ThreadId == null).Metric.CpuMs);
+        Assert.Equal(all.Threads, scoped.Threads);
+        Assert.Equal(all.Selected.Samples, scoped.Selected.Samples +
+            CpuStackAggregation.Build("hash", new(0, 10, ThreadId: "new-thread"), samples, default).Selected.Samples + 1);
+        Assert.Empty(CpuStackAggregation.Build("hash", new(0, 10, ThreadId: "missing"), samples, default).Rows);
+    }
+    [Fact] public void HottestPathUsesOnePassAndSampleCountsWithExplicitUnknownWeights()
+    {
+        int enumerations = 0;
+        IEnumerable<CpuStackSample> Once() {
+            Assert.Equal(1, ++enumerations);
+            yield return Sample(1, 1, "B", "A", "R"); yield return Sample(2, null, "B", "A", "R");
+            yield return Sample(3, 100, "C", "R");
+        }
+        var page = CpuStackAggregation.Build("hash", new(0, 10, View: CpuStackView.CallTree, HottestPath: true), Once(), default);
+        Assert.Equal(1, enumerations); Assert.Equal(new[] { "R", "A", "B" }, page.HotPath!.Keys);
+        Assert.Equal(new[] { "R", "A" }, page.Query.Path); Assert.False(page.Query.HottestPath);
+        Assert.Null(page.Selected.CpuMs); Assert.Equal(101, page.Selected.KnownCpuMs);
+        Assert.Equal(2, Assert.Single(page.Rows).Inclusive.Samples);
+        Assert.Equal(1, page.HotPath.Evidence!.EtlxEventIndex);
+    }
+    [Fact] public void HottestPathStopsAtDominantSelfAndBreaksTiesDeterministically()
+    {
+        var query = new CpuStackQuery(0, 10, View: CpuStackView.CallTree, HottestPath: true);
+        var self = CpuStackAggregation.Build("hash", query, [Sample(1, 1, "R"), Sample(2, 1, "R"), Sample(3, 1, "A", "R")], default);
+        Assert.Equal(new[] { "R" }, self.HotPath!.Keys);
+        var ties = CpuStackAggregation.Build("hash", query, [Sample(1, 1, "B", "R"), Sample(2, 1, "A", "R")], default);
+        Assert.Equal(new[] { "R", "A" }, ties.HotPath!.Keys);
+        var unknown = CpuStackAggregation.Build("hash", query, [Sample(1, 1), Sample(2, null), Sample(3, 10, "A")], default);
+        Assert.Equal(new[] { "missing-stack" }, unknown.HotPath!.Keys);
+        Assert.Equal(2, unknown.WithoutStacks.Samples);
+        var empty = CpuStackAggregation.Build("hash", query, [], default);
+        Assert.Empty(empty.HotPath!.Keys); Assert.Empty(empty.Rows); Assert.Null(empty.HotPath.Evidence);
+        Assert.Throws<WoiException>(() => CpuStackAggregation.Build("hash", query with { ThreadId = "" }, [], default));
+        Assert.Throws<WoiException>(() => CpuStackAggregation.Build("hash", query with { Path = ["R"] }, [], default));
+    }
+    [Fact] public void HottestPathBoundsItsContextualTree()
+    {
+        var samples = Enumerable.Range(0, CpuStackAggregation.MaximumRows + 1).Select(i => Sample(i, 1, "frame" + i));
+        var error = Assert.Throws<WoiException>(() => CpuStackAggregation.Build("hash",
+            new(0, 200000, View: CpuStackView.CallTree, HottestPath: true), samples, default));
+        Assert.Equal("StackLimit", error.Code);
+    }
     [Fact] public void FunctionsDeduplicateRecursionAndRetainMissingStacksAndUnknownWeights()
     {
         var page = CpuStackAggregation.Build("hash", new(0, 10), RecursiveSamples(), default);
@@ -81,6 +136,8 @@ public sealed class CpuStackTests
             var page = reader.QueryCpuStacks(query, default);
             Assert.Equal(selected.Length, page.Selected.Samples); Assert.Equal(captured, page.WithStacks.Samples);
             Assert.Equal(selected.Length - captured, page.WithoutStacks.Samples);
+            Assert.Equal(selected.Length, page.Threads!.Sum(x => x.Metric.Samples));
+            Assert.Equal(selected.Count(x => x.ThreadId == null), page.Threads!.Where(x => x.ThreadId == null).Sum(x => x.Metric.Samples));
             Assert.Equal(selected.Sum(x => x.CpuWeightMs ?? 0), page.Selected.KnownCpuMs, 7);
             Assert.Equal(engine.Contributors(interval, default).Sum(x => x.CpuSamples), page.Selected.Samples);
             var rows = page.Rows.ToList();
@@ -89,9 +146,21 @@ public sealed class CpuStackTests
             Assert.Equal(selected.Sum(x => x.CpuWeightMs ?? 0), rows.Sum(x => x.Exclusive.KnownCpuMs), 7);
             var chosen = rows.First(x => x.Exclusive.Samples > 0);
             Assert.Equal(chosen.Evidence.EtlxEventIndex, reader.GetEvidence(chosen.Evidence.EtlxEventIndex, null, default).Observation.Index);
-            var process = selected.First(x => x.ProcessId != null).ProcessId;
+            var process = selected.First(x => x.ProcessId != null && x.ThreadId != null).ProcessId;
             var scoped = reader.QueryCpuStacks(query with { ProcessId = process }, default);
             Assert.Equal(selected.Count(x => x.ProcessId == process), scoped.Selected.Samples);
+            var thread = selected.First(x => x.ProcessId == process && x.ThreadId != null).ThreadId!;
+            var threadPage = reader.QueryCpuStacks(query with { ProcessId = process, ThreadId = thread }, default);
+            Assert.Equal(selected.Count(x => x.ProcessId == process && x.ThreadId == thread), threadPage.Selected.Samples);
+            Assert.Equal(thread, threadPage.Query.ThreadId);
+            Assert.Equal(threadPage.Selected, threadPage.Threads!.Single(x => x.ThreadId == thread).Metric);
+            var hot = reader.QueryCpuStacks(query with { ProcessId = process, ThreadId = thread, View = CpuStackView.CallTree, HottestPath = true }, default);
+            Assert.Equal(threadPage.Selected, hot.Selected); Assert.NotEmpty(hot.HotPath!.Keys);
+            var hotEvent = reader.GetEvidence(hot.HotPath.Evidence!.EtlxEventIndex, null, default).Observation;
+            Assert.Equal(thread, hotEvent.ThreadId); Assert.Equal(process, hotEvent.ProcessId);
+            Assert.Throws<WoiException>(() => reader.QueryCpuStacks(query with { ThreadId = "missing" }, default));
+            var foreignProcess = reader.Entities.FirstOrDefault(x => x.Kind == "Process" && x.Id != process);
+            if (foreignProcess != null) Assert.Throws<WoiException>(() => reader.QueryCpuStacks(query with { ProcessId = foreignProcess.Id, ThreadId = thread }, default));
             Assert.Throws<WoiException>(() => reader.QueryCpuStacks(query with { ProcessId = "missing" }, default));
             using var cancelled = new CancellationTokenSource(); cancelled.Cancel();
             Assert.Throws<OperationCanceledException>(() => reader.QueryCpuStacks(query, cancelled.Token));

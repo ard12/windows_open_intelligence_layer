@@ -49,68 +49,12 @@ public sealed class InvestigationWorkspace
             sample.ReadBytesPerSecond, sample.WriteBytesPerSecond, sample.AvailablePhysicalBytes, sample.CommitBytes,
             sample.EnumeratedProcesses, sample.UnreadableProcesses, process, sample.Gaps);
     }
-    public void Export(string id, string path, string format, bool includeLocalPaths = false)
-    {
-        var document = Get(id); var view = View(document);
-        if (format is not ("json" or "markdown")) throw new WoiException("InvalidFormat", "Choose json or markdown.");
-        if (!includeLocalPaths && view.AttachedTrace is { } trace)
-            view = view with { AttachedTrace = trace with { Session = trace.Session with { SourcePath = "", CacheDirectory = "" } } };
-        path = InvestigationStore.Local(path);
-        if (format == "json") { File.WriteAllText(path, JsonSerializer.Serialize(view, new JsonSerializerOptions(Wire.Json) { WriteIndented = true })); return; }
-        var i = view.Investigation;
-        static string Clean(string text) => text.Replace("\r", " ").Replace("\n", " ").Replace("|", "\\|");
-        var text = new StringBuilder("# Windows Open Intelligence investigation\n\n");
-        text.AppendLine(Clean(i.Symptom)).AppendLine().AppendLine(FormattableString.Invariant($"Selected interval: {i.Window.StartSeconds:F3}–{i.Window.EndSeconds:F3}s from observation start; scope: {Clean(i.Scope)}."));
-        text.AppendLine($"Source: {view.Source.Id} / {view.Source.Kind} / {view.Source.Version}");
-        text.AppendLine("Snapshot times use recorded monotonic ticks and frequency. They have no ETLX event index.").AppendLine();
-        foreach (var finding in i.Findings) {
-            text.AppendLine("## " + finding.Title).AppendLine().AppendLine($"{finding.Provenance}: {finding.Statement}").AppendLine();
-            foreach (var r in finding.Snapshots) text.AppendLine($"- Snapshot {r.SourceId}:{r.MonotonicTick}; UTC {r.Utc:O}; lifetime {r.ProcessLifetimeId ?? "system gauges"}.");
-            foreach (var limitation in finding.Limitations) text.AppendLine("- " + limitation);
-        }
-        text.AppendLine().AppendLine("Next measurement: " + i.NextMeasurement).AppendLine();
-        if (!string.IsNullOrWhiteSpace(i.Notes)) text.AppendLine("User notes: " + Clean(i.Notes)).AppendLine();
-        foreach (var limitation in i.Limitations) text.AppendLine("- " + limitation);
-        if (view.AttachedTrace is { } attached) {
-            text.AppendLine().AppendLine("## User-attached ETL evidence").AppendLine().AppendLine($"SHA-256: {attached.Session.SourceHash}; parser: {attached.Session.ParserVersion}");
-            if (includeLocalPaths) text.AppendLine("Original local path: " + attached.Session.SourcePath);
-            text.AppendLine("This attachment is a separately recorded source. Attachment does not establish clock alignment, common machine identity, or causality.").AppendLine(attached.Explanation);
-            foreach (var evidence in attached.Contributors.SelectMany(x => x.Evidence).DistinctBy(x => x.EtlxEventIndex).Take(30))
-                text.AppendLine(FormattableString.Invariant($"- ETLX {evidence.EtlxEventIndex}; {evidence.TimeMs:F6}ms; {evidence.Provider}/{evidence.EventName}; source {evidence.TraceHash}."));
-        }
-        text.AppendLine().AppendLine("Sharing contains process names, source metadata, notes, and evidence coordinates. Raw ETL and the full snapshot evidence are excluded; review the report before sharing.");
-        File.WriteAllText(path, text.ToString());
-    }
-    public void ExportComparison(ComparisonRequest request, string path, string format)
-    {
-        var comparison = Compare(request);
-        var first = GetView(request.FirstId); var second = GetView(request.SecondId);
-        InvestigationView Redact(InvestigationView value) => value.AttachedTrace == null ? value : value with {
-            AttachedTrace = value.AttachedTrace with { Session = value.AttachedTrace.Session with { SourcePath = "", CacheDirectory = "" } }
-        };
-        path = InvestigationStore.Local(path);
-        if (format == "json") {
-            File.WriteAllText(path, JsonSerializer.Serialize(new { comparison, first = Redact(first), second = Redact(second) }, new JsonSerializerOptions(Wire.Json) { WriteIndented = true })); return;
-        }
-        if (format != "markdown") throw new WoiException("InvalidFormat", "Choose json or markdown.");
-        static string Clean(string text) => text.Replace("|", "\\|").Replace("\r", " ").Replace("\n", " ");
-        static string Value(double? value) => value?.ToString("F3", System.Globalization.CultureInfo.InvariantCulture) ?? "unavailable";
-        var text = new StringBuilder("# Windows Open Intelligence attempt comparison\n\n");
-        text.AppendLine("Task confirmed by user: " + Clean(comparison.Task)).AppendLine("User-stated change: " + Clean(comparison.Change)).AppendLine().AppendLine(comparison.Statement).AppendLine("Provenance: temporal correlation.").AppendLine();
-        text.AppendLine($"First: {first.Investigation.Id}; source {first.Source.Id}; {first.Source.Kind}/{first.Source.Version}");
-        text.AppendLine($"Second: {second.Investigation.Id}; source {second.Source.Id}; {second.Source.Kind}/{second.Source.Version}");
-        if (!string.IsNullOrWhiteSpace(comparison.ApplicationContext)) text.AppendLine("User-confirmed application context: " + Clean(comparison.ApplicationContext));
-        text.AppendLine().AppendLine("| Measurement | Unit | First | Second | Difference % | Comparable | ").AppendLine("|---|---|---:|---:|---:|---|");
-        foreach (var metric in comparison.Metrics) text.AppendLine($"| {Clean(metric.Name)} | {metric.Unit} | {Value(metric.First)} | {Value(metric.Second)} | {Value(metric.ChangePercent)} | {metric.Comparable} |");
-        text.AppendLine();
-        foreach (var metric in comparison.Metrics) text.AppendLine("- " + metric.Name + ": " + metric.Limitation);
-        foreach (var limitation in comparison.Limitations) text.AppendLine("- " + limitation);
-        text.AppendLine().AppendLine("## Evidence references").AppendLine();
-        foreach (var finding in first.Investigation.Findings.Concat(second.Investigation.Findings))
-            foreach (var reference in finding.Snapshots) text.AppendLine($"- Snapshot {reference.SourceId}:{reference.MonotonicTick}; UTC {reference.Utc:O}; lifetime {reference.ProcessLifetimeId ?? "system gauges"}.");
-        text.AppendLine().AppendLine("Raw ETL, full snapshot evidence, and original local trace paths are excluded. Notes, application context, and source references may contain private information; review before sharing.");
-        File.WriteAllText(path, text.ToString());
-    }
+    public void Export(string id, string path, string format, bool includeLocalPaths = false, ExportPrivacyOptions? privacy = null) =>
+        ReportExport.Write(path, format, GetView(id), privacy ?? new(IncludePaths: includeLocalPaths));
+    public AttemptComparisonExport ComparisonReport(ComparisonRequest request) =>
+        new(Compare(request), GetView(request.FirstId), GetView(request.SecondId));
+    public void ExportComparison(ComparisonRequest request, string path, string format, ExportPrivacyOptions? privacy = null) =>
+        ReportExport.Write(path, format, ComparisonReport(request), privacy);
     private InvestigationDocument Get(string id) => documents.GetValueOrDefault(id) ?? throw new WoiException("MissingInvestigation", "Open or create this investigation in the current worker first.");
     private static InvestigationView View(InvestigationDocument document) => new(document.Investigation, document.Source, document.AttachedTrace);
 }

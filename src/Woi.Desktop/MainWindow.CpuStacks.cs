@@ -7,6 +7,8 @@ namespace Woi.Desktop;
 public partial class MainWindow
 {
     private async void StackLoadClicked(object sender, RoutedEventArgs e) => await model!.LoadCpuStacks();
+    private async void StackAllThreadsClicked(object sender, RoutedEventArgs e) => await model!.AllStackThreads();
+    private async void StackHotPathClicked(object sender, RoutedEventArgs e) => await model!.ShowHottestPath();
     private async void StackFunctionsClicked(object sender, RoutedEventArgs e) => await model!.StackView(CpuStackView.Functions);
     private async void StackTreeClicked(object sender, RoutedEventArgs e) => await model!.StackView(CpuStackView.CallTree);
     private async void StackCallersClicked(object sender, RoutedEventArgs e) => await model!.StackView(CpuStackView.Callers);
@@ -62,6 +64,35 @@ public partial class MainWindow
         vm.StackGrouping = CpuStackGrouping.Module; await vm.LoadCpuStacks();
         Check(vm.CpuStacks!.Query.Grouping == CpuStackGrouping.Module && vm.CpuStackRows.Count > 0, "Module grouping failed.");
         vm.StackGrouping = CpuStackGrouping.Function; await vm.LoadCpuStacks();
+        // Scope by immutable thread lifetime, then navigate its hottest accounting path.
+        Contributor? process = null;
+        foreach (var candidate in vm.Contributors.Where(x => x.ProcessId != null && x.CpuSamples > 0).ToArray()) {
+            await vm.SelectContributor(candidate);
+            if (vm.CpuStacks!.Threads?.Any(x => x.ThreadId != null && x.Metric.Samples > 0) == true) { process = candidate; break; }
+        }
+        Check(process != null, "Fixture has no CPU contributor with resolved thread lifetimes.");
+        Check(vm.StackThreads.Count > 0, "Process scope did not expose captured thread lifetimes.");
+        Check(vm.CpuStacks!.Threads!.Sum(x => x.Metric.Samples) == process!.CpuSamples && vm.StackCoverage.Contains("unattributed to a thread"), "Thread attribution does not reconcile to process samples.");
+        EntityLifetime? sampledThread = null;
+        foreach (var thread in vm.StackThreads.ToArray()) {
+            vm.SelectedStackThread = thread; await vm.LoadCpuStacks();
+            if (vm.CpuStacks!.Selected.Samples > 0) { sampledThread = thread; break; }
+        }
+        Check(sampledThread != null && vm.CpuStacks!.Query.ThreadId == sampledThread.Id, "Thread lifetime scope has no samples.");
+        var threadTotal = vm.CpuStacks!.Selected;
+        await vm.ShowHottestPath();
+        Check(vm.CpuStacks!.Selected == threadTotal && vm.CpuStacks.Query.ThreadId == sampledThread!.Id &&
+            vm.SelectedStackRow?.Key == vm.CpuStacks.HotPath?.Keys.LastOrDefault(), "Hottest path changed thread scope or failed to select its leaf.");
+        var hotEvidence = vm.CpuStacks.HotPath!.Evidence!;
+        await vm.StackEvidence();
+        Check(vm.EvidenceEventIndex == hotEvidence.EtlxEventIndex && vm.EvidenceText.Contains("TID " + sampledThread!.OsId), "Hottest path evidence belongs to another thread.");
+        Views.SelectedItem = CpuStacksTab; await Task.Delay(150);
+        Capture(Path.ChangeExtension(snapshot, "thread-hot-path.png"));
+        await VerifyExportReview(vm.CpuStacks, snapshot, "cpu-stacks");
+        await vm.AllStackThreads();
+        Check(vm.CpuStacks!.Query.ThreadId == null && vm.SelectedStackThread == null, "All threads retained a lifetime filter.");
+        vm.SelectedProcess = null; await vm.Refresh();
+        Check(vm.StackThreads.Count == 0 && vm.CpuStacks!.Query.ThreadId == null, "Changing process scope retained stale thread choices.");
         await Task.Delay(200); Capture(Path.ChangeExtension(snapshot, "cpu-stacks.png"));
         var width = Width; var height = Height; Width = MinWidth; Height = MinHeight;
         await Task.Delay(200); UpdateLayout(); Capture(Path.ChangeExtension(snapshot, "cpu-stacks-small.png"));
